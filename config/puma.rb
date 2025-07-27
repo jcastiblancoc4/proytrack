@@ -28,7 +28,7 @@ if rails_env == "production"
   end
 end
 
-if Rails.env.development?
+if ENV.fetch("RAILS_ENV", "development") == "development"
   ssl_bind '127.0.0.1', '3000', {
     key:  'config/ssl/localhost.key',
     cert: 'config/ssl/localhost.crt',
@@ -37,6 +37,7 @@ if Rails.env.development?
 else
   port ENV.fetch("PORT") { 3000 }
 end
+
 # Specifies the `worker_timeout` threshold that Puma will use to wait before
 # terminating a worker in development environments.
 worker_timeout 3600 if ENV.fetch("RAILS_ENV", "development") == "development"
