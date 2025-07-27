@@ -1,0 +1,35 @@
+es:
+  enums:
+    project:
+      execution_status:
+        pending: "Pendiente"
+        running: "Ejecutando"
+        stop: "Pausado"
+        cancelled: "Cancelado"
+        ended: "Terminado"
+      payment_status:
+        pending: "Pendiente"
+        paid: "Pago"
+    expense:
+      expense_type:
+        payroll: "Nomina"
+        hardware: "Ferreteria"
+        fuel: "Combustible"
+  errors:
+    messages:
+      not_saved: "No se pudo guardar el registro. Corrige los errores e inténtalo de nuevo."
+      confirmation: "no coincide con la confirmación"
+  activemodel:
+    errors:
+      models:
+        user:
+          attributes:
+            password_confirmation:
+              confirmation: "no coincide con la contraseña"
+    mongoid:
+      errors:
+        models:
+          user:
+            attributes:
+              password_confirmation:
+                confirmation: "no coincide con la contraseña"

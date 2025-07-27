@@ -1,0 +1,20 @@
+development:
+  clients:
+    default:
+      uri: <%= ENV['MONGODB_URI'] %>
+      options:
+        ssl: true
+        retry_writes: true
+        server_selection_timeout: 5
+
+
+
+  options:
+test:
+  clients:
+    default:
+      uri: <%= ENV['MONGODB_URI'] %>
+      options:
+        ssl: true
+        retry_writes: true
+        server_selection_timeout: 5

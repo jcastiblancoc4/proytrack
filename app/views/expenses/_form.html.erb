@@ -1,0 +1,21 @@
+<%= form_with model: [@project, @expense], local: true do |f| %>
+  <div class="mb-4">
+    <%= f.label :description, "Descripción", class: "block text-sm font-medium" %>
+    <%= f.text_field :description, class: "w-full p-2 border rounded" %>
+  </div>
+
+  <div class="mb-4">
+    <%= f.label :amount, "Monto", class: "block text-sm font-medium" %>
+    <%= f.number_field :amount, step: 1000, class: "w-full p-2 border rounded" %>
+  </div>
+
+  <div class="mb-4">
+    <%= f.label :expense_type, "Tipo de Gasto", class: "block text-sm font-medium" %>
+    <%= f.select :expense_type, Expense.expense_types.map { |k, _| [k.humanize, k] }, {}, class: "w-full p-2 border rounded" %>
+  </div>
+
+  <div class="flex gap-4">
+    <%= f.submit "Guardar", class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" %>
+    <%= link_to "Cancelar", project_path(@project), class: "text-gray-600 hover:underline" %>
+  </div>
+<% end %>
