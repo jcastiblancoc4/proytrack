@@ -18,3 +18,11 @@ test:
         ssl: true
         retry_writes: true
         server_selection_timeout: 5
+production:
+  clients:
+    default:
+      uri: <%= ENV['MONGODB_URI'] %>
+      options:
+        ssl: true
+        retry_writes: true
+        server_selection_timeout: 5        
