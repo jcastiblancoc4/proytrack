@@ -1,7 +1,7 @@
 development:
   clients:
     default:
-      uri: "mongodb+srv://jpcast:pro123@proytrack.la0ps9g.mongodb.net/proytrack_development?retryWrites=true&w=majority&appName=ProyTrack"
+      uri: "mongodb+srv://jpcast:pro123@proytrack.la0ps9g.mongodb.net/proytrack_development?retryWrites=true&w=majority&authSource=admin"
       options:
         ssl: true
         retry_writes: true
@@ -13,7 +13,7 @@ development:
 test:
   clients:
     default:
-      uri: "mongodb+srv://jpcast:pro123@proytrack.la0ps9g.mongodb.net/proytrack_development?retryWrites=true&w=majority&appName=ProyTrack"
+      uri: "mongodb+srv://jpcast:pro123@proytrack.la0ps9g.mongodb.net/proytrack_development?retryWrites=true&w=majority&authSource=admin"
       options:
         ssl: true
         retry_writes: true
@@ -21,7 +21,7 @@ test:
 production:
   clients:
     default:
-      uri: "mongodb+srv://jpcast:pro123@proytrack.la0ps9g.mongodb.net/proytrack_development?retryWrites=true&w=majority&appName=ProyTrack"
+      uri: "mongodb+srv://jpcast:pro123@proytrack.la0ps9g.mongodb.net/proytrack_development?retryWrites=true&w=majority&authSource=admin"
       options:
         ssl: true
         retry_writes: true
