@@ -21,8 +21,8 @@ test:
 production:
   clients:
     default:
-      uri: "mongodb+srv://jpcast:pro123@proytrack.la0ps9g.mongodb.net/proytrack_development?retryWrites=true&w=majority&authSource=admin"
+      database: proytrack_production
+      hosts:
+        - 127.0.0.1:27017
       options:
-        ssl: true
-        retry_writes: true
         server_selection_timeout: 5        
