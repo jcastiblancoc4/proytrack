@@ -2,32 +2,41 @@ name: Deploy to Server
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" | base64 -d > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H 178.156.195.249 >> ~/.ssh/known_hosts
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 178.156.195.249
+          username: deploy
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
+            eval "$(rbenv init -)"
 
-      - name: Deploy to server
-        run: |
-          ssh -i ~/.ssh/id_ed25519 deploy@178.156.195.249 << 'EOF'
-            cd /home/deploy/proytrack || exit 1
-            git pull origin main
+            cd ~/proytrack
+
+            echo "=== Pulling latest code ==="
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "=== Installing gems ==="
             bundle install --deployment --without development test
+
+            echo "=== Migrating DB ==="
             RAILS_ENV=production rails db:migrate
+
+            echo "=== Precompiling assets ==="
             RAILS_ENV=production rails assets:precompile
+
+            echo "=== Restarting services ==="
             sudo systemctl restart puma
             sudo systemctl restart nginx
-          EOF
