@@ -16,9 +16,15 @@
     </h1>
 
     <%= form_with(model: [@project, @expense], local: true, class: "space-y-6") do |f| %>
+      <%= hidden_field_tag :from, params[:from] %>
       <div>
         <%= f.label :description, "📝 Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :description, value: @expense.description, class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+        <%= f.text_area :description, 
+                        value: @expense.description,
+                        class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 resize-none overflow-hidden",
+                        rows: 1,
+                        id: "description-textarea",
+                        placeholder: "Describe el gasto realizado..." %>
       </div>
 
       <div>
@@ -38,9 +44,19 @@
                      class: "w-full border border-gray-300 rounded px-3 py-2" %>
       </div>
 
+      <div>
+        <%= f.label :expense_date, "📅 Fecha del Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.date_field :expense_date, 
+                         value: @expense.expense_date&.strftime("%Y-%m-%d"),
+                         class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+      </div>
+
       <div class="flex justify-between items-center pt-6">
         <%= link_to "Cancelar", root_path, class: "text-gray-600 hover:underline" %>
-        <%= f.submit "Actualizar Gasto", class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" %>
+        <%= f.submit "Actualizar Gasto", 
+            class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed",
+            id: "submit-btn",
+            onclick: "return validateExpenseForm();" %>
       </div>
     <% end %>
   </div>
@@ -49,6 +65,18 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const input = document.getElementById("quoted_value_input");
+        const textarea = document.getElementById("description-textarea");
+
+        // Auto-resize textarea
+        if (textarea) {
+            function autoResize() {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+            
+            textarea.addEventListener('input', autoResize);
+            autoResize(); // Initial resize
+        }
 
         if (input) {
             input.addEventListener("input", function () {
@@ -61,4 +89,42 @@
             });
         }
     });
+
+    function validateExpenseForm() {
+        const description = document.querySelector('textarea[name="expense[description]"]').value.trim();
+        const amount = document.querySelector('input[name="expense[amount]"]').value.trim();
+        const expenseType = document.querySelector('select[name="expense[expense_type]"]').value;
+        const expenseDate = document.querySelector('input[name="expense[expense_date]"]').value;
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Validar campos obligatorios
+        if (!description) {
+            alert('La descripción del gasto es obligatoria');
+            return false;
+        }
+
+        if (!amount || amount === '0') {
+            alert('El valor del gasto es obligatorio y debe ser mayor a 0');
+            return false;
+        }
+
+        if (!expenseType) {
+            alert('El tipo de gasto es obligatorio');
+            return false;
+        }
+
+        if (!expenseDate) {
+            alert('La fecha del gasto es obligatoria');
+            return false;
+        }
+
+        // Si todo está bien, deshabilitar botón y mostrar efecto de carga
+        setTimeout(() => {
+            submitBtn.disabled = true;
+            submitBtn.value = '⏳ Actualizando...';
+            submitBtn.style.opacity = '0.6';
+        }, 0);
+
+        return true;
+    }
 </script>

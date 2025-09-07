@@ -9,6 +9,7 @@ class ProjectsController < ApplicationController
 
   # GET /projects/1 or /projects/1.json
   def show
+    @expenses = @project.expenses.order(created_at: :desc)
   end
 
   # GET /projects/new
@@ -40,7 +41,12 @@ class ProjectsController < ApplicationController
   def update
     respond_to do |format|
       if @project.update(project_params)
-        format.html { redirect_to root_path, notice: "Proyecto actualizado exitosamente."}
+        # Redireccionar según el origen
+        if params[:from] == 'home'
+          format.html { redirect_to root_path, notice: "Proyecto actualizado exitosamente." }
+        else
+          format.html { redirect_to project_path(@project), notice: "Proyecto actualizado exitosamente." }
+        end
         format.json { render :show, status: :ok, location: @project }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -67,6 +73,6 @@ class ProjectsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def project_params
-      params.require(:project).permit(:name, :purchase_order, :quoted_value, :locality, :payment_status, :execution_status)
+      params.require(:project).permit(:name, :project_identifier, :purchase_order, :quoted_value, :locality, :payment_status, :execution_status)
     end
 end

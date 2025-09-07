@@ -13,7 +13,12 @@ class ExpensesController < ApplicationController
   def create
     @expense = @project.expenses.build(expense_params)
     if @expense.save
-      redirect_to root_path, notice: "Gasto registrado exitosamente."
+      # Redireccionar según el origen
+      if params[:from] == 'home'
+        redirect_to root_path, notice: "Gasto registrado exitosamente."
+      else
+        redirect_to project_path(@project), notice: "Gasto registrado exitosamente."
+      end
     else
       render :new, alert: "No se pudo guardar el gasto."
     end
@@ -24,7 +29,12 @@ class ExpensesController < ApplicationController
 
   def update
     if @expense.update(expense_params)
-      redirect_to root_path, notice: "Gasto actualizado exitosamente."
+      # Redireccionar según el origen
+      if params[:from] == 'home'
+        redirect_to root_path, notice: "Gasto actualizado exitosamente."
+      else
+        redirect_to project_path(@project), notice: "Gasto actualizado exitosamente."
+      end
     else
       render :edit, alert: "No se pudo actualizar el gasto."
     end
@@ -32,7 +42,7 @@ class ExpensesController < ApplicationController
 
   def destroy
     @expense.destroy
-    redirect_to root_path, notice: "Gasto eliminado exitosamente."
+    redirect_to project_path(@project), notice: "Gasto eliminado exitosamente."
   end
 
   private
@@ -46,6 +56,6 @@ class ExpensesController < ApplicationController
   end
 
   def expense_params
-    params.require(:expense).permit(:description, :amount, :expense_type)
+    params.require(:expense).permit(:description, :amount, :expense_type, :expense_date)
   end
 end

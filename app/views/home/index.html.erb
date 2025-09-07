@@ -1,8 +1,19 @@
 <div class="max-w-7xl mx-auto mt-20 px-4">
   <div class="mb-6">
-    <h1 class="text-3xl font-extrabold text-blue-900 text-center mb-4">Proyectos Registrados</h1>
-    <div class="flex justify-end">
-      <%= link_to "Nuevo Proyecto", new_project_path, class: "inline-block px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded hover:bg-blue-700" %>
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-3xl font-extrabold text-blue-900">Proyectos Registrados</h1>
+      <%= link_to "Nuevo Proyecto", new_project_path, class: "inline-block px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded hover:bg-blue-700 transition-colors duration-200" %>
+    </div>
+    
+    <!-- Barra de búsqueda mejorada -->
+    <div class="mb-8">
+      <div class="relative max-w-lg mx-auto">
+        <input type="text" 
+               id="search-input"
+               placeholder="🔍 Buscar por ID o nombre del proyecto..."
+               class="block w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:placeholder-gray-300 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 shadow-lg hover:shadow-xl transition-all duration-200">
+      </div>
+      <p class="text-center text-sm text-gray-500 mt-2">Escribe para filtrar proyectos en tiempo real</p>
     </div>
   </div>
 
@@ -21,12 +32,15 @@
       %>
 
       <!-- Tarjeta del Proyecto -->
-      <div class="bg-white rounded shadow-md mb-8 p-6 border border-gray-300">
+      <div class="project-card bg-white rounded shadow-md mb-8 p-6 border border-gray-300" 
+           data-project-name="<%= project.name.downcase %>" 
+           data-project-id="<%= project.project_identifier.downcase %>">
         <!-- Encabezado del Proyecto -->
         <div class="mb-6 border-b pb-4">
           <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
             📁 <%= project.name.titleize %>
           </h2>
+          <p class="text-sm text-gray-600">🆔 ID: <%= project.project_identifier %></p>
           <p class="text-sm text-gray-500">Registrado el <%= project.created_at.in_time_zone("Bogota").strftime("%d/%m/%Y %I:%M %p") %></p>
         </div>
 
@@ -68,7 +82,8 @@
         <!-- Acciones del Proyecto -->
         <div class="flex flex-wrap justify-between items-center gap-2 mt-4">
           <div class="flex space-x-4 text-sm">
-            <%= link_to "Editar", edit_project_path(project), class: "text-blue-600 hover:underline" %>
+            <%= link_to "Ver Detalles", project_path(project), class: "text-green-600 hover:underline font-medium" %>
+            <%= link_to "Editar", edit_project_path(project, from: 'home'), class: "text-blue-600 hover:underline" %>
             <a href="#" onclick="if(confirm('¿Estás seguro de eliminar el registro?')) { document.getElementById('delete-project-<%= project.id %>').submit(); }" class="text-red-600 hover:underline">Eliminar</a>
             <%= form_with url: project_path(project), method: :delete, local: true, html: { id: "delete-project-#{project.id}", style: "display: none;" } do |f| %><% end %>
           </div>
@@ -83,7 +98,7 @@
             <table class="table-fixed w-full text-sm text-left text-gray-700 mb-4">
               <thead>
               <tr class="border-b border-gray-400 bg-gray-100">
-                <th class="px-4 py-2 w-1/6">Fecha</th>
+                <th class="px-4 py-2 w-1/6">Fecha Gasto</th>
                 <th class="px-4 py-2 w-1/6">Tipo</th>
                 <th class="px-4 py-2 w-2/6">Descripción</th>
                 <th class="px-4 py-2 w-1/6">Monto</th>
@@ -93,13 +108,13 @@
               <tbody>
               <% project.expenses.each do |expense| %>
                 <tr class="border-b border-gray-300 hover:bg-gray-100 transition-colors">
-                  <td class="px-4 py-3"><%= expense.created_at.in_time_zone("Bogota").strftime("%d/%m/%Y %I:%M %p") %></td>
+                  <td class="px-4 py-3"><%= expense.expense_date&.strftime("%d/%m/%Y") || "N/A" %></td>
                   <td class="px-4 py-3 whitespace-nowrap"><%= t("enums.expense.expense_type.#{expense.expense_type}") %></td>
                   <td class="px-4 py-3"><%= expense.description %></td>
                   <td class="px-4 py-3"><%= number_to_currency(expense.amount, unit: "$", delimiter: ".", separator: ",", precision: 0) %></td>
                   <td class="px-4 py-3">
                     <div class="flex flex-col space-y-1 text-sm">
-                      <%= link_to "Editar", edit_project_expense_path(project, expense), class: "text-blue-600 hover:underline" %>
+                      <%= link_to "Editar", edit_project_expense_path(project, expense, from: 'home'), class: "text-blue-600 hover:underline" %>
                       <a href="#"
                          onclick="if(confirm('¿Estás seguro de eliminar este gasto?')) { document.getElementById('delete-expense-<%= expense.id %>').submit(); }"
                          class="text-red-600 hover:underline">
@@ -117,7 +132,7 @@
             <p class="text-sm text-gray-500 mb-2">No hay gastos registrados.</p>
           <% end %>
 
-          <%= link_to "Registrar gasto", new_project_expense_path(project), class: "inline-block text-green-600 hover:underline text-sm" %>
+          <%= link_to "Registrar gasto", new_project_expense_path(project, from: 'home'), class: "inline-block text-green-600 hover:underline text-sm" %>
         </div>
       </div>
     <% end %>
@@ -135,4 +150,40 @@
             row.style.display = 'none';
         }
     }
+
+    // Búsqueda en tiempo real
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search-input');
+        const projectCards = document.querySelectorAll('.project-card');
+
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            projectCards.forEach(function(card) {
+                const projectName = card.getAttribute('data-project-name');
+                const projectId = card.getAttribute('data-project-id');
+                
+                // Buscar coincidencias en nombre o ID
+                const matchesName = projectName.includes(searchTerm);
+                const matchesId = projectId.includes(searchTerm);
+                
+                if (searchTerm === '' || matchesName || matchesId) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Event listener para búsqueda
+        searchInput.addEventListener('input', performSearch);
+
+        // Event listener para tecla Escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                performSearch();
+            }
+        });
+    });
 </script>

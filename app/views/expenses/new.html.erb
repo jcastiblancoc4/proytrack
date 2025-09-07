@@ -15,10 +15,39 @@
       💸 Gasto en Proyecto: <span class="ml-2 font-semibold"><%= @project.name.titleize %></span>
     </h1>
 
+    <% if @expense.errors.any? %>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">
+              Se encontraron <%= pluralize(@expense.errors.count, "error") %>:
+            </h3>
+            <div class="mt-2 text-sm text-red-700">
+              <ul class="list-disc pl-5 space-y-1">
+                <% @expense.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <%= form_with(model: [@project, @expense], local: true, class: "space-y-6") do |f| %>
+      <%= hidden_field_tag :from, params[:from] %>
       <div>
         <%= f.label :description, "📝 Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :description, class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200" %>
+        <%= f.text_area :description, 
+                        class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200 resize-none overflow-hidden",
+                        rows: 1,
+                        id: "description-textarea",
+                        placeholder: "Describe el gasto realizado..." %>
       </div>
 
       <div>
@@ -38,12 +67,19 @@
                      class: "w-full border border-gray-300 rounded px-3 py-2" %>
       </div>
 
+      <div>
+        <%= f.label :expense_date, "📅 Fecha del Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.date_field :expense_date, 
+                         value: Date.current,
+                         class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200" %>
+      </div>
+
       <div class="flex justify-between items-center pt-6">
         <%= link_to "Cancelar", root_path, class: "text-gray-600 hover:underline" %>
         <%= f.submit "Guardar Gasto", 
             class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed",
             id: "submit-btn",
-            onclick: "setTimeout(() => { this.disabled=true; this.value='⏳ Guardando...'; this.style.opacity='0.6'; }, 0);" %>
+            onclick: "return validateExpenseForm();" %>
       </div>
     <% end %>
   </div>
@@ -52,6 +88,18 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const input = document.getElementById("quoted_value_input");
+        const textarea = document.getElementById("description-textarea");
+
+        // Auto-resize textarea
+        if (textarea) {
+            function autoResize() {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+            
+            textarea.addEventListener('input', autoResize);
+            autoResize(); // Initial resize
+        }
 
         if (input) {
             input.addEventListener("input", function () {
@@ -64,4 +112,42 @@
             });
         }
     });
+
+    function validateExpenseForm() {
+        const description = document.querySelector('textarea[name="expense[description]"]').value.trim();
+        const amount = document.querySelector('input[name="expense[amount]"]').value.trim();
+        const expenseType = document.querySelector('select[name="expense[expense_type]"]').value;
+        const expenseDate = document.querySelector('input[name="expense[expense_date]"]').value;
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Validar campos obligatorios
+        if (!description) {
+            alert('La descripción del gasto es obligatoria');
+            return false;
+        }
+
+        if (!amount || amount === '0') {
+            alert('El valor del gasto es obligatorio y debe ser mayor a 0');
+            return false;
+        }
+
+        if (!expenseType) {
+            alert('El tipo de gasto es obligatorio');
+            return false;
+        }
+
+        if (!expenseDate) {
+            alert('La fecha del gasto es obligatoria');
+            return false;
+        }
+
+        // Si todo está bien, deshabilitar botón y mostrar efecto de carga
+        setTimeout(() => {
+            submitBtn.disabled = true;
+            submitBtn.value = '⏳ Guardando...';
+            submitBtn.style.opacity = '0.6';
+        }, 0);
+
+        return true;
+    }
 </script>

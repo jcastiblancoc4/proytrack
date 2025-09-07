@@ -15,10 +15,42 @@
       ✏️ Nuevo Proyecto
     </h1>
 
+    <% if @project.errors.any? %>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">
+              Se encontraron <%= pluralize(@project.errors.count, "error") %>:
+            </h3>
+            <div class="mt-2 text-sm text-red-700">
+              <ul class="list-disc pl-5 space-y-1">
+                <% @project.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <%= form_with model: @project, local: true, class: "space-y-6" do |f| %>
       <div>
         <%= f.label :name, "📌 Nombre del Proyecto", class: "block text-sm font-medium text-gray-700 mb-1" %>
         <%= f.text_field :name, class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+      </div>
+
+      <div>
+        <%= f.label :project_identifier, "🆔 Identificador del Proyecto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :project_identifier, 
+                         placeholder: "Ej: PROY-2024-001, ABC-123, etc.",
+                         class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+        <p class="text-xs text-gray-500 mt-1">Identificador único que identifica este proyecto</p>
       </div>
 
       <div>
@@ -45,7 +77,7 @@
         <%= f.submit "Guardar Proyecto", 
             class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed",
             id: "submit-btn",
-            onclick: "setTimeout(() => { this.disabled=true; this.value='⏳ Guardando...'; this.style.opacity='0.6'; }, 0);" %>
+            onclick: "return validateForm();" %>
       </div>
     <% end %>
   </div>
@@ -66,4 +98,49 @@
             });
         }
     });
+
+    function validateForm() {
+        const name = document.querySelector('input[name="project[name]"]').value.trim();
+        const projectIdentifier = document.querySelector('input[name="project[project_identifier]"]').value.trim();
+        const purchaseOrder = document.querySelector('input[name="project[purchase_order]"]').value.trim();
+        const quotedValue = document.querySelector('input[name="project[quoted_value]"]').value.trim();
+        const locality = document.querySelector('input[name="project[locality]"]').value.trim();
+        
+        let errors = [];
+        
+        if (!name) {
+            errors.push("El nombre del proyecto es obligatorio");
+        }
+        
+        if (!projectIdentifier) {
+            errors.push("El identificador del proyecto es obligatorio");
+        }
+        
+        if (!purchaseOrder) {
+            errors.push("La orden de compra es obligatoria");
+        }
+        
+        if (!quotedValue || quotedValue === "0") {
+            errors.push("El valor cotizado es obligatorio y debe ser mayor a 0");
+        }
+        
+        if (!locality) {
+            errors.push("La localidad es obligatoria");
+        }
+        
+        if (errors.length > 0) {
+            alert("Por favor corrige los siguientes errores:\n\n" + errors.join("\n"));
+            return false;
+        }
+        
+        // Si no hay errores, mostrar el efecto de carga
+        const submitBtn = document.getElementById("submit-btn");
+        setTimeout(() => { 
+            submitBtn.disabled = true; 
+            submitBtn.value = '⏳ Guardando...'; 
+            submitBtn.style.opacity = '0.6'; 
+        }, 0);
+        
+        return true;
+    }
 </script>
