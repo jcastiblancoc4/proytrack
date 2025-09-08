@@ -33,8 +33,8 @@
 
       <!-- Tarjeta del Proyecto -->
       <div class="project-card bg-white rounded shadow-md mb-8 p-6 border border-gray-300" 
-           data-project-name="<%= project.name.downcase %>" 
-           data-project-id="<%= project.project_identifier.downcase %>">
+           data-project-name="<%= project.name.to_s.downcase %>" 
+           data-project-id="<%= project.project_identifier.to_s.downcase %>">
         <!-- Encabezado del Proyecto -->
         <div class="mb-6 border-b pb-4">
           <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
