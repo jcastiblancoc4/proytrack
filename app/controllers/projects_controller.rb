@@ -4,12 +4,20 @@ class ProjectsController < ApplicationController
 
   # GET /projects or /projects.json
   def index
-    @projects = Project.all
+    # Incluir proyectos propios y proyectos compartidos
+    @projects = current_user.projects + current_user.shared_with_me_projects
   end
 
   # GET /projects/1 or /projects/1.json
   def show
+    # Verificar que el usuario tenga acceso al proyecto
+    unless @project.can_access?(current_user)
+      flash[:alert] = "No tienes acceso a este proyecto"
+      redirect_to root_path and return
+    end
+    
     @expenses = @project.expenses.order(created_at: :desc)
+    @can_edit = @project.can_edit?(current_user)
   end
 
   # GET /projects/new
@@ -19,6 +27,11 @@ class ProjectsController < ApplicationController
 
   # GET /projects/1/edit
   def edit
+    # Solo el propietario puede editar
+    unless @project.can_edit?(current_user)
+      flash[:alert] = "No tienes permisos para editar este proyecto"
+      redirect_to project_path(@project) and return
+    end
   end
 
   # POST /projects or /projects.json
@@ -39,6 +52,12 @@ class ProjectsController < ApplicationController
 
   # PATCH/PUT /projects/1 or /projects/1.json
   def update
+    # Solo el propietario puede actualizar
+    unless @project.can_edit?(current_user)
+      flash[:alert] = "No tienes permisos para editar este proyecto"
+      redirect_to project_path(@project) and return
+    end
+
     respond_to do |format|
       if @project.update(project_params)
         # Redireccionar según el origen
@@ -57,6 +76,12 @@ class ProjectsController < ApplicationController
 
   # DELETE /projects/1 or /projects/1.json
   def destroy
+    # Solo el propietario puede eliminar
+    unless @project.can_edit?(current_user)
+      flash[:alert] = "No tienes permisos para eliminar este proyecto"
+      redirect_to project_path(@project) and return
+    end
+
     @project.destroy!
 
     respond_to do |format|

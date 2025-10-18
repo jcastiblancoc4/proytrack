@@ -11,6 +11,7 @@ class Project
 
   belongs_to :user
   has_many :expenses, dependent: :destroy
+  has_many :shared_projects, dependent: :destroy
 
   # Callbacks
   before_validation :generate_project_identifier, on: :create
@@ -39,6 +40,24 @@ class Project
     cancelled: 3, # cancelado
     ended: 4, # termino
   }, field: { type: Integer, default: 0 }
+
+  # Métodos personalizados para usuarios compartidos (Mongoid no soporta through)
+  def shared_with_users
+    User.in(id: shared_projects.pluck(:user_id))
+  end
+
+  # Métodos para gestión de acceso
+  def can_access?(user)
+    user == self.user || shared_with_users.include?(user)
+  end
+
+  def can_edit?(user)
+    user == self.user
+  end
+
+  def shared_with?(user)
+    shared_with_users.include?(user)
+  end
 
   private
 

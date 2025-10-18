@@ -5,6 +5,7 @@ Rails.application.routes.draw do
 
   resources :projects, only: [:show, :new, :create, :edit, :update, :destroy] do
     resources :expenses, except: [:show]
+    resources :shared_projects, only: [:create, :destroy]
   end
 
   # Health check

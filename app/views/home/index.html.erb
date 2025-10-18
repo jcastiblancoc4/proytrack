@@ -33,16 +33,32 @@
       %>
 
       <!-- Tarjeta del Proyecto -->
-      <div class="project-card bg-white rounded shadow-md mb-6 sm:mb-8 p-4 sm:p-6 border border-gray-300" 
-           data-project-name="<%= project.name.to_s.downcase %>" 
+      <div class="project-card <%= project.user == current_user ? 'bg-white' : '' %> rounded shadow-md mb-6 sm:mb-8 p-4 sm:p-6 border <%= project.user == current_user ? 'border-gray-300' : 'border-gray-300' %>"
+           <%= project.user == current_user ? '' : 'style="background-color: #f0fdf4;"' %>
+           data-project-name="<%= project.name.to_s.downcase %>"
            data-project-id="<%= project.project_identifier.to_s.downcase %>">
         <!-- Encabezado del Proyecto -->
         <div class="mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
-          <h2 class="text-xl sm:text-2xl font-extrabold text-gray-800 flex items-center gap-2">
-            📁 <%= project.name.titleize %>
-          </h2>
-          <p class="text-xs sm:text-sm text-gray-600">🆔 ID: <%= project.project_identifier %></p>
-          <p class="text-xs sm:text-sm text-gray-500">Registrado el <%= project.created_at.in_time_zone("Bogota").strftime("%d/%m/%Y %I:%M %p") %></p>
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-gray-800 flex items-center gap-2">
+                📁 <%= project.name.titleize %>
+                <% if project.user != current_user %>
+                  <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    Compartido
+                  </span>
+                <% end %>
+              </h2>
+              <p class="text-xs sm:text-sm text-gray-600">🆔 ID: <%= project.project_identifier %></p>
+              <p class="text-xs sm:text-sm text-gray-500">
+                <% if project.user == current_user %>
+                  Registrado el <%= project.created_at.in_time_zone("Bogota").strftime("%d/%m/%Y %I:%M %p") %>
+                <% else %>
+                  Propietario: <%= project.user.email %>
+                <% end %>
+              </p>
+            </div>
+          </div>
         </div>
 
         <!-- Detalles del Proyecto -->
@@ -74,9 +90,15 @@
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-4">
           <div class="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
             <%= link_to "Ver Detalles", project_path(project), class: "bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200 font-medium transition-colors" %>
-            <%= link_to "Editar", edit_project_path(project, from: 'home'), class: "bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition-colors" %>
-            <a href="#" onclick="if(confirm('¿Estás seguro de eliminar el registro?')) { document.getElementById('delete-project-<%= project.id %>').submit(); }" class="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition-colors">Eliminar</a>
-            <%= form_with url: project_path(project), method: :delete, local: true, html: { id: "delete-project-#{project.id}", style: "display: none;" } do |f| %><% end %>
+            <% if project.user == current_user %>
+              <%= link_to "Editar", edit_project_path(project, from: 'home'), class: "bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition-colors" %>
+              <a href="#" onclick="if(confirm('¿Estás seguro de eliminar el registro?')) { document.getElementById('delete-project-<%= project.id %>').submit(); }" class="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition-colors">Eliminar</a>
+              <%= form_with url: project_path(project), method: :delete, local: true, html: { id: "delete-project-#{project.id}", style: "display: none;" } do |f| %><% end %>
+            <% else %>
+              <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded text-xs">
+                Solo Lectura
+              </span>
+            <% end %>
           </div>
         </div>
 

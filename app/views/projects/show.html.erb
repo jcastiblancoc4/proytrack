@@ -32,11 +32,17 @@
             <%= t("enums.project.execution_status.#{@project.execution_status}") %>
           </div>
             <div class="flex flex-col items-start space-y-2">
-              <%= link_to "Editar Proyecto", edit_project_path(@project, from: 'show'),
-                  class: "bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-center text-sm" %>
+              <% if @can_edit %>
+                <%= link_to "Editar Proyecto", edit_project_path(@project, from: 'show'),
+                    class: "bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-center text-sm w-full" %>
 
-              <a href="#" onclick="if(confirm('¿Estás seguro de eliminar este proyecto? Esta acción no se puede deshacer.')) { document.getElementById('delete-project-<%= @project.id %>').submit(); }" class="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-center text-sm">Eliminar Proyecto</a>
-              <%= form_with url: project_path(@project), method: :delete, local: true, html: { id: "delete-project-#{@project.id}", style: "display: none;" } do |f| %><% end %>
+                <a href="#" onclick="if(confirm('¿Estás seguro de eliminar este proyecto? Esta acción no se puede deshacer.')) { document.getElementById('delete-project-<%= @project.id %>').submit(); }" class="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-center text-sm w-full">Eliminar Proyecto</a>
+                <%= form_with url: project_path(@project), method: :delete, local: true, html: { id: "delete-project-#{@project.id}", style: "display: none;" } do |f| %><% end %>
+              <% else %>
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  Solo Lectura
+                </span>
+              <% end %>
             </div>
         </div>
       </div>
@@ -111,13 +117,81 @@
       </div>
     </div>
 
-    <!-- Formulario para agregar gasto -->
-    <div class="bg-white shadow rounded-lg mb-6">
-      <div class="px-6 py-4 border-b border-gray-200">
-        <h2 class="text-lg font-medium text-gray-900">Agregar Nuevo Gasto</h2>
+    <!-- Sección de usuarios con acceso al proyecto -->
+    <% if @can_edit %>
+      <div class="bg-white shadow rounded-lg mb-6">
+        <!-- Header con título y botón para agregar -->
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+              <h2 class="text-lg font-medium text-gray-900">
+                Usuarios con Acceso
+              </h2>
+              <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <%= @project.shared_projects.count %>
+              </span>
+            </div>
+            <button type="button" onclick="toggleShareModal()" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+              </svg>
+              Compartir Proyecto
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de usuarios con acceso -->
+        <div class="px-6 py-4">
+          <% if @project.shared_projects.any? %>
+            <div class="space-y-2">
+              <% @project.shared_projects.includes(:user, :shared_by).each do |shared_project| %>
+                <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
+                  <div class="flex items-center space-x-3 flex-1">
+                    <div class="flex-shrink-0">
+                      <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span class="text-white font-semibold text-sm"><%= shared_project.user.email[0].upcase %></span>
+                      </div>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm font-semibold text-gray-900"><%= shared_project.user.email %></p>
+                      <div class="flex items-center space-x-2 mt-0.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                          Solo lectura
+                        </span>
+                        <span class="text-xs text-gray-500">
+                          • <%= time_ago_in_words(shared_project.created_at) %>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button onclick="if(confirm('¿Revocar acceso a <%= shared_project.user.email %>?')) { document.getElementById('revoke-<%= shared_project.id %>').submit(); }"
+                          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-all duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <span>Quitar</span>
+                  </button>
+                  <%= form_with url: project_shared_project_path(@project, shared_project), method: :delete, local: true, html: { id: "revoke-#{shared_project.id}", style: "display: none;" } do |f| %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
       </div>
-      <div class="px-6 py-4">
-        <% if @expense && @expense.errors.any? %>
+    <% end %>
+
+    <!-- Formulario para agregar gasto -->
+    <% if @can_edit %>
+      <div class="bg-white shadow rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-medium text-gray-900">Agregar Nuevo Gasto</h2>
+        </div>
+        <div class="px-6 py-4">
+          <% if @expense && @expense.errors.any? %>
           <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <div class="flex">
               <div class="flex-shrink-0">
@@ -182,6 +256,7 @@
         <% end %>
       </div>
     </div>
+    <% end %>
 
     <!-- Lista de gastos - Acordeón -->
     <div class="bg-white shadow rounded-lg">
@@ -245,17 +320,21 @@
                       <%= expense.expense_date&.strftime("%d/%m/%Y") || "N/A" %>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <% if expense.persisted? %>
-                        <%= link_to "Editar", edit_project_expense_path(@project, expense, from: 'show'), class: "text-blue-600 hover:text-blue-900 mr-3" %>
-                        <a href="#"
-                           onclick="if(confirm('¿Estás seguro de eliminar este gasto?')) { document.getElementById('delete-expense-<%= expense.id %>').submit(); }"
-                           class="text-red-600 hover:text-red-900">
-                          Eliminar
-                        </a>
-                        <%= form_with url: project_expense_path(@project, expense), method: :delete, local: true, html: { id: "delete-expense-#{expense.id}", style: "display: none;" } do |f| %>
+                      <% if @can_edit %>
+                        <% if expense.persisted? %>
+                          <%= link_to "Editar", edit_project_expense_path(@project, expense, from: 'show'), class: "text-blue-600 hover:text-blue-900 mr-3" %>
+                          <a href="#"
+                             onclick="if(confirm('¿Estás seguro de eliminar este gasto?')) { document.getElementById('delete-expense-<%= expense.id %>').submit(); }"
+                             class="text-red-600 hover:text-red-900">
+                            Eliminar
+                          </a>
+                          <%= form_with url: project_expense_path(@project, expense), method: :delete, local: true, html: { id: "delete-expense-#{expense.id}", style: "display: none;" } do |f| %>
+                          <% end %>
+                        <% else %>
+                          <span class="text-gray-400">N/A</span>
                         <% end %>
                       <% else %>
-                        <span class="text-gray-400">N/A</span>
+                        <span class="text-gray-400">Solo lectura</span>
                       <% end %>
                     </td>
                   </tr>
@@ -360,4 +439,122 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return true;
     }
+
+</script>
+
+<!-- Modal para compartir proyecto -->
+<div id="shareModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; overflow-y: auto;">
+  <div style="position: relative; margin: 80px auto; padding: 30px; width: 450px; max-width: 90%; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);" onclick="event.stopPropagation()">
+    <!-- Header del modal -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <svg style="width: 24px; height: 24px; color: #16a34a;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.645 9 12 9 12s.114.645.316 1.342m0 0a8.997 8.997 0 001.656 2.658m-1.656-2.658a8.997 8.997 0 01-1.656-2.658m0 0a8.997 8.997 0 011.656-2.658m-1.656 2.658L9 12l1.656-2.658m0 0a8.997 8.997 0 011.656 2.658m-1.656-2.658L9 12l-1.656 2.658"></path>
+        </svg>
+        <h3 style="font-size: 20px; font-weight: 600; color: #111827; margin: 0;">Compartir Proyecto</h3>
+      </div>
+      <button type="button" onclick="closeShareModal()" style="background: none; border: none; cursor: pointer; color: #9ca3af; padding: 4px; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.color='#4b5563'; this.style.backgroundColor='#f3f4f6';" onmouseout="this.style.color='#9ca3af'; this.style.backgroundColor='transparent';">
+        <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <%= form_with url: project_shared_projects_path(@project), method: :post, local: true do |f| %>
+      <div style="margin-bottom: 24px;">
+        <label for="shared_project_user_email" style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">
+          Email del usuario
+          <div style="position: relative; display: inline-block;">
+            <svg class="info-icon" style="width: 16px; height: 16px; color: #6b7280; cursor: help;" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="tooltip-text" style="visibility: hidden; opacity: 0; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); width: 250px; background-color: #1f2937; color: white; text-align: center; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: normal; z-index: 10000; transition: opacity 0.3s, visibility 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);">
+              El usuario podrá ver el proyecto y sus gastos, pero no podrá editarlo ni eliminarlo.
+              <div style="position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1f2937 transparent transparent transparent;"></div>
+            </div>
+          </div>
+        </label>
+        <%= f.email_field :user_email,
+            id: "shared_project_user_email",
+            placeholder: "ejemplo@correo.com",
+            required: true,
+            style: "width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: all 0.2s; outline: none;",
+            onfocus: "this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)';",
+            onblur: "this.style.borderColor='#d1d5db'; this.style.boxShadow='none';" %>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+        <button type="button" onclick="closeShareModal()"
+                style="padding: 10px 20px; font-size: 14px; font-weight: 500; color: #374151; background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.backgroundColor='#f3f4f6';"
+                onmouseout="this.style.backgroundColor='#f9fafb';">
+          Cancelar
+        </button>
+        <%= f.submit "Compartir Proyecto",
+            style: "padding: 10px 24px; font-size: 14px; font-weight: 500; color: white; background-color: #16a34a; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;",
+            onmouseover: "this.style.backgroundColor='#15803d';",
+            onmouseout: "this.style.backgroundColor='#16a34a';" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.info-icon:hover + .tooltip-text {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+</style>
+
+<script>
+// Funciones para el modal de compartir proyecto
+function toggleShareModal() {
+    console.log('toggleShareModal called');
+    const modal = document.getElementById('shareModal');
+    console.log('Modal element:', modal);
+
+    if (!modal) {
+        console.error('Modal element not found!');
+        alert('Error: No se pudo encontrar el modal');
+        return;
+    }
+
+    const currentDisplay = window.getComputedStyle(modal).display;
+    console.log('Current display:', currentDisplay);
+
+    if (currentDisplay === 'none' || modal.style.display === 'none') {
+        modal.style.display = 'block';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        console.log('Modal shown - display set to block');
+    } else {
+        modal.style.display = 'none';
+        console.log('Modal hidden - display set to none');
+    }
+}
+
+function closeShareModal() {
+    console.log('closeShareModal called');
+    const modal = document.getElementById('shareModal');
+    if (modal) {
+        modal.style.display = 'none';
+        console.log('Modal closed');
+    }
+}
+
+// Cerrar modal al hacer clic fuera de él
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - Setting up modal listeners');
+    const modal = document.getElementById('shareModal');
+    if (modal) {
+        console.log('Modal found in DOMContentLoaded');
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeShareModal();
+            }
+        });
+    } else {
+        console.error('Modal not found in DOMContentLoaded');
+    }
+});
 </script>
