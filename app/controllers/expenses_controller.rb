@@ -1,6 +1,7 @@
 class ExpensesController < ApplicationController
   before_action :set_project
   before_action :set_expense, only: [:edit, :update, :destroy]
+  before_action :check_edit_permission, only: [:new, :create, :edit, :update, :destroy]
 
   def index
     @expenses = @project.expenses
@@ -53,6 +54,13 @@ class ExpensesController < ApplicationController
 
   def set_expense
     @expense = @project.expenses.find(params[:id])
+  end
+
+  def check_edit_permission
+    unless @project.can_edit?(current_user)
+      flash[:alert] = "No tienes permisos para realizar esta acción. Solo el propietario del proyecto puede gestionar gastos."
+      redirect_to project_path(@project) and return
+    end
   end
 
   def expense_params
