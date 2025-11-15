@@ -4,6 +4,9 @@ Rails.application.routes.draw do
   devise_for :users
 
   resources :projects, only: [:show, :new, :create, :edit, :update, :destroy] do
+    member do
+      patch :update_status
+    end
     resources :expenses, except: [:show]
     resources :shared_projects, only: [:create, :destroy]
   end

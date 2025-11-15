@@ -62,7 +62,7 @@
         </div>
 
         <!-- Detalles del Proyecto -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-800 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-800 mb-4">
           <div class="bg-gray-50 p-2 sm:p-3 rounded">
             <strong class="block text-gray-600">Valor Cotizado:</strong>
             <span class="text-green-600 font-semibold"><%= number_to_currency(project.quoted_value, unit: "$", delimiter: ".", separator: ",", precision: 0) %></span>
@@ -83,6 +83,31 @@
             <strong class="block text-gray-600">Localidad:</strong>
             <span class="text-gray-800"><%= project.locality.presence || "-" %></span>
           </div>
+          <div class="bg-gray-50 p-2 sm:p-3 rounded">
+            <strong class="block text-gray-600 mb-1">Estado:</strong>
+            <div class="flex items-center gap-1">
+              <%
+                status_styles = {
+                  'pending' => 'background-color: #f3f4f6; color: #1f2937;',
+                  'running' => 'background-color: #dbeafe; color: #1e3a8a;',
+                  'stop' => 'background-color: #fed7aa; color: #c2410c;',
+                  'cancelled' => 'background-color: #fecaca; color: #991b1b;',
+                  'ended' => 'background-color: #d1fae5; color: #065f46;'
+                }
+                current_style = status_styles[project.execution_status] || 'background-color: #f3f4f6; color: #1f2937;'
+              %>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style="<%= current_style %>">
+                <%= t("enums.project.execution_status.#{project.execution_status}") %>
+              </span>
+              <% if project.user == current_user %>
+                <button type="button" onclick="toggleStatusModal<%= project.id %>()" class="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors" title="Actualizar estado">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                  </svg>
+                </button>
+              <% end %>
+            </div>
+          </div>
         </div>
 
 
@@ -101,6 +126,101 @@
             <% end %>
           </div>
         </div>
+
+        <!-- Modal para actualizar estado de ejecución -->
+        <% if project.user == current_user %>
+          <div id="statusModal<%= project.id %>" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; overflow-y: auto;">
+            <div style="position: relative; margin: 80px auto; padding: 30px; width: 500px; max-width: 90%; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);" onclick="event.stopPropagation()">
+              <!-- Header del modal -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <svg style="width: 24px; height: 24px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <h3 style="font-size: 20px; font-weight: 600; color: #111827; margin: 0;">Actualizar Estado de Ejecución</h3>
+                </div>
+                <button type="button" onclick="closeStatusModal<%= project.id %>()" style="background: none; border: none; cursor: pointer; color: #9ca3af; padding: 4px; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.color='#4b5563'; this.style.backgroundColor='#f3f4f6';" onmouseout="this.style.color='#9ca3af'; this.style.backgroundColor='transparent';">
+                  <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+
+              <%= form_with model: project, url: update_status_project_path(project), method: :patch, local: true, id: "update-status-form-#{project.id}", data: { turbo: false } do |f| %>
+                <div style="margin-bottom: 24px;">
+                  <label style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 12px;">
+                    Selecciona el nuevo estado del proyecto:
+                  </label>
+
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <% Project.execution_statuses.each do |status_key, status_value| %>
+                      <label style="display: flex; align-items: center; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+                             class="status-option-<%= project.id %>"
+                             onmouseover="this.style.borderColor='#3b82f6'; this.style.backgroundColor='#eff6ff';"
+                             onmouseout="if(!this.querySelector('input').checked) { this.style.borderColor='#e5e7eb'; this.style.backgroundColor='transparent'; }">
+                        <%= f.radio_button :execution_status, status_key,
+                            id: "status_#{status_key}_#{project.id}",
+                            checked: project.execution_status == status_key,
+                            style: "width: 18px; height: 18px; cursor: pointer;",
+                            onchange: "updateSelectedOption#{project.id}(this); toggleSettlementDate#{project.id}(this.value);" %>
+                        <div style="margin-left: 12px; flex-grow: 1;">
+                          <span style="font-weight: 500; color: #111827; font-size: 14px;">
+                            <%= t("enums.project.execution_status.#{status_key}") %>
+                          </span>
+                          <span style="display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
+                            <%= case status_key
+                                when 'pending' then 'background-color: #f3f4f6; color: #1f2937;'
+                                when 'running' then 'background-color: #dbeafe; color: #1e40af;'
+                                when 'stop' then 'background-color: #fed7aa; color: #c2410c;'
+                                when 'cancelled' then 'background-color: #fecaca; color: #991b1b;'
+                                when 'ended' then 'background-color: #d1fae5; color: #065f46;'
+                                end %>">
+                            <% case status_key
+                               when 'pending' then '⏳'
+                               when 'running' then '▶️'
+                               when 'stop' then '⏸️'
+                               when 'cancelled' then '❌'
+                               when 'ended' then '✅'
+                               end %>
+                          </span>
+                        </div>
+                      </label>
+                    <% end %>
+                  </div>
+                </div>
+
+                <!-- Campo de fecha de liquidación (solo visible cuando estado = ended) -->
+                <div id="settlement_date_container_<%= project.id %>" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                  <label for="settlement_date_<%= project.id %>" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">
+                    📅 Fecha de Liquidación
+                  </label>
+                  <%= f.date_field :settlement_date,
+                      id: "settlement_date_#{project.id}",
+                      value: project.settlement_date || Date.current,
+                      style: "width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: all 0.2s; outline: none;",
+                      onfocus: "this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)';",
+                      onblur: "this.style.borderColor='#d1d5db'; this.style.boxShadow='none';" %>
+                  <p style="margin-top: 6px; font-size: 12px; color: #6b7280;">
+                    Ingresa la fecha en que se liquidó el proyecto
+                  </p>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                  <button type="button" onclick="closeStatusModal<%= project.id %>()"
+                          style="padding: 10px 20px; font-size: 14px; font-weight: 500; color: #374151; background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; transition: all 0.2s;"
+                          onmouseover="this.style.backgroundColor='#f3f4f6';"
+                          onmouseout="this.style.backgroundColor='#f9fafb';">
+                    Cancelar
+                  </button>
+                  <%= f.submit "Actualizar Estado",
+                      id: "update-status-btn-#{project.id}",
+                      class: "bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed",
+                      onclick: "return validateUpdateStatusForm#{project.id}();" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
 
       </div>
     <% end %>
@@ -145,4 +265,96 @@
             }
         });
     });
+
+    // Funciones para modales de actualización de estado (dinámicas por proyecto)
+    <% @projects.each do |project| %>
+      <% if project.user == current_user %>
+        function toggleStatusModal<%= project.id %>() {
+            const modal = document.getElementById('statusModal<%= project.id %>');
+            if (!modal) return;
+
+            const currentDisplay = window.getComputedStyle(modal).display;
+            if (currentDisplay === 'none' || modal.style.display === 'none') {
+                modal.style.display = 'block';
+                modal.style.visibility = 'visible';
+                modal.style.opacity = '1';
+
+                // Inicializar el estado seleccionado
+                const checkedRadio = document.querySelector('input[name="project[execution_status]"][id*="_<%= project.id %>"]:checked');
+                if (checkedRadio) {
+                    updateSelectedOption<%= project.id %>(checkedRadio);
+                    toggleSettlementDate<%= project.id %>(checkedRadio.value);
+                }
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
+        function closeStatusModal<%= project.id %>() {
+            const modal = document.getElementById('statusModal<%= project.id %>');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function updateSelectedOption<%= project.id %>(radio) {
+            document.querySelectorAll('.status-option-<%= project.id %>').forEach(option => {
+                option.style.borderColor = '#e5e7eb';
+                option.style.backgroundColor = 'transparent';
+            });
+
+            const selectedOption = radio.closest('.status-option-<%= project.id %>');
+            if (selectedOption) {
+                selectedOption.style.borderColor = '#3b82f6';
+                selectedOption.style.backgroundColor = '#eff6ff';
+            }
+        }
+
+        function toggleSettlementDate<%= project.id %>(status) {
+            const container = document.getElementById('settlement_date_container_<%= project.id %>');
+            const dateInput = document.getElementById('settlement_date_<%= project.id %>');
+
+            if (status === 'ended') {
+                container.style.display = 'block';
+                dateInput.required = true;
+            } else {
+                container.style.display = 'none';
+                dateInput.required = false;
+            }
+        }
+
+        function validateUpdateStatusForm<%= project.id %>() {
+            const selectedStatus = document.querySelector('input[name="project[execution_status]"][id*="_<%= project.id %>"]:checked');
+            const submitBtn = document.getElementById('update-status-btn-<%= project.id %>');
+
+            if (selectedStatus && selectedStatus.value === 'ended') {
+                const settlementDate = document.getElementById('settlement_date_<%= project.id %>');
+                if (!settlementDate.value || settlementDate.value.trim() === '') {
+                    alert('Por favor ingresa la fecha de liquidación');
+                    return false;
+                }
+            }
+
+            setTimeout(() => {
+                submitBtn.disabled = true;
+                submitBtn.value = '⏳ Actualizando...';
+                submitBtn.style.opacity = '0.6';
+            }, 0);
+
+            return true;
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('statusModal<%= project.id %>');
+            if (modal) {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === modal) {
+                        closeStatusModal<%= project.id %>();
+                    }
+                });
+            }
+        });
+      <% end %>
+    <% end %>
 </script>

@@ -1,6 +1,6 @@
 class ProjectsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_project, only: %i[ show edit update destroy ]
+  before_action :set_project, only: %i[ show edit update destroy update_status ]
 
   # GET /projects or /projects.json
   def index
@@ -87,6 +87,38 @@ class ProjectsController < ApplicationController
     respond_to do |format|
       format.html { redirect_to root_path, status: :see_other, notice: "El proyecto fue eliminado con éxito." }
       format.json { head :no_content }
+    end
+  end
+
+  # PATCH /projects/1/update_status
+  def update_status
+    # Solo el propietario puede actualizar el estado
+    unless @project.can_edit?(current_user)
+      flash[:alert] = "No tienes permisos para actualizar el estado de este proyecto"
+      redirect_to project_path(@project) and return
+    end
+
+    new_status = params.dig(:project, :execution_status) || params[:execution_status]
+    settlement_date = params.dig(:project, :settlement_date)
+
+    # Preparar los atributos a actualizar
+    update_attrs = { execution_status: new_status }
+
+    # Si el estado es "ended" y se proporciona fecha de liquidación, agregarla
+    if new_status == 'ended' && settlement_date.present?
+      update_attrs[:settlement_date] = settlement_date
+    elsif new_status != 'ended'
+      # Si el estado NO es "ended", limpiar la fecha de liquidación
+      update_attrs[:settlement_date] = nil
+    end
+
+    if new_status.present? && @project.update(update_attrs)
+      flash[:notice] = "El estado del proyecto fue actualizado exitosamente."
+      # Redireccionar según el origen (from parameter o referer)
+      redirect_back(fallback_location: project_path(@project))
+    else
+      flash[:alert] = "Hubo un error al actualizar el estado del proyecto."
+      redirect_back(fallback_location: project_path(@project))
     end
   end
 

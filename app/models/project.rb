@@ -8,6 +8,7 @@ class Project
   field :purchase_order, type: String
   field :quoted_value, type: Money, default: Money.new(0, 'COP')
   field :locality, type: String
+  field :settlement_date, type: Date
 
   belongs_to :user
   has_many :expenses, dependent: :destroy
