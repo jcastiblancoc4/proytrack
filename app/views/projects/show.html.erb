@@ -324,6 +324,7 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Gasto</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Liquidación</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
@@ -345,6 +346,11 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <%= expense.expense_date&.strftime("%d/%m/%Y") || "N/A" %>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= expense.status == 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-purple-100 text-purple-800' %>">
+                        <%= t("enums.expense.status.#{expense.status}") %>
+                      </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <% if @can_edit %>

@@ -1,0 +1,102 @@
+class Settlement
+  include Mongoid::Document
+  include Mongoid::Timestamps
+
+  field :month, type: Integer  # 1-12
+  field :year, type: Integer
+  field :total_projects_value, type: Money, default: Money.new(0, 'COP')
+  field :total_expenses_value, type: Money, default: Money.new(0, 'COP')
+  field :created_by_email, type: String  # Email del usuario que creó la liquidación
+
+  belongs_to :user
+  has_many :expenses, dependent: :nullify
+
+  # Validaciones
+  validates :month, presence: true, inclusion: { in: 1..12 }
+  validates :year, presence: true
+  validates :user, presence: true
+  validates :month, uniqueness: { scope: :year, message: "Ya existe una liquidación para este mes y año" }
+
+  # Callbacks
+  before_create :set_created_by_email
+  after_create :update_related_statuses
+  before_destroy :revert_related_statuses
+
+  # Métodos personalizados
+  def projects
+    # Obtener proyectos que se liquidaron en este mes/año
+    Project.where(
+      :settlement_date.gte => Date.new(year, month, 1),
+      :settlement_date.lte => Date.new(year, month, -1),
+      execution_status_cd: 5  # in_liquidation
+    )
+  end
+
+  def month_name
+    I18n.l(Date.new(year, month, 1), format: '%B')
+  end
+
+  def period_name
+    "#{month_name} #{year}"
+  end
+
+  def difference
+    total_projects_value - total_expenses_value
+  end
+
+  private
+
+  def set_created_by_email
+    self.created_by_email = user.email
+  end
+
+  def update_related_statuses
+    # Cambiar estado de proyectos de ended a in_liquidation
+    start_date = Date.new(year, month, 1)
+    end_date = Date.new(year, month, -1)
+
+    # Actualizar proyectos
+    projects_to_update = Project.where(
+      :settlement_date.gte => start_date,
+      :settlement_date.lte => end_date,
+      execution_status_cd: 4  # ended
+    )
+
+    projects_to_update.each do |project|
+      project.update(execution_status_cd: 5)  # in_liquidation
+    end
+
+    # Actualizar gastos
+    expenses_to_update = Expense.where(
+      :expense_date.gte => start_date,
+      :expense_date.lte => end_date,
+      status_cd: 0  # pending
+    )
+
+    expenses_to_update.each do |expense|
+      expense.update(status_cd: 1, settlement: self)  # in_liquidation
+    end
+  end
+
+  def revert_related_statuses
+    # Revertir estado de proyectos de in_liquidation a ended
+    start_date = Date.new(year, month, 1)
+    end_date = Date.new(year, month, -1)
+
+    # Revertir proyectos a estado "ended"
+    projects_to_revert = Project.where(
+      :settlement_date.gte => start_date,
+      :settlement_date.lte => end_date,
+      execution_status_cd: 5  # in_liquidation
+    )
+
+    projects_to_revert.each do |project|
+      project.update(execution_status_cd: 4)  # ended
+    end
+
+    # Revertir gastos a estado "pending" y quitar la asociación con settlement
+    expenses.each do |expense|
+      expense.update(status_cd: 0, settlement: nil)  # pending
+    end
+  end
+end

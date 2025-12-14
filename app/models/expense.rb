@@ -8,6 +8,7 @@ class Expense
   field :expense_date, type: Date
 
   belongs_to :project
+  belongs_to :settlement, optional: true
 
   # Validaciones
   validates :description, presence: { message: "La descripción del gasto es obligatoria" }
@@ -19,6 +20,11 @@ class Expense
     payroll: 0,
     hardware: 1,
     fuel: 2,
+  }, field: { type: Integer, default: 0 }
+
+  as_enum :status, {
+    pending: 0,
+    in_liquidation: 1,
   }, field: { type: Integer, default: 0 }
 
 end

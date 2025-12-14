@@ -1,0 +1,113 @@
+<div class="max-w-3xl mx-auto px-3 sm:px-4 mt-4">
+  <div class="mb-6">
+    <!-- Header -->
+    <div class="mb-6">
+      <h1 class="text-xl sm:text-2xl font-extrabold text-blue-900">📝 Nueva Liquidación</h1>
+      <p class="text-xs sm:text-sm text-gray-600 mt-1">
+        Selecciona el período para generar la liquidación mensual
+      </p>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <%= form_with model: @settlement, local: true do |f| %>
+        <!-- Errores -->
+        <% if @settlement.errors.any? %>
+          <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">
+                  Se encontraron <%= pluralize(@settlement.errors.count, "error", "errores") %>:
+                </h3>
+                <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                  <% @settlement.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Selección de Período -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            📅 Seleccionar Período a Liquidar
+          </label>
+
+          <% if @available_months.any? %>
+            <div class="space-y-2">
+              <% @available_months.each do |period| %>
+                <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                  <%= f.radio_button :month, period[:month],
+                      id: "period_#{period[:year]}_#{period[:month]}",
+                      data: { year: period[:year] },
+                      onchange: "document.getElementById('settlement_year').value = this.dataset.year;",
+                      class: "w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" %>
+                  <div class="ml-3 flex-1">
+                    <span class="text-sm font-medium text-gray-900"><%= period[:name] %></span>
+                  </div>
+                </label>
+              <% end %>
+            </div>
+
+            <%= f.hidden_field :year %>
+          <% else %>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm text-yellow-700">
+                    <strong>No hay períodos disponibles para liquidar.</strong><br>
+                    Asegúrate de tener proyectos en estado "Terminado" con fecha de liquidación definida.
+                  </p>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">
+                <strong>Al crear la liquidación:</strong>
+              </p>
+              <ul class="mt-2 text-sm text-blue-700 list-disc list-inside space-y-1">
+                <li>Los proyectos terminados pasarán al estado "En Liquidación"</li>
+                <li>Los gastos pendientes pasarán al estado "En Liquidación"</li>
+                <li>Se calculará automáticamente el total de proyectos y gastos</li>
+                <li>Esta acción no se puede deshacer (pero puedes eliminar la liquidación)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex gap-4">
+          <%= f.submit "Crear Liquidación",
+              class: "flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
+              disabled: @available_months.empty? %>
+          <%= link_to "Cancelar", settlements_path,
+              class: "flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors duration-200 text-center" %>
+        </div>
+      <% end %>
+    </div>
+
+  </div>
+</div>

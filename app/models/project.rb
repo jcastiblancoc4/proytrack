@@ -40,6 +40,7 @@ class Project
     stop: 2,      # pausado
     cancelled: 3, # cancelado
     ended: 4, # termino
+    in_liquidation: 5, # en liquidación
   }, field: { type: Integer, default: 0 }
 
   # Métodos personalizados para usuarios compartidos (Mongoid no soporta through)

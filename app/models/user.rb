@@ -32,6 +32,7 @@ class User
   has_many :projects, dependent: :destroy
   has_many :shared_projects, dependent: :destroy, inverse_of: :user
   has_many :shared_by_me_projects, class_name: 'SharedProject', foreign_key: 'shared_by_id', inverse_of: :shared_by, dependent: :destroy
+  has_many :settlements, dependent: :destroy
 
   # Métodos personalizados para proyectos compartidos (Mongoid no soporta through)
   def shared_with_me_projects

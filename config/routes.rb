@@ -11,6 +11,12 @@ Rails.application.routes.draw do
     resources :shared_projects, only: [:create, :destroy]
   end
 
+  resources :settlements, only: [:index, :new, :create, :show, :destroy] do
+    collection do
+      get :preliquidation
+    end
+  end
+
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 end

@@ -1,4 +1,57 @@
 es:
+  date:
+    formats:
+      default: "%d/%m/%Y"
+      short: "%d de %b"
+      long: "%d de %B de %Y"
+    day_names:
+      - domingo
+      - lunes
+      - martes
+      - miércoles
+      - jueves
+      - viernes
+      - sábado
+    abbr_day_names:
+      - dom
+      - lun
+      - mar
+      - mié
+      - jue
+      - vie
+      - sáb
+    month_names:
+      - ~
+      - enero
+      - febrero
+      - marzo
+      - abril
+      - mayo
+      - junio
+      - julio
+      - agosto
+      - septiembre
+      - octubre
+      - noviembre
+      - diciembre
+    abbr_month_names:
+      - ~
+      - ene
+      - feb
+      - mar
+      - abr
+      - may
+      - jun
+      - jul
+      - ago
+      - sep
+      - oct
+      - nov
+      - dic
+    order:
+      - :day
+      - :month
+      - :year
   datetime:
     distance_in_words:
       half_a_minute: "medio minuto"
@@ -43,6 +96,7 @@ es:
         stop: "Pausado"
         cancelled: "Cancelado"
         ended: "Terminado"
+        in_liquidation: "En Liquidación"
       payment_status:
         pending: "Pendiente"
         paid: "Pago"
@@ -51,6 +105,9 @@ es:
         payroll: "Nomina"
         hardware: "Ferreteria"
         fuel: "Combustible"
+      status:
+        pending: "Pendiente"
+        in_liquidation: "En Liquidación"
   errors:
     messages:
       not_saved: "No se pudo guardar el registro. Corrige los errores e inténtalo de nuevo."
