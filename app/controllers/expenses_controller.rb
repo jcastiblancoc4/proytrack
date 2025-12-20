@@ -58,7 +58,11 @@ class ExpensesController < ApplicationController
 
   def check_edit_permission
     unless @project.can_edit?(current_user)
-      flash[:alert] = "No tienes permisos para realizar esta acción. Solo el propietario del proyecto puede gestionar gastos."
+      if @project.in_liquidation?
+        flash[:alert] = "No se pueden agregar, editar o eliminar gastos de un proyecto en liquidación."
+      else
+        flash[:alert] = "No tienes permisos para realizar esta acción. Solo el propietario del proyecto puede gestionar gastos."
+      end
       redirect_to project_path(@project) and return
     end
   end

@@ -41,14 +41,15 @@
                   'running' => 'background-color: #dbeafe; color: #1e3a8a;',
                   'stop' => 'background-color: #fed7aa; color: #c2410c;',
                   'cancelled' => 'background-color: #fecaca; color: #991b1b;',
-                  'ended' => 'background-color: #d1fae5; color: #065f46;'
+                  'ended' => 'background-color: #d1fae5; color: #065f46;',
+                  'in_liquidation' => 'background-color: #f3e8ff; color: #7e22ce;'
                 }
                 current_style = status_styles[@project.execution_status] || 'background-color: #f3f4f6; color: #1f2937;'
               %>
               <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium" style="<%= current_style %>">
                 <%= t("enums.project.execution_status.#{@project.execution_status}") %>
               </span>
-              <% if @can_edit %>
+              <% if @can_edit && !@project.in_liquidation? %>
                 <button type="button" onclick="toggleStatusModal()" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
                   <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
@@ -59,7 +60,29 @@
             </div>
           </div>
             <div class="flex flex-col items-start space-y-2">
-              <% if @can_edit %>
+              <% if @project.in_liquidation? %>
+                <div class="bg-purple-100 border-2 border-purple-300 px-3 py-2 rounded-lg w-full">
+                  <div class="flex items-center gap-2 mb-1">
+                    <svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span class="text-purple-800 text-sm font-semibold">
+                      Proyecto en Liquidación
+                    </span>
+                  </div>
+                  <p class="text-purple-700 text-xs mb-2">
+                    No se puede editar ni agregar gastos
+                  </p>
+                  <% if @project.settlement.present? %>
+                    <%= link_to settlement_path(@project.settlement), class: "inline-flex items-center gap-1 text-xs font-medium text-purple-700 hover:text-purple-900 bg-purple-200 hover:bg-purple-300 px-2 py-1 rounded transition-colors" do %>
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      Ver Liquidación <%= @project.settlement.period_name %>
+                    <% end %>
+                  <% end %>
+                </div>
+              <% elsif @can_edit %>
                 <%= link_to "Editar Proyecto", edit_project_path(@project, from: 'show'),
                     class: "bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-center text-sm w-full" %>
 
@@ -145,7 +168,7 @@
     </div>
 
     <!-- Sección de usuarios con acceso al proyecto -->
-    <% if @can_edit %>
+    <% if @can_edit && !@project.in_liquidation? %>
       <div class="bg-white shadow rounded-lg mb-6">
         <!-- Header con título y botón para agregar -->
         <div class="px-6 py-4 border-b border-gray-200">
@@ -212,7 +235,7 @@
     <% end %>
 
     <!-- Formulario para agregar gasto -->
-    <% if @can_edit %>
+    <% if @can_edit && !@project.in_liquidation? %>
       <div class="bg-white shadow rounded-lg mb-6">
         <div class="px-6 py-4 border-b border-gray-200">
           <h2 class="text-lg font-medium text-gray-900">Agregar Nuevo Gasto</h2>
@@ -353,7 +376,7 @@
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <% if @can_edit %>
+                      <% if @can_edit && !@project.in_liquidation? %>
                         <% if expense.persisted? %>
                           <%= link_to "Editar", edit_project_expense_path(@project, expense, from: 'show'), class: "text-blue-600 hover:text-blue-900 mr-3" %>
                           <a href="#"
@@ -521,6 +544,7 @@ document.addEventListener("DOMContentLoaded", function () {
                       when 'stop' then 'background-color: #fed7aa; color: #c2410c;'
                       when 'cancelled' then 'background-color: #fecaca; color: #991b1b;'
                       when 'ended' then 'background-color: #d1fae5; color: #065f46;'
+                      when 'in_liquidation' then 'background-color: #f3e8ff; color: #7e22ce;'
                       end %>">
                   <% case status_key
                      when 'pending' then '⏳'
@@ -528,6 +552,7 @@ document.addEventListener("DOMContentLoaded", function () {
                      when 'stop' then '⏸️'
                      when 'cancelled' then '❌'
                      when 'ended' then '✅'
+                     when 'in_liquidation' then '💰'
                      end %>
                 </span>
               </div>

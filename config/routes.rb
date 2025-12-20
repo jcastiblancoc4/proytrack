@@ -11,7 +11,7 @@ Rails.application.routes.draw do
     resources :shared_projects, only: [:create, :destroy]
   end
 
-  resources :settlements, only: [:index, :new, :create, :show, :destroy] do
+  resources :settlements, only: [:index, :new, :create, :show, :update, :destroy] do
     collection do
       get :preliquidation
     end

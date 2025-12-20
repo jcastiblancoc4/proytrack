@@ -41,22 +41,52 @@
           </label>
 
           <% if @available_months.any? %>
-            <div class="space-y-2">
+            <div class="space-y-3">
               <% @available_months.each do |period| %>
-                <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 <%= period[:has_settlement] ? 'bg-amber-50 border-amber-300' : '' %>">
                   <%= f.radio_button :month, period[:month],
                       id: "period_#{period[:year]}_#{period[:month]}",
-                      data: { year: period[:year] },
-                      onchange: "document.getElementById('settlement_year').value = this.dataset.year;",
-                      class: "w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" %>
+                      data: {
+                        year: period[:year],
+                        has_settlement: period[:has_settlement],
+                        settlement_id: period[:settlement_id]&.to_s
+                      },
+                      onchange: "handlePeriodSelection(this);",
+                      class: "w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 mt-0.5" %>
                   <div class="ml-3 flex-1">
-                    <span class="text-sm font-medium text-gray-900"><%= period[:name] %></span>
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-sm font-semibold text-gray-900"><%= period[:name] %></span>
+                      <% if period[:has_settlement] %>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                          ⚠️ Liquidación existente
+                        </span>
+                      <% end %>
+                    </div>
+                    <div class="flex gap-3 text-xs text-gray-600">
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <%= period[:pending_projects] %> proyecto(s) pendiente(s)
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                        <%= period[:pending_expenses] %> gasto(s) pendiente(s)
+                      </span>
+                    </div>
+                    <% if period[:has_settlement] %>
+                      <p class="text-xs text-amber-700 mt-1">
+                        Al continuar, se agregarán los items pendientes a la liquidación existente
+                      </p>
+                    <% end %>
                   </div>
                 </label>
               <% end %>
             </div>
 
-            <%= f.hidden_field :year %>
+            <%= f.hidden_field :year, id: 'settlement_year' %>
           <% else %>
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div class="flex">
@@ -77,7 +107,7 @@
         </div>
 
         <!-- Información adicional -->
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+        <div id="info-create" class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -98,11 +128,34 @@
           </div>
         </div>
 
+        <div id="info-update" class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6" style="display: none;">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-amber-700">
+                <strong>Al actualizar la liquidación existente:</strong>
+              </p>
+              <ul class="mt-2 text-sm text-amber-700 list-disc list-inside space-y-1">
+                <li>Los proyectos y gastos pendientes se agregarán a la liquidación</li>
+                <li>Se actualizarán los totales de la liquidación</li>
+                <li>Los items se marcarán como "En Liquidación"</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <!-- Botones -->
         <div class="flex gap-4">
-          <%= f.submit "Crear Liquidación",
-              class: "flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
-              disabled: @available_months.empty? %>
+          <button type="submit"
+                  id="submit-btn"
+                  class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  <%= 'disabled' if @available_months.empty? %>>
+            <span id="submit-text">Crear Liquidación</span>
+          </button>
           <%= link_to "Cancelar", settlements_path,
               class: "flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors duration-200 text-center" %>
         </div>
@@ -111,3 +164,35 @@
 
   </div>
 </div>
+
+<script>
+function handlePeriodSelection(radio) {
+  const year = radio.dataset.year;
+  const hasSettlement = radio.dataset.hasSettlement === 'true';
+
+  // Actualizar año hidden field
+  document.getElementById('settlement_year').value = year;
+
+  // Obtener elementos
+  const submitBtn = document.getElementById('submit-btn');
+  const submitText = document.getElementById('submit-text');
+  const infoCreate = document.getElementById('info-create');
+  const infoUpdate = document.getElementById('info-update');
+
+  if (hasSettlement) {
+    // Modo actualización - cambiar a color ámbar
+    submitText.textContent = 'Actualizar Liquidación';
+    submitBtn.className = 'flex-1 bg-amber-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-amber-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+
+    infoCreate.style.display = 'none';
+    infoUpdate.style.display = 'block';
+  } else {
+    // Modo creación - cambiar a color azul
+    submitText.textContent = 'Crear Liquidación';
+    submitBtn.className = 'flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+
+    infoCreate.style.display = 'block';
+    infoUpdate.style.display = 'none';
+  }
+}
+</script>

@@ -13,23 +13,27 @@
       <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start w-full sm:w-auto">
         <!-- Filtro estilo Excel -->
         <div class="relative" x-data="{ open: false }" @click.away="open = false">
+          <%
+            has_active_filters = @selected_statuses != ['todos'] && @selected_statuses.any?
+            active_filter_count = has_active_filters ? @selected_statuses.count : 0
+          %>
           <button @click="open = !open"
                   type="button"
                   id="filter-button"
-                  class="w-full sm:w-auto sm:min-w-[180px] inline-flex items-center justify-center gap-2 px-4 py-2 <%= @selected_status != 'todos' ? 'bg-blue-50 border-2 border-blue-500 text-blue-700 hover:bg-blue-100 hover:border-blue-600' : 'bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400' %> text-sm font-semibold rounded transition-all duration-200 shadow-sm">
+                  class="w-full sm:w-auto sm:min-w-[180px] inline-flex items-center justify-center gap-2 px-4 py-2 <%= has_active_filters ? 'bg-blue-50 border-2 border-blue-500 text-blue-700 hover:bg-blue-100 hover:border-blue-600' : 'bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400' %> text-sm font-semibold rounded transition-all duration-200 shadow-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
             </svg>
             <span class="flex-1 text-center">
-              <% if @selected_status == 'todos' %>
-                Filtrar
+              <% if has_active_filters %>
+                <%= active_filter_count == 1 ? t("enums.project.execution_status.#{@selected_statuses.first}") : "#{active_filter_count} filtros" %>
               <% else %>
-                <%= t("enums.project.execution_status.#{@selected_status}") %>
+                Filtrar
               <% end %>
             </span>
             <!-- Badge siempre presente pero invisible cuando no hay filtro -->
-            <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white rounded-full <%= @selected_status != 'todos' ? 'bg-green-600' : 'bg-transparent text-transparent' %>">
-              <%= @selected_status != 'todos' ? @projects.count : '0' %>
+            <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white rounded-full <%= has_active_filters ? 'bg-green-600' : 'bg-transparent text-transparent' %>">
+              <%= has_active_filters ? @projects.count : '0' %>
             </span>
             <svg class="w-4 h-4 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -58,7 +62,7 @@
                   </svg>
                   Filtrar por Estado
                 </h3>
-                <% if @selected_status != 'todos' %>
+                <% if has_active_filters %>
                   <%= link_to root_path, class: "text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors" do %>
                     Limpiar
                   <% end %>
@@ -68,10 +72,10 @@
 
             <!-- Lista de opciones -->
             <div class="py-2 max-h-96 overflow-y-auto">
-              <%= form_with url: root_path, method: :get, local: true do |f| %>
+              <%= form_with url: root_path, method: :get, local: true, id: 'filter-form' do |f| %>
                 <%
                   filter_options = [
-                    { value: 'todos', label: 'Todos los estados', icon: '📋', color: 'bg-gray-100 text-gray-800' },
+                    { value: 'todos', label: 'Todos los estados', icon: '📋', color: 'bg-gray-100 text-gray-800', is_all: true },
                     { value: 'pending', label: t('enums.project.execution_status.pending'), icon: '⏳', color: 'bg-gray-100 text-gray-800' },
                     { value: 'running', label: t('enums.project.execution_status.running'), icon: '▶️', color: 'bg-blue-100 text-blue-800' },
                     { value: 'stop', label: t('enums.project.execution_status.stop'), icon: '⏸️', color: 'bg-orange-100 text-orange-800' },
@@ -82,12 +86,21 @@
                 %>
                 <% filter_options.each do |option| %>
                   <label class="flex items-center px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors duration-150 group">
-                    <input type="radio"
-                           name="execution_status"
-                           value="<%= option[:value] %>"
-                           <%= 'checked' if @selected_status == option[:value] %>
-                           onchange="this.form.submit();"
-                           class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                    <% if option[:is_all] %>
+                      <input type="checkbox"
+                             id="filter-todos"
+                             value="<%= option[:value] %>"
+                             <%= 'checked' if @selected_statuses.include?(option[:value]) %>
+                             onchange="handleTodosCheckbox(this); this.form.submit();"
+                             class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2 rounded">
+                    <% else %>
+                      <input type="checkbox"
+                             name="execution_status[]"
+                             value="<%= option[:value] %>"
+                             class="status-checkbox w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2 rounded"
+                             <%= 'checked' if @selected_statuses.include?(option[:value]) %>
+                             onchange="handleStatusCheckbox(this); this.form.submit();">
+                    <% end %>
                     <div class="ml-3 flex-1 flex items-center justify-between">
                       <div class="flex items-center gap-2">
                         <span class="text-lg"><%= option[:icon] %></span>
@@ -95,7 +108,7 @@
                           <%= option[:label] %>
                         </span>
                       </div>
-                      <% if @selected_status == option[:value] %>
+                      <% if @selected_statuses.include?(option[:value]) %>
                         <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                         </svg>
@@ -107,14 +120,14 @@
             </div>
 
             <!-- Footer con información -->
-            <% if @selected_status != 'todos' %>
+            <% if has_active_filters %>
               <div class="px-4 py-3 bg-blue-50 border-t border-blue-100 rounded-b-lg">
                 <div class="flex items-center justify-between text-xs">
                   <span class="text-blue-700 font-medium">
                     <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                     </svg>
-                    Filtro activo
+                    <%= active_filter_count %> <%= active_filter_count == 1 ? 'filtro activo' : 'filtros activos' %>
                   </span>
                   <span class="text-blue-600 font-semibold"><%= @projects.count %> resultados</span>
                 </div>
@@ -221,7 +234,7 @@
               <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" style="<%= current_style %>">
                 <%= t("enums.project.execution_status.#{project.execution_status}") %>
               </span>
-              <% if project.user == current_user %>
+              <% if project.user == current_user && !project.in_liquidation? %>
                 <button type="button" onclick="toggleStatusModal<%= project.id %>()" class="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors" title="Actualizar estado">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
@@ -238,9 +251,25 @@
           <div class="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
             <%= link_to "Ver Detalles", project_path(project), class: "bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200 font-medium transition-colors" %>
             <% if project.user == current_user %>
-              <%= link_to "Editar", edit_project_path(project, from: 'home'), class: "bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition-colors" %>
-              <a href="#" onclick="if(confirm('¿Estás seguro de eliminar el registro?')) { document.getElementById('delete-project-<%= project.id %>').submit(); }" class="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition-colors">Eliminar</a>
-              <%= form_with url: project_path(project), method: :delete, local: true, html: { id: "delete-project-#{project.id}", style: "display: none;" } do |f| %><% end %>
+              <% if project.in_liquidation? %>
+                <div class="flex flex-col gap-2">
+                  <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded text-xs font-medium">
+                    🔒 En Liquidación - Solo Lectura
+                  </span>
+                  <% if project.settlement.present? %>
+                    <%= link_to settlement_path(project.settlement), class: "bg-purple-200 text-purple-800 px-3 py-1 rounded text-xs font-medium hover:bg-purple-300 transition-colors inline-flex items-center justify-center gap-1" do %>
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      Ver Liquidación
+                    <% end %>
+                  <% end %>
+                </div>
+              <% else %>
+                <%= link_to "Editar", edit_project_path(project, from: 'home'), class: "bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition-colors" %>
+                <a href="#" onclick="if(confirm('¿Estás seguro de eliminar el registro?')) { document.getElementById('delete-project-<%= project.id %>').submit(); }" class="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition-colors">Eliminar</a>
+                <%= form_with url: project_path(project), method: :delete, local: true, html: { id: "delete-project-#{project.id}", style: "display: none;" } do |f| %><% end %>
+              <% end %>
             <% else %>
               <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded text-xs">
                 Solo Lectura
@@ -354,6 +383,30 @@
 </div>
 
 <script>
+    // Manejo de filtros con checkboxes
+    function handleTodosCheckbox(todosCheckbox) {
+        const statusCheckboxes = document.querySelectorAll('.status-checkbox');
+        if (todosCheckbox.checked) {
+            // Si se marca "Todos", desmarcar todos los demás
+            statusCheckboxes.forEach(cb => cb.checked = false);
+        }
+    }
+
+    function handleStatusCheckbox(statusCheckbox) {
+        const todosCheckbox = document.getElementById('filter-todos');
+        if (statusCheckbox.checked && todosCheckbox) {
+            // Si se marca cualquier estado específico, desmarcar "Todos"
+            todosCheckbox.checked = false;
+        } else if (!statusCheckbox.checked && todosCheckbox) {
+            // Si se desmarca un checkbox, verificar si quedan otros marcados
+            const anyChecked = Array.from(document.querySelectorAll('.status-checkbox')).some(cb => cb.checked);
+            // Si no quedan checkboxes marcados, marcar "Todos"
+            if (!anyChecked) {
+                todosCheckbox.checked = true;
+            }
+        }
+    }
+
     // Búsqueda en tiempo real
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search-input');
@@ -361,15 +414,15 @@
 
         function performSearch() {
             const searchTerm = searchInput.value.toLowerCase().trim();
-            
+
             projectCards.forEach(function(card) {
                 const projectName = card.getAttribute('data-project-name');
                 const projectId = card.getAttribute('data-project-id');
-                
+
                 // Buscar coincidencias en nombre o ID
                 const matchesName = projectName.includes(searchTerm);
                 const matchesId = projectId.includes(searchTerm);
-                
+
                 if (searchTerm === '' || matchesName || matchesId) {
                     card.style.display = 'block';
                 } else {

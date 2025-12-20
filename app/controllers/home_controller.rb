@@ -10,8 +10,19 @@ class HomeController < ApplicationController
     all_projects = own_projects + shared_projects
 
     # Filtrar por estado de ejecución si se especificó
-    if params[:execution_status].present? && params[:execution_status] != 'todos'
-      all_projects = all_projects.select { |project| project.execution_status.to_s == params[:execution_status] }
+    # Ahora soporta múltiples estados
+    if params[:execution_status].present?
+      # Convertir a array si viene como string o ya es array
+      selected_statuses = Array(params[:execution_status]).reject(&:blank?)
+
+      # Filtrar solo si hay estados seleccionados y no incluye 'todos'
+      if selected_statuses.any? && !selected_statuses.include?('todos')
+        all_projects = all_projects.select { |project| selected_statuses.include?(project.execution_status.to_s) }
+      end
+
+      @selected_statuses = selected_statuses.include?('todos') ? ['todos'] : selected_statuses
+    else
+      @selected_statuses = ['todos']
     end
 
     # Ordenar por última actualización
@@ -19,9 +30,6 @@ class HomeController < ApplicationController
       last_expense_date = project.expenses.max_by(&:updated_at)&.updated_at
       [project.updated_at, last_expense_date].compact.max
     end.reverse
-
-    # Guardar el estado seleccionado para el filtro
-    @selected_status = params[:execution_status] || 'todos'
   end
 
 

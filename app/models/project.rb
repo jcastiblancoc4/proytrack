@@ -54,11 +54,25 @@ class Project
   end
 
   def can_edit?(user)
+    # No se puede editar si está en liquidación
+    # El método in_liquidation? es generado automáticamente por simple_enum
+    return false if in_liquidation?
     user == self.user
   end
 
   def shared_with?(user)
     shared_with_users.include?(user)
+  end
+
+  # Obtiene la liquidación asociada a este proyecto
+  def settlement
+    return nil unless settlement_date.present? && in_liquidation?
+
+    Settlement.where(
+      user_id: user_id,
+      month: settlement_date.month,
+      year: settlement_date.year
+    ).first
   end
 
   private

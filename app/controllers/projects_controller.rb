@@ -93,8 +93,14 @@ class ProjectsController < ApplicationController
   # PATCH /projects/1/update_status
   def update_status
     # Solo el propietario puede actualizar el estado
-    unless @project.can_edit?(current_user)
+    unless @project.user == current_user
       flash[:alert] = "No tienes permisos para actualizar el estado de este proyecto"
+      redirect_to project_path(@project) and return
+    end
+
+    # No se puede actualizar el estado si está en liquidación
+    if @project.in_liquidation?
+      flash[:alert] = "No se puede modificar el estado de un proyecto en liquidación"
       redirect_to project_path(@project) and return
     end
 
