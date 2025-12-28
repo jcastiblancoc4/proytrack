@@ -196,7 +196,7 @@
         </div>
 
         <!-- Detalles del Proyecto -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-800 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-<%= (project.ended? || project.in_liquidation?) && project.settlement_date.present? ? '7' : '6' %> gap-3 sm:gap-4 text-xs sm:text-sm text-gray-800 mb-4">
           <div class="bg-gray-50 p-2 sm:p-3 rounded">
             <strong class="block text-gray-600">Valor Cotizado:</strong>
             <span class="text-green-600 font-semibold"><%= number_to_currency(project.quoted_value, unit: "$", delimiter: ".", separator: ",", precision: 0) %></span>
@@ -243,6 +243,12 @@
               <% end %>
             </div>
           </div>
+          <% if (project.ended? || project.in_liquidation?) && project.settlement_date.present? %>
+            <div class="bg-green-50 p-2 sm:p-3 rounded border border-green-200">
+              <strong class="block text-gray-600">📅 Fecha Finalización:</strong>
+              <span class="text-green-700 font-semibold"><%= project.settlement_date.strftime("%d/%m/%Y") %></span>
+            </div>
+          <% end %>
         </div>
 
 
@@ -387,17 +393,17 @@
     // Variable global para el timeout del debounce
     let filterSubmitTimeout = null;
 
-    // Función con debounce de 2 segundos para enviar el formulario
+    // Función con debounce de 1 segundo para enviar el formulario
     function submitFilterWithDebounce() {
         // Cancelar el timeout anterior si existe
         if (filterSubmitTimeout) {
             clearTimeout(filterSubmitTimeout);
         }
 
-        // Crear un nuevo timeout de 2 segundos
+        // Crear un nuevo timeout de 1 segundo
         filterSubmitTimeout = setTimeout(function() {
             document.getElementById('filter-form').submit();
-        }, 2000);
+        }, 1000);
     }
 
     // Manejo de filtros con checkboxes
