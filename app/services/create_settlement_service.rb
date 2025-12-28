@@ -144,13 +144,13 @@ class CreateSettlementService
   def rollback_changes
     # Revertir proyectos asociados a esta liquidación
     if @settlement && @settlement.persisted?
-      @settlement.projects.each do |project|
-        project.update(execution_status_cd: 4, settlement: nil)  # ended
+      Project.where(settlement_id: @settlement.id).each do |project|
+        project.update(execution_status_cd: 4, settlement_id: nil)  # ended
       end
 
       # Revertir gastos asociados a esta liquidación
-      @settlement.expenses.each do |expense|
-        expense.update(status_cd: 0, settlement: nil)  # pending
+      Expense.where(settlement_id: @settlement.id).each do |expense|
+        expense.update(status_cd: 0, settlement_id: nil)  # pending
       end
 
       # Eliminar la liquidación

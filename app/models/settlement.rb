@@ -9,8 +9,8 @@ class Settlement
   field :created_by_email, type: String  # Email del usuario que creó la liquidación
 
   belongs_to :user
-  has_many :projects, dependent: :nullify
-  has_many :expenses, dependent: :nullify
+  has_many :projects
+  has_many :expenses
 
   # Validaciones
   validates :month, presence: true, inclusion: { in: 1..12 }
@@ -43,13 +43,13 @@ class Settlement
 
   def revert_related_statuses
     # Revertir proyectos a estado "ended" y quitar la asociación
-    projects.each do |project|
-      project.update(execution_status_cd: 4, settlement: nil)  # ended
+    Project.where(settlement_id: self.id).each do |project|
+      project.update(execution_status_cd: 4, settlement_id: nil)  # ended
     end
 
     # Revertir gastos a estado "pending" y quitar la asociación con settlement
-    expenses.each do |expense|
-      expense.update(status_cd: 0, settlement: nil)  # pending
+    Expense.where(settlement_id: self.id).each do |expense|
+      expense.update(status_cd: 0, settlement_id: nil)  # pending
     end
   end
 end
