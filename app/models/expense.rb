@@ -8,6 +8,7 @@ class Expense
   field :expense_date, type: Date
 
   belongs_to :project
+  belongs_to :user
   belongs_to :settlement, optional: true
 
   # Validaciones

@@ -13,6 +13,7 @@ class ExpensesController < ApplicationController
 
   def create
     @expense = @project.expenses.build(expense_params)
+    @expense.user = current_user
     if @expense.save
       # Redireccionar según el origen
       if params[:from] == 'home'
@@ -29,6 +30,7 @@ class ExpensesController < ApplicationController
   end
 
   def update
+    @expense.user = current_user if @expense.user.nil?
     if @expense.update(expense_params)
       # Redireccionar según el origen
       if params[:from] == 'home'
