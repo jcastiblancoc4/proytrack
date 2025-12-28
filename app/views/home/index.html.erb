@@ -91,7 +91,7 @@
                              id="filter-todos"
                              value="<%= option[:value] %>"
                              <%= 'checked' if @selected_statuses.include?(option[:value]) %>
-                             onchange="handleTodosCheckbox(this); this.form.submit();"
+                             onchange="handleTodosCheckbox(this); submitFilterWithDebounce();"
                              class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2 rounded">
                     <% else %>
                       <input type="checkbox"
@@ -99,7 +99,7 @@
                              value="<%= option[:value] %>"
                              class="status-checkbox w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2 rounded"
                              <%= 'checked' if @selected_statuses.include?(option[:value]) %>
-                             onchange="handleStatusCheckbox(this); this.form.submit();">
+                             onchange="handleStatusCheckbox(this); submitFilterWithDebounce();">
                     <% end %>
                     <div class="ml-3 flex-1 flex items-center justify-between">
                       <div class="flex items-center gap-2">
@@ -384,6 +384,22 @@
 </div>
 
 <script>
+    // Variable global para el timeout del debounce
+    let filterSubmitTimeout = null;
+
+    // Función con debounce de 2 segundos para enviar el formulario
+    function submitFilterWithDebounce() {
+        // Cancelar el timeout anterior si existe
+        if (filterSubmitTimeout) {
+            clearTimeout(filterSubmitTimeout);
+        }
+
+        // Crear un nuevo timeout de 2 segundos
+        filterSubmitTimeout = setTimeout(function() {
+            document.getElementById('filter-form').submit();
+        }, 2000);
+    }
+
     // Manejo de filtros con checkboxes
     function handleTodosCheckbox(todosCheckbox) {
         const statusCheckboxes = document.querySelectorAll('.status-checkbox');

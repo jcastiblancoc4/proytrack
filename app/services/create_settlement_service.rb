@@ -77,6 +77,10 @@ class CreateSettlementService
   end
 
   def create_new_settlement
+    # Capturar conteos ANTES de asociar (porque después cambiarán de estado)
+    projects_count = pending_projects.count
+    expenses_count = pending_expenses.count
+
     @settlement = user.settlements.build(
       month: month,
       year: year,
@@ -93,11 +97,15 @@ class CreateSettlementService
       return failure("Error al asociar proyectos y gastos")
     end
 
-    success("Liquidación de #{@settlement.period_name} creada exitosamente con #{pending_projects.count} proyecto(s) y #{pending_expenses.count} gasto(s)")
+    success("Liquidación de #{@settlement.period_name} creada exitosamente con #{projects_count} proyecto(s) y #{expenses_count} gasto(s)")
   end
 
   def update_existing_settlement(existing_settlement)
     @settlement = existing_settlement
+
+    # Capturar conteos ANTES de asociar
+    projects_count = pending_projects.count
+    expenses_count = pending_expenses.count
 
     # Asociar proyectos y gastos pendientes
     unless associate_projects_and_expenses(@settlement)
@@ -112,7 +120,7 @@ class CreateSettlementService
       return failure("Error al actualizar totales de la liquidación")
     end
 
-    success("Liquidación actualizada: #{pending_projects.count} proyecto(s) y #{pending_expenses.count} gasto(s) agregados")
+    success("Liquidación actualizada: #{projects_count} proyecto(s) y #{expenses_count} gasto(s) agregados")
   end
 
   def associate_projects_and_expenses(settlement)
