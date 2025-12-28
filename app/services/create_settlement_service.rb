@@ -12,21 +12,20 @@ class CreateSettlementService
     # Validar que hay proyectos o gastos pendientes
     return failure('No hay proyectos ni gastos pendientes para liquidar en el período seleccionado') if no_pending_items?
 
-    # Ejecutar dentro de una transacción para garantizar atomicidad
-    Settlement.with_session do |session|
-      session.with_transaction do
-        # Verificar si ya existe una liquidación
-        existing_settlement = find_existing_settlement
+    begin
+      # Verificar si ya existe una liquidación
+      existing_settlement = find_existing_settlement
 
-        if existing_settlement
-          update_existing_settlement(existing_settlement)
-        else
-          create_new_settlement
-        end
+      if existing_settlement
+        update_existing_settlement(existing_settlement)
+      else
+        create_new_settlement
       end
+    rescue => e
+      # Si hay error, revertir cambios manualmente si es necesario
+      rollback_changes if @settlement
+      failure("Error al crear la liquidación: #{e.message}")
     end
-  rescue => e
-    failure("Error al crear la liquidación: #{e.message}")
   end
 
   def success?
@@ -86,10 +85,14 @@ class CreateSettlementService
     )
 
     unless @settlement.save
-      raise ActiveRecord::RecordInvalid, @settlement.errors.full_messages.join(', ')
+      return failure(@settlement.errors.full_messages.join(', '))
     end
 
-    associate_projects_and_expenses(@settlement)
+    unless associate_projects_and_expenses(@settlement)
+      @settlement.destroy
+      return failure("Error al asociar proyectos y gastos")
+    end
+
     success("Liquidación de #{@settlement.period_name} creada exitosamente con #{pending_projects.count} proyecto(s) y #{pending_expenses.count} gasto(s)")
   end
 
@@ -97,13 +100,17 @@ class CreateSettlementService
     @settlement = existing_settlement
 
     # Asociar proyectos y gastos pendientes
-    associate_projects_and_expenses(@settlement)
+    unless associate_projects_and_expenses(@settlement)
+      return failure("Error al asociar proyectos y gastos")
+    end
 
     # Recalcular totales
-    @settlement.update!(
+    unless @settlement.update(
       total_projects_value: @settlement.projects.sum(&:quoted_value),
       total_expenses_value: @settlement.expenses.sum(&:amount)
     )
+      return failure("Error al actualizar totales de la liquidación")
+    end
 
     success("Liquidación actualizada: #{pending_projects.count} proyecto(s) y #{pending_expenses.count} gasto(s) agregados")
   end
@@ -111,12 +118,35 @@ class CreateSettlementService
   def associate_projects_and_expenses(settlement)
     # Asociar proyectos a la liquidación y cambiar su estado
     pending_projects.each do |project|
-      project.update!(execution_status_cd: 5, settlement: settlement)  # in_liquidation
+      unless project.update(execution_status_cd: 5, settlement: settlement)  # in_liquidation
+        return false
+      end
     end
 
     # Asociar gastos a la liquidación y cambiar su estado
     pending_expenses.each do |expense|
-      expense.update!(status_cd: 1, settlement: settlement)  # in_liquidation
+      unless expense.update(status_cd: 1, settlement: settlement)  # in_liquidation
+        return false
+      end
+    end
+
+    true
+  end
+
+  def rollback_changes
+    # Revertir proyectos asociados a esta liquidación
+    if @settlement && @settlement.persisted?
+      @settlement.projects.each do |project|
+        project.update(execution_status_cd: 4, settlement: nil)  # ended
+      end
+
+      # Revertir gastos asociados a esta liquidación
+      @settlement.expenses.each do |expense|
+        expense.update(status_cd: 0, settlement: nil)  # pending
+      end
+
+      # Eliminar la liquidación
+      @settlement.destroy
     end
   end
 
