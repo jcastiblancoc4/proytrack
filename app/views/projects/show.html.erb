@@ -376,7 +376,7 @@
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <% if @can_edit && !@project.in_liquidation? %>
+                      <% if @can_edit && !@project.in_liquidation? && !expense.in_liquidation? %>
                         <% if expense.persisted? %>
                           <%= link_to "Editar", edit_project_expense_path(@project, expense, from: 'show'), class: "text-blue-600 hover:text-blue-900 mr-3" %>
                           <a href="#"
@@ -389,6 +389,8 @@
                         <% else %>
                           <span class="text-gray-400">N/A</span>
                         <% end %>
+                      <% elsif expense.in_liquidation? %>
+                        <span class="text-purple-600">En liquidación</span>
                       <% else %>
                         <span class="text-gray-400">Solo lectura</span>
                       <% end %>
@@ -524,6 +526,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <% Project.execution_statuses.each do |status_key, status_value| %>
+            <% next if status_key == 'in_liquidation' %>
             <label style="display: flex; align-items: center; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
                    class="status-option"
                    onmouseover="this.style.borderColor='#3b82f6'; this.style.backgroundColor='#eff6ff';"
@@ -544,7 +547,6 @@ document.addEventListener("DOMContentLoaded", function () {
                       when 'stop' then 'background-color: #fed7aa; color: #c2410c;'
                       when 'cancelled' then 'background-color: #fecaca; color: #991b1b;'
                       when 'ended' then 'background-color: #d1fae5; color: #065f46;'
-                      when 'in_liquidation' then 'background-color: #f3e8ff; color: #7e22ce;'
                       end %>">
                   <% case status_key
                      when 'pending' then '⏳'
@@ -552,7 +554,6 @@ document.addEventListener("DOMContentLoaded", function () {
                      when 'stop' then '⏸️'
                      when 'cancelled' then '❌'
                      when 'ended' then '✅'
-                     when 'in_liquidation' then '💰'
                      end %>
                 </span>
               </div>

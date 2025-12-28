@@ -305,6 +305,7 @@
 
                   <div style="display: flex; flex-direction: column; gap: 10px;">
                     <% Project.execution_statuses.each do |status_key, status_value| %>
+                      <% next if status_key == 'in_liquidation' %>
                       <label style="display: flex; align-items: center; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
                              class="status-option-<%= project.id %>"
                              onmouseover="this.style.borderColor='#3b82f6'; this.style.backgroundColor='#eff6ff';"

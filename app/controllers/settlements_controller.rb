@@ -22,10 +22,11 @@ class SettlementsController < ApplicationController
 
     # Gastos del mes actual en estado pending
     preliq_expenses = Expense.where(
+      user: current_user,
       :expense_date.gte => start_date,
       :expense_date.lte => end_date,
       status_cd: 0  # pending
-    ).includes(:project).select { |expense| expense.project.user == current_user }
+    )
 
     # Calcular totales de preliquidación
     @preliq_total_projects = preliq_projects.sum(&:quoted_value)
@@ -54,10 +55,11 @@ class SettlementsController < ApplicationController
 
     # Gastos del mes actual en estado pending
     @expenses = Expense.where(
+      user: current_user,
       :expense_date.gte => start_date,
       :expense_date.lte => end_date,
       status_cd: 0  # pending
-    ).includes(:project).select { |expense| expense.project.user == current_user }
+    )
 
     # Calcular totales
     @total_projects_value = @projects.sum(&:quoted_value)
@@ -75,81 +77,26 @@ class SettlementsController < ApplicationController
   end
 
   def create
-    month = settlement_params[:month].to_i
-    year = settlement_params[:year].to_i
-
-    # Verificar si ya existe una liquidación para este período
-    existing_settlement = Settlement.where(
+    service = CreateSettlementService.new(
       user: current_user,
-      month: month,
-      year: year
-    ).first
-
-    start_date = Date.new(year, month, 1)
-    end_date = Date.new(year, month, -1)
-
-    # Proyectos terminados en el mes seleccionado
-    pending_projects = Project.where(
-      user: current_user,
-      :settlement_date.gte => start_date,
-      :settlement_date.lte => end_date,
-      execution_status_cd: 4  # ended
+      month: settlement_params[:month],
+      year: settlement_params[:year]
     )
 
-    # Gastos del mes seleccionado en estado pending
-    user_project_ids = current_user.projects.pluck(:id)
-    pending_expenses = Expense.where(
-      :project_id.in => user_project_ids,
-      :expense_date.gte => start_date,
-      :expense_date.lte => end_date,
-      status_cd: 0  # pending
-    )
+    result = service.call
 
-    # Validar que haya al menos proyectos o gastos pendientes
-    if pending_projects.empty? && pending_expenses.empty?
-      redirect_to new_settlement_path, alert: 'No hay proyectos ni gastos pendientes para liquidar en el período seleccionado'
-      return
-    end
+    if result.success?
+      @settlement = service.settlement
 
-    if existing_settlement
-      # ACTUALIZAR liquidación existente
-      # Actualizar proyectos a estado "en liquidación"
-      pending_projects.each do |project|
-        project.update(execution_status_cd: 5)  # in_liquidation
-      end
-
-      # Actualizar gastos a estado "en liquidación" y asociarlos a la liquidación
-      pending_expenses.each do |expense|
-        expense.update(status_cd: 1, settlement: existing_settlement)  # in_liquidation
-      end
-
-      # Recalcular totales de la liquidación
-      all_projects = Project.where(
-        user: current_user,
-        :settlement_date.gte => start_date,
-        :settlement_date.lte => end_date,
-        execution_status_cd: 5  # in_liquidation
-      )
-
-      existing_settlement.update(
-        total_projects_value: all_projects.sum(&:quoted_value),
-        total_expenses_value: existing_settlement.expenses.sum(&:amount)
-      )
-
-      redirect_to settlement_path(existing_settlement),
-                  notice: "Liquidación actualizada: #{pending_projects.count} proyecto(s) y #{pending_expenses.count} gasto(s) agregados"
-    else
-      # CREAR nueva liquidación
-      @settlement = current_user.settlements.build(settlement_params)
-      @settlement.total_projects_value = pending_projects.sum(&:quoted_value)
-      @settlement.total_expenses_value = pending_expenses.sum(&:amount)
-
-      if @settlement.save
-        redirect_to settlements_path, notice: "Liquidación de #{@settlement.period_name} creada exitosamente con #{pending_projects.count} proyecto(s) y #{pending_expenses.count} gasto(s)"
+      # Redirigir según si fue actualización o creación nueva
+      if service.message.include?('actualizada')
+        redirect_to settlement_path(@settlement), notice: service.message
       else
-        @available_months = get_available_months
-        render :new, status: :unprocessable_entity
+        redirect_to settlements_path, notice: service.message
       end
+    else
+      @available_months = get_available_months
+      redirect_to new_settlement_path, alert: service.errors.first
     end
   end
 
@@ -167,9 +114,8 @@ class SettlementsController < ApplicationController
     )
 
     # Gastos pendientes del período
-    user_project_ids = current_user.projects.pluck(:id)
     pending_expenses = Expense.where(
-      :project_id.in => user_project_ids,
+      user: current_user,
       :expense_date.gte => start_date,
       :expense_date.lte => end_date,
       status_cd: 0  # pending
@@ -180,9 +126,9 @@ class SettlementsController < ApplicationController
       return
     end
 
-    # Actualizar proyectos a estado "en liquidación"
+    # Actualizar proyectos a estado "en liquidación" y asociarlos
     pending_projects.each do |project|
-      project.update(execution_status_cd: 5)  # in_liquidation
+      project.update(execution_status_cd: 5, settlement: @settlement)  # in_liquidation
     end
 
     # Actualizar gastos a estado "en liquidación" y asociarlos a la liquidación
@@ -191,15 +137,8 @@ class SettlementsController < ApplicationController
     end
 
     # Recalcular totales de la liquidación
-    all_projects = Project.where(
-      user: current_user,
-      :settlement_date.gte => start_date,
-      :settlement_date.lte => end_date,
-      execution_status_cd: 5  # in_liquidation
-    )
-
     @settlement.update(
-      total_projects_value: all_projects.sum(&:quoted_value),
+      total_projects_value: @settlement.projects.sum(&:quoted_value),
       total_expenses_value: @settlement.expenses.sum(&:amount)
     )
 
@@ -208,16 +147,7 @@ class SettlementsController < ApplicationController
   end
 
   def show
-    start_date = Date.new(@settlement.year, @settlement.month, 1)
-    end_date = Date.new(@settlement.year, @settlement.month, -1)
-
-    @projects = Project.where(
-      user: current_user,
-      :settlement_date.gte => start_date,
-      :settlement_date.lte => end_date,
-      execution_status_cd: 5  # in_liquidation
-    )
-
+    @projects = @settlement.projects
     @expenses = @settlement.expenses.includes(:project)
   end
 
@@ -257,10 +187,8 @@ class SettlementsController < ApplicationController
     end
 
     # También considerar gastos pendientes del usuario
-    # (gastos que pertenecen a proyectos del usuario)
-    user_project_ids = current_user.projects.pluck(:id)
     pending_expenses = Expense.where(
-      :project_id.in => user_project_ids,
+      user: current_user,
       status_cd: 0,  # pending
       :expense_date.ne => nil
     )

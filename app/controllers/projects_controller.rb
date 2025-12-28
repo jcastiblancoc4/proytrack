@@ -107,6 +107,12 @@ class ProjectsController < ApplicationController
     new_status = params.dig(:project, :execution_status) || params[:execution_status]
     settlement_date = params.dig(:project, :settlement_date)
 
+    # Prevenir cambio manual a estado "en liquidación"
+    if new_status == 'in_liquidation'
+      flash[:alert] = "El estado 'En Liquidación' solo puede ser asignado automáticamente al crear una liquidación"
+      redirect_to project_path(@project) and return
+    end
+
     # Preparar los atributos a actualizar
     update_attrs = { execution_status: new_status }
 

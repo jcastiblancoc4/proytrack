@@ -2,6 +2,7 @@ class ExpensesController < ApplicationController
   before_action :set_project
   before_action :set_expense, only: [:edit, :update, :destroy]
   before_action :check_edit_permission, only: [:new, :create, :edit, :update, :destroy]
+  before_action :check_expense_liquidation_status, only: [:edit, :update, :destroy]
 
   def index
     @expenses = @project.expenses
@@ -65,6 +66,13 @@ class ExpensesController < ApplicationController
       else
         flash[:alert] = "No tienes permisos para realizar esta acción. Solo el propietario del proyecto puede gestionar gastos."
       end
+      redirect_to project_path(@project) and return
+    end
+  end
+
+  def check_expense_liquidation_status
+    if @expense && @expense.in_liquidation?
+      flash[:alert] = "No se puede editar o eliminar un gasto que está en liquidación."
       redirect_to project_path(@project) and return
     end
   end

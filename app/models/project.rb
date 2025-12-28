@@ -11,6 +11,7 @@ class Project
   field :settlement_date, type: Date
 
   belongs_to :user
+  belongs_to :settlement, optional: true
   has_many :expenses, dependent: :destroy
   has_many :shared_projects, dependent: :destroy
 
@@ -62,17 +63,6 @@ class Project
 
   def shared_with?(user)
     shared_with_users.include?(user)
-  end
-
-  # Obtiene la liquidación asociada a este proyecto
-  def settlement
-    return nil unless settlement_date.present? && in_liquidation?
-
-    Settlement.where(
-      user_id: user_id,
-      month: settlement_date.month,
-      year: settlement_date.year
-    ).first
   end
 
   private
