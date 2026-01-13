@@ -124,14 +124,16 @@ class CreateSettlementService
     # Asociar proyectos a la liquidación y cambiar su estado
     projects = pending_projects
     projects.each do |project|
-      unless project.update(execution_status_cd: 5, settlement: settlement)  # in_liquidation
+      p "project id: #{project.id.to_s}"
+      unless project.update!(execution_status_cd: 5, settlement: settlement)  # in_liquidation
         return false
       end
     end
 
     # Asociar gastos a la liquidación y cambiar su estado
     pending_expenses(projects: projects).each do |expense|
-      unless expense.update(status_cd: 1, settlement: settlement)  # in_liquidation
+      p "expense id: #{expense.id.to_s}"
+      unless expense.update!(status_cd: 1, settlement: settlement)  # in_liquidation
         return false
       end
     end
