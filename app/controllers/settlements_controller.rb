@@ -22,9 +22,7 @@ class SettlementsController < ApplicationController
 
     # Gastos del mes actual en estado pending
     preliq_expenses = Expense.where(
-      user: current_user,
-      :expense_date.gte => start_date,
-      :expense_date.lte => end_date,
+      :project_id => preliq_projects.pluck(:id),
       status_cd: 0  # pending
     )
 
@@ -186,16 +184,19 @@ class SettlementsController < ApplicationController
       periods_hash[key][:pending_projects] += 1
     end
 
-    # También considerar gastos pendientes del usuario
+    # Obtener gastos pendientes que pertenezcan a proyectos con settlement_date
     pending_expenses = Expense.where(
       user: current_user,
-      status_cd: 0,  # pending
-      :expense_date.ne => nil
-    )
+      status_cd: 0  # pending
+    ).includes(:project)
 
+    # Agrupar gastos por el settlement_date del proyecto al que pertenecen
     pending_expenses.each do |expense|
-      month = expense.expense_date.month
-      year = expense.expense_date.year
+      # Solo considerar gastos cuyo proyecto tenga settlement_date
+      next unless expense.project&.settlement_date
+
+      month = expense.project.settlement_date.month
+      year = expense.project.settlement_date.year
       key = "#{year}-#{month}"
 
       periods_hash[key] ||= { month: month, year: year, pending_projects: 0, pending_expenses: 0 }

@@ -55,17 +55,15 @@ class CreateSettlementService
     )
   end
 
-  def pending_expenses
+  def pending_expenses(projects:)
     @pending_expenses ||= Expense.where(
       user: user,
-      :expense_date.gte => start_date,
-      :expense_date.lte => end_date,
       status_cd: 0  # pending
-    )
+    ).where(:project_id.in => projects.pluck(:id))
   end
 
   def no_pending_items?
-    pending_projects.empty? && pending_expenses.empty?
+    pending_projects.empty?
   end
 
   def find_existing_settlement
@@ -78,14 +76,13 @@ class CreateSettlementService
 
   def create_new_settlement
     # Capturar conteos ANTES de asociar (porque después cambiarán de estado)
-    projects_count = pending_projects.count
-    expenses_count = pending_expenses.count
-
+    projects = pending_projects
+    expenses = pending_expenses(projects: projects)
     @settlement = user.settlements.build(
       month: month,
       year: year,
-      total_projects_value: pending_projects.sum(&:quoted_value),
-      total_expenses_value: pending_expenses.sum(&:amount)
+      total_projects_value: projects.sum(&:quoted_value),
+      total_expenses_value: expenses.sum(&:amount)
     )
 
     unless @settlement.save
@@ -97,15 +94,15 @@ class CreateSettlementService
       return failure("Error al asociar proyectos y gastos")
     end
 
-    success("Liquidación de #{@settlement.period_name} creada exitosamente con #{projects_count} proyecto(s) y #{expenses_count} gasto(s)")
+    success("Liquidación de #{@settlement.period_name} creada exitosamente con #{projects.count} proyecto(s) y #{expenses.count} gasto(s)")
   end
 
   def update_existing_settlement(existing_settlement)
     @settlement = existing_settlement
 
     # Capturar conteos ANTES de asociar
-    projects_count = pending_projects.count
-    expenses_count = pending_expenses.count
+    projects = pending_projects
+    expenses = pending_expenses(projects: projects)
 
     # Asociar proyectos y gastos pendientes
     unless associate_projects_and_expenses(@settlement)
@@ -125,14 +122,15 @@ class CreateSettlementService
 
   def associate_projects_and_expenses(settlement)
     # Asociar proyectos a la liquidación y cambiar su estado
-    pending_projects.each do |project|
+    projects = pending_projects
+    projects.each do |project|
       unless project.update(execution_status_cd: 5, settlement: settlement)  # in_liquidation
         return false
       end
     end
 
     # Asociar gastos a la liquidación y cambiar su estado
-    pending_expenses.each do |expense|
+    pending_expenses(projects: projects).each do |expense|
       unless expense.update(status_cd: 1, settlement: settlement)  # in_liquidation
         return false
       end
