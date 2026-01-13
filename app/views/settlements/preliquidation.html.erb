@@ -110,7 +110,7 @@
                     <%= t("enums.expense.expense_type.#{expense.expense_type}") %>
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-500">
-                    <%= expense.expense_date.strftime("%d/%m/%Y") %>
+                    <%= expense.expense_date.strftime("%d/%m/%Y") if expense.expense_date %>
                   </td>
                   <td class="px-6 py-4 text-sm text-right font-semibold text-red-600">
                     <%= number_to_currency(expense.amount, unit: "$", delimiter: ".", separator: ",", precision: 0) %>

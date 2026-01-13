@@ -127,7 +127,7 @@
                     <%= t("enums.expense.expense_type.#{expense.expense_type}") %>
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-500">
-                    <%= expense.expense_date.strftime("%d/%m/%Y") %>
+                    <%= expense.expense_date.strftime("%d/%m/%Y") if expense.expense_date %>
                   </td>
                   <td class="px-6 py-4 text-sm">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
