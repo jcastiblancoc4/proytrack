@@ -15,7 +15,7 @@ class Expense
   validates :description, presence: { message: "La descripción del gasto es obligatoria" }
   validates :amount, presence: { message: "El valor del gasto es obligatorio" }
   validates :expense_type, presence: { message: "El tipo de gasto es obligatorio" }
-  validates :expense_date, presence: { message: "La fecha del gasto es obligatoria" }
+  #validates :expense_date, presence: { message: "La fecha del gasto es obligatoria" }
 
   as_enum :expense_type, {
     payroll: 0,

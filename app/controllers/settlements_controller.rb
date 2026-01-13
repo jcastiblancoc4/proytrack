@@ -77,8 +77,8 @@ class SettlementsController < ApplicationController
   def create
     service = CreateSettlementService.new(
       user: current_user,
-      month: 8,
-      year: 2025
+      month: settlement_params[:month],
+      year: settlement_params[:year]
     )
 
     result = service.call
