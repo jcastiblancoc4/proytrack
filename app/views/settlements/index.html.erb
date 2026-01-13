@@ -60,7 +60,7 @@
           <!-- Diferencia -->
           <div class="bg-gradient-to-br <%= @preliq_difference >= 0 ? 'from-blue-50 to-blue-100' : 'from-orange-50 to-orange-100' %> rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
             <div class="flex items-center justify-between mb-1.5">
-              <h3 class="text-xs font-semibold <%= @preliq_difference >= 0 ? 'text-blue-800' : 'text-orange-800' %>">Diferencia</h3>
+              <h3 class="text-xs font-semibold <%= @preliq_difference >= 0 ? 'text-blue-800' : 'text-orange-800' %>">Utilidad</h3>
               <span class="text-xl"><%= @preliq_difference >= 0 ? '💰' : '⚠️' %></span>
             </div>
             <p class="text-2xl font-bold <%= @preliq_difference >= 0 ? 'text-blue-700' : 'text-orange-700' %> mb-0.5">
@@ -129,7 +129,7 @@
 
               <div class="pt-3 border-t border-gray-200">
                 <div class="flex justify-between items-center">
-                  <span class="text-sm font-bold text-gray-700">Diferencia:</span>
+                  <span class="text-sm font-bold text-gray-700">Utilidad:</span>
                   <span class="text-base font-bold <%= settlement.difference >= 0 ? 'text-green-600' : 'text-red-600' %>">
                     <%= number_to_currency(settlement.difference, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
                   </span>

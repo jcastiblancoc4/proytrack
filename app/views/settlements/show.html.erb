@@ -35,7 +35,7 @@
       </div>
 
       <div class="<%= @settlement.difference >= 0 ? 'bg-blue-50 border-2 border-blue-200' : 'bg-orange-50 border-2 border-orange-200' %> rounded-lg p-6">
-        <h3 class="text-sm font-medium <%= @settlement.difference >= 0 ? 'text-blue-800' : 'text-orange-800' %> mb-2">Diferencia</h3>
+        <h3 class="text-sm font-medium <%= @settlement.difference >= 0 ? 'text-blue-800' : 'text-orange-800' %> mb-2">Utilidad</h3>
         <p class="text-3xl font-bold <%= @settlement.difference >= 0 ? 'text-blue-600' : 'text-orange-600' %>">
           <%= number_to_currency(@settlement.difference, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
         </p>
