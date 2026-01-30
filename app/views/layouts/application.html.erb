@@ -63,12 +63,17 @@
             </nav>
 
             <!-- Usuario -->
-            <span class="flex items-center space-x-2 text-xs sm:text-sm text-gray-700">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A7 7 0 0112 15a7 7 0 016.879 2.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span class="hidden lg:inline">Hola, <span class="font-medium text-gray-900"><%= current_user.email %></span></span>
-            </span>
+            <div class="flex items-center space-x-2 text-xs sm:text-sm">
+              <div class="flex items-center space-x-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A7 7 0 0112 15a7 7 0 016.879 2.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span class="text-gray-700">
+                  <span class="hidden sm:inline font-medium text-gray-900"><%= current_user.email %></span>
+                  <span class="sm:hidden font-medium text-gray-900"><%= current_user.email.split('@').first %></span>
+                </span>
+              </div>
+            </div>
 
             <!-- Cerrar Sesión -->
             <%= button_to "Cerrar sesión", destroy_user_session_path,

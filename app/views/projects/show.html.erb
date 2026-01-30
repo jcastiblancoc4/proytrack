@@ -168,7 +168,7 @@
     </div>
 
     <!-- Sección de usuarios con acceso al proyecto -->
-    <% if @can_edit && !@project.in_liquidation? %>
+    <% if @can_share %>
       <div class="bg-white shadow rounded-lg mb-6">
         <!-- Header con título y botón para agregar -->
         <div class="px-6 py-4 border-b border-gray-200">

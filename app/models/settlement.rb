@@ -11,6 +11,7 @@ class Settlement
   belongs_to :user
   has_many :projects
   has_many :expenses
+  has_many :shared_settlements, dependent: :destroy
 
   # Validaciones
   validates :month, presence: true, inclusion: { in: 1..12 }
@@ -33,6 +34,27 @@ class Settlement
 
   def difference
     total_projects_value - total_expenses_value
+  end
+
+  # Control de acceso
+  def can_access?(user)
+    # El propietario o usuarios con acceso compartido pueden ver
+    user == self.user || shared_with_users.include?(user)
+  end
+
+  def can_edit?(user)
+    # Solo el propietario puede editar
+    user == self.user
+  end
+
+  def shared_with?(user)
+    # Verifica si está compartido con un usuario específico
+    shared_with_users.include?(user)
+  end
+
+  # Acceso a usuarios compartidos
+  def shared_with_users
+    User.in(id: shared_settlements.pluck(:user_id))
   end
 
   private

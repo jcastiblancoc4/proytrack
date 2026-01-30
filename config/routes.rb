@@ -15,6 +15,7 @@ Rails.application.routes.draw do
     collection do
       get :preliquidation
     end
+    resources :shared_settlements, only: [:create, :destroy]
   end
 
   # Health check
