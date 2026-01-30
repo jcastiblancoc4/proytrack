@@ -8,3 +8,30 @@
 /dataSources.local.xml
 # Editor-based HTTP Client requests
 /httpRequests/
+
+# Logs
+/log/*
+!/log/.keep
+
+# Temp files
+/tmp/*
+!/tmp/.keep
+
+# Uploaded files
+/storage/*
+!/storage/.keep
+
+# Bundler
+/vendor/bundle
+
+# Node
+/node_modules
+
+# Environment variables
+.env
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
