@@ -13,6 +13,7 @@ class Project
   belongs_to :user
   belongs_to :settlement, optional: true
   has_many :expenses, dependent: :destroy
+  has_many :transactions, dependent: :destroy
   has_many :shared_projects, dependent: :destroy
 
   # Callbacks

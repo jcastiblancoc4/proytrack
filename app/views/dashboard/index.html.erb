@@ -1,0 +1,371 @@
+<div class="flex min-h-screen bg-gray-50">
+  <!-- Sidebar - Estadísticas y Resumen -->
+  <aside class="hidden lg:block w-80 bg-blue-900 border-r border-blue-800 overflow-y-auto">
+    <div class="sticky top-0 p-6">
+      <!-- Header del Sidebar -->
+      <div class="mb-6 pb-4 border-b border-blue-700">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          Resumen General
+        </h2>
+      </div>
+
+      <%
+        total_cotizado = @projects.sum { |p| p.quoted_value.to_i }
+        total_gastado = @projects.sum { |p| p.expenses.sum { |e| e.amount.to_i } }
+        diferencia_total = total_cotizado - total_gastado
+      %>
+
+      <!-- Tarjetas de Resumen -->
+      <div class="space-y-4 mb-6">
+        <!-- Total de Proyectos -->
+        <div class="bg-blue-800 border-2 border-blue-700 rounded-lg p-4 hover:bg-blue-700 transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-blue-200">Total Proyectos</span>
+            <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+          </div>
+          <p class="text-2xl font-bold text-white"><%= @projects.count %></p>
+        </div>
+
+        <!-- Total Cotizado -->
+        <div class="bg-green-600 border-2 border-green-500 rounded-lg p-4 hover:bg-green-500 transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-green-100">Total Cotizado</span>
+            <svg class="w-5 h-5 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <p class="text-xl font-bold text-white"><%= number_to_currency(total_cotizado, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
+        </div>
+
+        <!-- Total Gastado -->
+        <div class="bg-red-600 border-2 border-red-500 rounded-lg p-4 hover:bg-red-500 transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-red-100">Total Gastado</span>
+            <svg class="w-5 h-5 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+          <p class="text-xl font-bold text-white"><%= number_to_currency(total_gastado, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
+        </div>
+
+        <!-- Diferencia -->
+        <div class="bg-<%= diferencia_total >= 0 ? 'purple' : 'orange' %>-600 border-2 border-<%= diferencia_total >= 0 ? 'purple' : 'orange' %>-500 rounded-lg p-4 hover:bg-<%= diferencia_total >= 0 ? 'purple' : 'orange' %>-500 transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-<%= diferencia_total >= 0 ? 'purple' : 'orange' %>-100">Diferencia</span>
+            <svg class="w-5 h-5 text-<%= diferencia_total >= 0 ? 'purple' : 'orange' %>-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+            </svg>
+          </div>
+          <p class="text-xl font-bold text-white"><%= number_to_currency(diferencia_total, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
+          <p class="text-xs text-<%= diferencia_total >= 0 ? 'purple' : 'orange' %>-100 mt-1"><%= diferencia_total >= 0 ? 'Superávit' : 'Déficit' %></p>
+        </div>
+      </div>
+
+      <!-- Proyectos por Estado -->
+      <div class="border-t border-blue-700 pt-4">
+        <h3 class="text-sm font-semibold text-white mb-3">Por Estado</h3>
+        <div class="space-y-2">
+          <%
+            estados = [
+              { key: 'pending', label: 'Pendiente', icon: '⏳', color: 'gray' },
+              { key: 'running', label: 'Ejecutando', icon: '▶️', color: 'blue' },
+              { key: 'stop', label: 'Pausado', icon: '⏸️', color: 'orange' },
+              { key: 'cancelled', label: 'Cancelado', icon: '❌', color: 'red' },
+              { key: 'ended', label: 'Terminado', icon: '✅', color: 'green' },
+              { key: 'in_liquidation', label: 'En Liquidación', icon: '💰', color: 'purple' }
+            ]
+          %>
+          <% estados.each do |estado| %>
+            <%
+              count = @projects.count { |p| p.execution_status.to_s == estado[:key] }
+              total_estado = @projects.select { |p| p.execution_status.to_s == estado[:key] }.sum { |p| p.quoted_value.to_i }
+            %>
+            <div class="flex items-center justify-between p-2 rounded hover:bg-blue-800 transition-colors">
+              <div class="flex items-center gap-2 flex-1">
+                <span class="text-base"><%= estado[:icon] %></span>
+                <span class="text-sm text-blue-100"><%= estado[:label] %></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-<%= estado[:color] %>-100 text-<%= estado[:color] %>-800">
+                  <%= count %>
+                </span>
+                <% if count > 0 %>
+                  <span class="text-xs text-blue-200"><%= number_to_currency(total_estado, unit: "$", delimiter: ".", separator: ",", precision: 0) %></span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenido Principal -->
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-6">
+      <!-- Header -->
+      <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-3">
+          <div class="flex-1">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Proyectos Registrados</h1>
+            <p class="text-sm text-gray-600 mt-1">
+              Mostrando <%= @projects.count %> <%= @projects.count == 1 ? 'proyecto' : 'proyectos' %>
+            </p>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-start w-full sm:w-auto">
+            <!-- Filtro dropdown -->
+            <div class="relative" x-data="{ open: false }" @click.away="open = false">
+              <%
+                has_active_filters = @selected_statuses != ['todos'] && @selected_statuses.any?
+                active_filter_count = has_active_filters ? @selected_statuses.count : 0
+              %>
+              <button @click="open = !open"
+                      type="button"
+                      class="w-full sm:w-auto sm:min-w-[180px] inline-flex items-center justify-center gap-2 px-4 py-2 <%= has_active_filters ? 'bg-blue-50 border-2 border-blue-500 text-blue-700' : 'bg-white border-2 border-gray-300 text-gray-700' %> text-sm font-semibold rounded transition-all duration-200 shadow-sm hover:shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
+                <span>
+                  <% if has_active_filters %>
+                    <%= active_filter_count == 1 ? t("enums.project.execution_status.#{@selected_statuses.first}") : "#{active_filter_count} filtros" %>
+                  <% else %>
+                    Filtrar
+                  <% end %>
+                </span>
+                <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white rounded-full <%= has_active_filters ? 'bg-green-600' : 'bg-transparent' %>">
+                  <%= has_active_filters ? @projects.count : '' %>
+                </span>
+              </button>
+
+              <!-- Dropdown del filtro -->
+              <div x-show="open" x-cloak @click.away="open = false"
+                   class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-700">Filtrar por Estado</h3>
+                    <% if has_active_filters %>
+                      <%= link_to dashboard_path, class: "text-xs text-blue-600 hover:text-blue-800 font-medium" do %>
+                        Limpiar
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
+
+                <div class="py-2 max-h-96 overflow-y-auto">
+                  <%= form_with url: dashboard_path, method: :get, local: true, id: 'filter-form' do |f| %>
+                    <%
+                      filter_options = [
+                        { value: 'todos', label: 'Todos los estados', icon: '📋', is_all: true },
+                        { value: 'pending', label: t('enums.project.execution_status.pending'), icon: '⏳' },
+                        { value: 'running', label: t('enums.project.execution_status.running'), icon: '▶️' },
+                        { value: 'stop', label: t('enums.project.execution_status.stop'), icon: '⏸️' },
+                        { value: 'cancelled', label: t('enums.project.execution_status.cancelled'), icon: '❌' },
+                        { value: 'ended', label: t('enums.project.execution_status.ended'), icon: '✅' },
+                        { value: 'in_liquidation', label: t('enums.project.execution_status.in_liquidation'), icon: '💰' }
+                      ]
+                    %>
+                    <% filter_options.each do |option| %>
+                      <label class="flex items-center px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors group">
+                        <% if option[:is_all] %>
+                          <input type="checkbox" id="filter-todos" value="<%= option[:value] %>"
+                                 <%= 'checked' if @selected_statuses.include?(option[:value]) %>
+                                 onchange="handleTodosCheckbox(this); submitFilterWithDebounce();"
+                                 class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                        <% else %>
+                          <input type="checkbox" name="execution_status[]" value="<%= option[:value] %>"
+                                 class="status-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded"
+                                 <%= 'checked' if @selected_statuses.include?(option[:value]) %>
+                                 onchange="handleStatusCheckbox(this); submitFilterWithDebounce();">
+                        <% end %>
+                        <div class="ml-3 flex-1 flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="text-lg"><%= option[:icon] %></span>
+                            <span class="text-sm font-medium text-gray-700"><%= option[:label] %></span>
+                          </div>
+                        </div>
+                      </label>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+
+            <%= link_to "Nuevo Proyecto", new_project_path, class: "w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded hover:bg-blue-700 transition-colors shadow-sm" %>
+          </div>
+        </div>
+
+        <!-- Barra de búsqueda -->
+        <div class="mb-6">
+          <div class="relative max-w-2xl">
+            <input type="text" id="search-input" placeholder="🔍 Buscar por ID o nombre..."
+                   class="block w-full px-4 py-3 text-base border-2 border-gray-200 rounded-xl bg-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 shadow-sm">
+          </div>
+        </div>
+      </div>
+
+      <!-- Proyectos Agrupados por Estado -->
+      <div class="space-y-4">
+        <% if @projects.any? %>
+          <% estados.each do |estado| %>
+            <%
+              proyectos_estado = @projects.select { |p| p.execution_status.to_s == estado[:key] }
+            %>
+            <% if proyectos_estado.any? %>
+              <div class="bg-white rounded-lg shadow-sm border border-gray-200" x-data="{ expanded: true }">
+                <!-- Header del Estado (Accordion) -->
+                <button @click="expanded = !expanded" type="button"
+                        class="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors rounded-t-lg">
+                  <div class="flex items-center gap-3">
+                    <span class="text-2xl"><%= estado[:icon] %></span>
+                    <div class="text-left">
+                      <h2 class="text-lg font-bold text-gray-900"><%= estado[:label] %></h2>
+                      <p class="text-sm text-gray-600"><%= proyectos_estado.count %> <%= proyectos_estado.count == 1 ? 'proyecto' : 'proyectos' %></p>
+                    </div>
+                  </div>
+                  <svg class="w-6 h-6 text-gray-500 transition-transform duration-200" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+
+                <!-- Contenido del Estado -->
+                <div x-show="expanded" x-collapse class="border-t border-gray-200">
+                  <div class="p-4 space-y-4">
+                    <% proyectos_estado.each do |project| %>
+                      <% amount_spent = project.expenses.sum { |e| e.amount.to_i } %>
+                      <% quoted_less_spent = project.quoted_value.to_i - amount_spent %>
+                      <% color_class = quoted_less_spent > 1_000_000 ? "text-green-600" : (quoted_less_spent >= 0 ? "text-orange-500" : "text-red-600") %>
+
+                      <!-- Tarjeta del Proyecto -->
+                      <div class="project-card <%= project.user == current_user ? 'bg-gray-50' : 'bg-green-50' %> rounded-lg border-2 <%= project.user == current_user ? 'border-gray-200' : 'border-green-200' %> p-4 hover:shadow-md transition-shadow"
+                           data-project-name="<%= project.name.to_s.downcase %>"
+                           data-project-id="<%= project.project_identifier.to_s.downcase %>">
+
+                        <!-- Header del Proyecto -->
+                        <div class="flex justify-between items-start mb-3">
+                          <div class="flex-1">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                              📁 <%= project.name.titleize %>
+                              <% if project.user != current_user %>
+                                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">Compartido</span>
+                              <% end %>
+                            </h3>
+                            <p class="text-sm text-gray-600">🆔 <%= project.project_identifier %></p>
+                          </div>
+                        </div>
+
+                        <!-- Grid de Información -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                          <div class="bg-white p-2 rounded border border-gray-200">
+                            <strong class="block text-xs text-gray-600">Cotizado:</strong>
+                            <span class="text-sm text-green-600 font-semibold"><%= number_to_currency(project.quoted_value, unit: "$", delimiter: ".", separator: ",", precision: 0) %></span>
+                          </div>
+                          <div class="bg-white p-2 rounded border border-gray-200">
+                            <strong class="block text-xs text-gray-600">Gastado:</strong>
+                            <span class="text-sm text-red-600 font-semibold"><%= number_to_currency(amount_spent, unit: "$", delimiter: ".", separator: ",", precision: 0) %></span>
+                          </div>
+                          <div class="bg-white p-2 rounded border border-gray-200">
+                            <strong class="block text-xs text-gray-600">Diferencia:</strong>
+                            <span class="text-sm <%= color_class %> font-semibold"><%= number_to_currency(quoted_less_spent, unit: "$", delimiter: ".", separator: ",", precision: 0) %></span>
+                          </div>
+                          <div class="bg-white p-2 rounded border border-gray-200">
+                            <strong class="block text-xs text-gray-600">Orden:</strong>
+                            <span class="text-sm text-gray-800"><%= project.purchase_order.presence || "-" %></span>
+                          </div>
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="flex flex-wrap gap-2">
+                          <%= link_to "Ver Detalles", project_path(project), class: "bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700 transition-colors" %>
+                          <% if project.user == current_user %>
+                            <% if project.in_liquidation? %>
+                              <span class="bg-purple-100 text-purple-700 px-3 py-1.5 rounded text-sm">🔒 En Liquidación</span>
+                            <% else %>
+                              <%= link_to "Editar", edit_project_path(project, from: 'home'), class: "bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition-colors" %>
+                              <button onclick="if(confirm('¿Eliminar proyecto?')) { document.getElementById('delete-project-<%= project.id %>').submit(); }" class="bg-red-600 text-white px-3 py-1.5 rounded text-sm hover:bg-red-700 transition-colors">Eliminar</button>
+                              <%= form_with url: project_path(project), method: :delete, local: true, html: { id: "delete-project-#{project.id}", style: "display: none;" } do |f| %><% end %>
+                            <% end %>
+                          <% else %>
+                            <span class="bg-gray-200 text-gray-600 px-3 py-1.5 rounded text-sm">Solo Lectura</span>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        <% else %>
+          <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+            </svg>
+            <p class="text-gray-600 text-lg">No hay proyectos registrados</p>
+            <p class="text-gray-500 text-sm mt-2">Comienza creando tu primer proyecto</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Búsqueda en tiempo real
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const projectCards = document.querySelectorAll('.project-card');
+
+    searchInput?.addEventListener('input', function() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+
+      projectCards.forEach(card => {
+        const projectName = card.getAttribute('data-project-name');
+        const projectId = card.getAttribute('data-project-id');
+
+        if (searchTerm === '' || projectName.includes(searchTerm) || projectId.includes(searchTerm)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Filtros
+  let filterSubmitTimeout = null;
+
+  function submitFilterWithDebounce() {
+    if (filterSubmitTimeout) clearTimeout(filterSubmitTimeout);
+    filterSubmitTimeout = setTimeout(() => {
+      document.getElementById('filter-form').submit();
+    }, 1000);
+  }
+
+  function handleTodosCheckbox(todosCheckbox) {
+    const statusCheckboxes = document.querySelectorAll('.status-checkbox');
+    if (todosCheckbox.checked) {
+      statusCheckboxes.forEach(cb => cb.checked = false);
+    }
+  }
+
+  function handleStatusCheckbox(statusCheckbox) {
+    const todosCheckbox = document.getElementById('filter-todos');
+    if (statusCheckbox.checked && todosCheckbox) {
+      todosCheckbox.checked = false;
+    } else if (!statusCheckbox.checked && todosCheckbox) {
+      const anyChecked = Array.from(document.querySelectorAll('.status-checkbox')).some(cb => cb.checked);
+      if (!anyChecked) todosCheckbox.checked = true;
+    }
+  }
+</script>
+
+<style>
+  [x-cloak] { display: none !important; }
+</style>

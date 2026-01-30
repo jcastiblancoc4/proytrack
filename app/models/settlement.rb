@@ -11,6 +11,7 @@ class Settlement
   belongs_to :user
   has_many :projects
   has_many :expenses
+  has_many :transactions
 
   # Validaciones
   validates :month, presence: true, inclusion: { in: 1..12 }
