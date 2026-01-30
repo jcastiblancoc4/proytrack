@@ -4,8 +4,8 @@ class SharedSettlement
 
   # Referencias a Settlement y User
   belongs_to :settlement
-  belongs_to :user          # Usuario que recibe acceso
-  belongs_to :shared_by, class_name: 'User'  # Usuario que comparte
+  belongs_to :user, inverse_of: :shared_settlements          # Usuario que recibe acceso
+  belongs_to :shared_by, class_name: 'User', inverse_of: :shared_by_me_settlements  # Usuario que comparte
 
   # Validaciones
   validates :settlement_id, presence: true
