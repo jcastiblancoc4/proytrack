@@ -33,10 +33,17 @@ class User
   has_many :shared_projects, dependent: :destroy, inverse_of: :user
   has_many :shared_by_me_projects, class_name: 'SharedProject', foreign_key: 'shared_by_id', inverse_of: :shared_by, dependent: :destroy
   has_many :settlements, dependent: :destroy
+  has_many :shared_settlements, dependent: :destroy, inverse_of: :user
+  has_many :shared_by_me_settlements, class_name: 'SharedSettlement', foreign_key: 'shared_by_id', inverse_of: :shared_by, dependent: :destroy
 
   # Métodos personalizados para proyectos compartidos (Mongoid no soporta through)
   def shared_with_me_projects
     Project.in(id: shared_projects.pluck(:project_id))
+  end
+
+  # Métodos personalizados para liquidaciones compartidas (Mongoid no soporta through)
+  def shared_with_me_settlements
+    Settlement.in(id: shared_settlements.pluck(:settlement_id))
   end
 
   ## Trackable

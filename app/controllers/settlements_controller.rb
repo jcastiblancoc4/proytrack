@@ -1,9 +1,14 @@
 class SettlementsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_settlement, only: [:show, :update, :destroy]
+  before_action :authorize_access, only: [:show]
+  before_action :authorize_edit, only: [:update, :destroy]
 
   def index
-    @settlements = Settlement.where(user: current_user).order(year: :desc, month: :desc)
+    # Combina liquidaciones propias y compartidas
+    @settlements = (current_user.settlements.to_a +
+                    current_user.shared_with_me_settlements.to_a)
+                    .sort_by { |s| [s.year, s.month] }.reverse
 
     # Datos de preliquidación del mes actual
     @current_month = Date.current.month
@@ -147,6 +152,7 @@ class SettlementsController < ApplicationController
   def show
     @projects = @settlement.projects
     @expenses = @settlement.expenses.includes(:project)
+    @can_edit = @settlement.can_edit?(current_user)
   end
 
   def destroy
@@ -158,11 +164,20 @@ class SettlementsController < ApplicationController
 
   def set_settlement
     @settlement = Settlement.find(params[:id])
-    unless @settlement.user == current_user
-      redirect_to settlements_path, alert: 'No tienes acceso a esta liquidación'
-    end
   rescue Mongoid::Errors::DocumentNotFound
     redirect_to settlements_path, alert: 'Liquidación no encontrada'
+  end
+
+  def authorize_access
+    unless @settlement.can_access?(current_user)
+      redirect_to settlements_path, alert: 'No tienes acceso a esta liquidación'
+    end
+  end
+
+  def authorize_edit
+    unless @settlement.can_edit?(current_user)
+      redirect_to settlements_path, alert: 'No tienes permisos para editar esta liquidación'
+    end
   end
 
   def settlement_params
