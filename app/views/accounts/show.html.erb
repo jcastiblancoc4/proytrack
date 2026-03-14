@@ -1,0 +1,152 @@
+<div class="max-w-5xl mx-auto px-4 mt-6 space-y-6">
+
+  <!-- Cabecera de la cuenta -->
+  <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+    <div class="flex justify-between items-start">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <%= t("enums.account.account_type.#{@account.account_type}") %>
+          <% if @account.bank_name.present? %> · <%= @account.bank_name %><% end %>
+          <% if @account.account_number.present? %> · Nº <%= @account.account_number %><% end %>
+        </p>
+        <h1 class="text-2xl font-bold text-gray-900 mt-1"><%= @account.name %></h1>
+      </div>
+      <div class="text-right">
+        <p class="text-3xl font-bold <%= @account.balance.negative? ? 'text-red-600' : 'text-green-700' %>">
+          <%= number_to_currency(@account.balance, unit: "$", separator: ",", delimiter: ".") %>
+        </p>
+        <p class="text-xs text-gray-500 mt-1">Saldo actual COP</p>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-4">
+      <%= link_to "Editar cuenta", edit_account_path(@account),
+                  class: "text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded" %>
+      <%= button_to "Eliminar cuenta", account_path(@account), method: :delete,
+                    class: "text-sm bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded",
+                    form: { onsubmit: "return confirm('¿Eliminar esta cuenta y todas sus transacciones?')" } %>
+      <%= link_to "Volver", accounts_path,
+                  class: "text-sm text-gray-500 hover:underline px-3 py-1.5" %>
+    </div>
+  </div>
+
+  <!-- Formulario de nueva transacción -->
+  <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+    <h2 class="text-lg font-semibold text-gray-800 mb-4">Registrar Transacción</h2>
+    <%= form_with model: [@account, @new_transaction], local: true, class: "space-y-4" do |f| %>
+      <% if @new_transaction.errors.any? %>
+        <div class="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
+          <ul class="list-disc pl-4 space-y-1">
+            <% @new_transaction.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :transaction_type, "Tipo", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.select :transaction_type,
+                       Transaction.transaction_types.map { |k, _| [t("enums.transaction.transaction_type.#{k}"), k] },
+                       {},
+                       class: "w-full border border-gray-300 rounded px-3 py-2" %>
+        </div>
+        <div>
+          <%= f.label :amount, "Valor (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <input type="text"
+                 id="amount_display"
+                 placeholder="0"
+                 inputmode="numeric"
+                 autocomplete="off"
+                 class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+          <%= f.hidden_field :amount, id: "amount_raw" %>
+        </div>
+        <div>
+          <%= f.label :transaction_date, "Fecha", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.date_field :transaction_date, value: Date.current,
+                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
+        </div>
+        <div>
+          <%= f.label :description, "Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :description, placeholder: "Describe la transacción",
+                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <%= f.submit "Registrar",
+                     class: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium" %>
+      </div>
+    <% end %>
+  </div>
+
+  <script>
+    (function () {
+      const display = document.getElementById('amount_display');
+      const raw     = document.getElementById('amount_raw');
+      display.addEventListener('input', function () {
+        const digits = this.value.replace(/\D/g, '');
+        this.value   = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        raw.value    = digits;
+      });
+    })();
+  </script>
+
+  <!-- Listado de transacciones -->
+  <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h2 class="text-lg font-semibold text-gray-800">
+        Movimientos
+        <span class="text-sm font-normal text-gray-500">(<%= @transactions.count %>)</span>
+      </h2>
+    </div>
+
+    <% if @transactions.any? %>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 text-left">Fecha</th>
+            <th class="px-4 py-3 text-left">Descripción</th>
+            <th class="px-4 py-3 text-left">Tipo</th>
+            <th class="px-4 py-3 text-right">Valor</th>
+            <th class="px-4 py-3 text-center">Acción</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% @transactions.each do |tx| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                <%= tx.transaction_date&.strftime("%d/%m/%Y") || "-" %>
+              </td>
+              <td class="px-4 py-3 text-gray-800"><%= tx.description %></td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                  <%= tx.income? ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                  <%= t("enums.transaction.transaction_type.#{tx.transaction_type}") %>
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right font-semibold <%= tx.income? ? 'text-green-700' : 'text-red-600' %>">
+                <%= tx.income? ? "+" : "-" %>
+                <%= number_to_currency(tx.amount, unit: "$", separator: ",", delimiter: ".") %>
+              </td>
+              <td class="px-4 py-3 text-center">
+                <div class="flex justify-center items-center gap-3">
+                  <% if tx.expense_id.present? %>
+                    <%= link_to "Ver gasto", edit_expense_path(tx.expense),
+                                class: "text-xs text-blue-600 hover:underline" %>
+                  <% end %>
+                  <%= button_to "Eliminar",
+                                account_transaction_path(@account, tx),
+                                method: :delete,
+                                class: "text-xs text-red-600 hover:underline bg-transparent border-0 cursor-pointer",
+                                form: { onsubmit: "return confirm('¿Eliminar esta transacción? El saldo se ajustará automáticamente.')" } %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="text-center text-gray-500 py-10 text-sm">No hay movimientos registrados.</p>
+    <% end %>
+  </div>
+</div>

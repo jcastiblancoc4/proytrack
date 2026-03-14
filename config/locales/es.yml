@@ -100,6 +100,19 @@ es:
       payment_status:
         pending: "Pendiente"
         paid: "Pago"
+    account:
+      account_type:
+        savings:  "Ahorro"
+        checking: "Corriente"
+        cash:     "Efectivo"
+    transaction:
+      transaction_type:
+        income:  "Ingreso"
+        expense: "Egreso"
+    third_party:
+      party_type:
+        person:  "Persona"
+        company: "Empresa"
     expense:
       expense_type:
         payroll: "Nomina"

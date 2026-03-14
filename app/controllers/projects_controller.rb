@@ -18,7 +18,9 @@ class ProjectsController < ApplicationController
     
     @expenses = @project.expenses.order(created_at: :desc)
     @can_edit = @project.can_edit?(current_user)
-    @can_share = @project.user == current_user  # Puede compartir si es propietario, sin importar estado
+    @can_share = @project.user == current_user
+    @third_parties = current_user.third_parties.order(:first_name.asc)
+    @accounts = current_user.accounts.order(created_at: :desc)
   end
 
   # GET /projects/new

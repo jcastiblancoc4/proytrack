@@ -1,0 +1,92 @@
+<%= form_with model: account, class: "space-y-5" do |f| %>
+  <% if account.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <ul class="list-disc pl-5 text-sm text-red-700 space-y-1">
+        <% account.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, "Nombre de la cuenta", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.text_field :name,
+                     placeholder: "Ej: Cuenta principal, Efectivo oficina",
+                     class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+  </div>
+
+  <div>
+    <%= f.label :account_type, "Tipo de cuenta", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.select :account_type,
+                 Account.account_types.map { |k, _| [t("enums.account.account_type.#{k}"), k] },
+                 {},
+                 class: "w-full border border-gray-300 rounded px-3 py-2",
+                 id: "account_account_type",
+                 onchange: "toggleBankField()" %>
+  </div>
+
+  <div id="bank-field" class="<%= account.requires_bank? ? '' : 'hidden' %>">
+    <div class="mb-4">
+      <%= f.label :bank_name, "Banco", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.select :bank_name,
+                   [["Selecciona un banco", ""]] + Account::BANKS.map { |b| [b, b] },
+                   {},
+                   class: "w-full border border-gray-300 rounded px-3 py-2" %>
+    </div>
+    <div>
+      <%= f.label :account_number, "Número de cuenta", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :account_number,
+                       placeholder: "Ej: 1234567890",
+                       class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+    </div>
+  </div>
+
+  <% unless account.persisted? %>
+    <div>
+      <%= f.label :initial_balance, "Saldo inicial (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <input type="text"
+             id="initial_balance_display"
+             placeholder="0"
+             inputmode="numeric"
+             autocomplete="off"
+             class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+      <%= f.hidden_field :initial_balance, id: "initial_balance_raw" %>
+      <p class="text-xs text-gray-500 mt-1">Se registrará automáticamente como una transacción de "Saldo inicial".</p>
+    </div>
+  <% end %>
+
+  <div class="flex justify-between items-center pt-2">
+    <% if account.persisted? %>
+      <%= link_to "Cancelar", account_path(account), class: "text-gray-600 hover:underline text-sm" %>
+    <% else %>
+      <button type="button" @click="open = false" class="text-gray-600 hover:underline text-sm">Cancelar</button>
+    <% end %>
+    <%= f.submit account.persisted? ? "Actualizar Cuenta" : "Crear Cuenta",
+                 class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium" %>
+  </div>
+<% end %>
+
+<script>
+  function toggleBankField() {
+    const typeSelect = document.getElementById('account_account_type');
+    const bankField  = document.getElementById('bank-field');
+    const bankSelect = bankField.querySelector('select');
+    const needsBank  = typeSelect.value === 'savings' || typeSelect.value === 'checking';
+    bankField.classList.toggle('hidden', !needsBank);
+    if (!needsBank) bankSelect.value = '';
+  }
+
+  (function () {
+    const display = document.getElementById('initial_balance_display');
+    const raw     = document.getElementById('initial_balance_raw');
+    if (!display || !raw) return;
+
+    display.addEventListener('input', function () {
+      const digits = this.value.replace(/\D/g, '');
+      const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      this.value = formatted;
+      raw.value  = digits;
+    });
+  })();
+</script>

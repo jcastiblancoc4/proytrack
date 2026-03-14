@@ -11,6 +11,14 @@ Rails.application.routes.draw do
     resources :shared_projects, only: [:create, :destroy]
   end
 
+  resources :accounts do
+    resources :transactions, only: [:new, :create, :destroy]
+  end
+
+  resources :expenses, only: [:index, :create, :edit, :update, :destroy]
+
+  resources :third_parties, only: [:index, :create, :edit, :update, :destroy]
+
   resources :settlements, only: [:index, :new, :create, :show, :update, :destroy] do
     collection do
       get :preliquidation

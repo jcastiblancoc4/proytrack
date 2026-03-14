@@ -1,0 +1,52 @@
+<div class="max-w-lg mx-auto mt-10 px-4">
+  <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+    <h1 class="text-xl font-bold text-gray-800 mb-2">Nueva Transacción</h1>
+    <p class="text-sm text-gray-500 mb-6">Cuenta: <strong><%= @account.name %></strong></p>
+
+    <%= form_with model: [@account, @transaction], local: true, class: "space-y-4" do |f| %>
+      <div>
+        <%= f.label :transaction_type, "Tipo", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.select :transaction_type,
+                     Transaction.transaction_types.map { |k, _| [t("enums.transaction.transaction_type.#{k}"), k] },
+                     {}, class: "w-full border border-gray-300 rounded px-3 py-2" %>
+      </div>
+      <div>
+        <%= f.label :amount, "Valor (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <input type="text"
+               id="amount_display"
+               placeholder="0"
+               inputmode="numeric"
+               autocomplete="off"
+               class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+        <%= f.hidden_field :amount, id: "amount_raw" %>
+      </div>
+      <div>
+        <%= f.label :transaction_date, "Fecha", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.date_field :transaction_date, value: Date.current,
+                         class: "w-full border border-gray-300 rounded px-3 py-2" %>
+      </div>
+      <div>
+        <%= f.label :description, "Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :description, placeholder: "Describe la transacción",
+                         class: "w-full border border-gray-300 rounded px-3 py-2" %>
+      </div>
+      <div class="flex justify-between items-center pt-2">
+        <%= link_to "Cancelar", account_path(@account), class: "text-gray-600 hover:underline text-sm" %>
+        <%= f.submit "Registrar", class: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const display = document.getElementById('amount_display');
+    const raw     = document.getElementById('amount_raw');
+
+    display.addEventListener('input', function () {
+      const digits    = this.value.replace(/\D/g, '');
+      this.value      = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      raw.value       = digits;
+    });
+  })();
+</script>

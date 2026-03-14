@@ -1,0 +1,103 @@
+<%= form_with model: third_party, class: "space-y-4" do |f| %>
+  <% if third_party.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <ul class="list-disc pl-5 text-sm text-red-700 space-y-1">
+        <% third_party.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div x-data="{ partyType: '<%= third_party.party_type || 'person' %>' }">
+    <!-- Tipo de tercero -->
+    <div class="mb-4">
+      <%= f.label :party_type, "Tipo de tercero", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <div class="flex gap-4">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <%= f.radio_button :party_type, "person",
+              checked: !third_party.persisted? || third_party.person?,
+              class: "text-blue-600",
+              "@change": "partyType = 'person'" %>
+          <span class="text-sm text-gray-700">Persona</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <%= f.radio_button :party_type, "company",
+              checked: third_party.persisted? && third_party.company?,
+              class: "text-blue-600",
+              "@change": "partyType = 'company'" %>
+          <span class="text-sm text-gray-700">Empresa</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Persona: nombre y apellido -->
+    <div x-show="partyType === 'person'" class="grid grid-cols-2 gap-3 mb-4">
+      <div>
+        <%= f.label :first_name, "Nombres", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :first_name, placeholder: "Nombres",
+                         class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+      </div>
+      <div>
+        <%= f.label :last_name, "Apellidos", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :last_name, placeholder: "Apellidos",
+                         class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+      </div>
+    </div>
+
+    <!-- Empresa: razón social -->
+    <div x-show="partyType === 'company'" class="mb-4" style="display:none">
+      <%= f.label :business_name, "Razón social", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :business_name, placeholder: "Nombre de la empresa",
+                       class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+    </div>
+
+    <!-- Tipo de documento -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div>
+        <%= f.label :document_type, "Tipo de documento", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div x-show="partyType === 'person'">
+          <%= f.select :document_type,
+                       [["Cédula", "cedula"], ["NIT", "nit"], ["Pasaporte", "pasaporte"]],
+                       { include_blank: "Seleccionar..." },
+                       class: "w-full border border-gray-300 rounded px-3 py-2",
+                       id: "doc_type_person" %>
+        </div>
+        <div x-show="partyType === 'company'" style="display:none">
+          <input type="text" value="NIT" disabled
+                 class="w-full border border-gray-200 rounded px-3 py-2 bg-gray-50 text-gray-500">
+          <input type="hidden" name="third_party[document_type]" value="nit" id="doc_type_company">
+        </div>
+      </div>
+      <div>
+        <%= f.label :document_number, "Número de documento", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :document_number, placeholder: "Ej: 1234567890",
+                         class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contacto -->
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <%= f.label :phone, "Número de contacto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :phone, placeholder: "Ej: 3001234567",
+                       class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+    </div>
+    <div>
+      <%= f.label :address, "Dirección", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :address, placeholder: "Ej: Calle 123 # 45-67",
+                       class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+    </div>
+  </div>
+
+  <div class="flex justify-between items-center pt-2">
+    <% if third_party.persisted? %>
+      <%= link_to "Cancelar", third_parties_path, class: "text-gray-600 hover:underline text-sm" %>
+    <% else %>
+      <button type="button" @click="open = false" class="text-gray-600 hover:underline text-sm">Cancelar</button>
+    <% end %>
+    <%= f.submit third_party.persisted? ? "Actualizar" : "Registrar",
+                 class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium" %>
+  </div>
+<% end %>

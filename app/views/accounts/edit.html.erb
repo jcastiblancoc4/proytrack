@@ -1,0 +1,13 @@
+<div class="max-w-4xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+  <div class="md:col-span-1 bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm">
+    <h2 class="text-lg font-semibold text-yellow-800 mb-2">Editar Cuenta</h2>
+    <p class="text-sm text-gray-700 leading-relaxed">
+      Modifica los datos descriptivos de <strong><%= @account.name %></strong>.
+    </p>
+  </div>
+
+  <div class="md:col-span-2 bg-white border border-yellow-100 rounded-xl p-6 shadow-md">
+    <h1 class="text-2xl font-bold text-yellow-800 mb-6">Editar Cuenta</h1>
+    <%= render "form", account: @account %>
+  </div>
+</div>

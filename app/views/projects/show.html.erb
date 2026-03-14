@@ -266,42 +266,93 @@
         <% end %>
         <%= form_with model: [@project, Expense.new], local: true, class: "space-y-4" do |f| %>
           <%= hidden_field_tag :from, 'show' %>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <%= f.label :description, "📝 Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.text_area :description, 
-                              class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200 resize-none overflow-hidden",
-                              rows: 1,
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <%= f.label :description, "Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
+              <%= f.text_area :description,
+                              class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200 resize-none",
+                              rows: 2,
                               id: "description-textarea",
                               placeholder: "Describe el gasto realizado..." %>
             </div>
             <div>
-              <%= f.label :amount, "💰 Valor", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.text_field :amount,
-                         value: '',
-                         class: "w-full border border-gray-300 rounded px-3 py-2",
-                         id: "quoted_value_input",
-                         autocomplete: "off" %>
+              <%= f.label :amount, "Valor (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+              <input type="text"
+                     id="project_expense_amount_display"
+                     placeholder="0"
+                     inputmode="numeric"
+                     autocomplete="off"
+                     class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200">
+              <%= f.hidden_field :amount, id: "project_expense_amount_raw" %>
             </div>
             <div>
-              <%= f.label :expense_type, "📂 Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+              <%= f.label :expense_type, "Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
               <%= f.select :expense_type,
                            Expense.expense_types.map { |k, _| [t("enums.expense.expense_type.#{k}"), k] },
                            {},
                            class: "w-full border border-gray-300 rounded px-3 py-2" %>
             </div>
             <div>
-              <%= f.label :expense_date, "📅 Fecha del Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.date_field :expense_date, 
+              <%= f.label :expense_date, "Fecha del Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+              <%= f.date_field :expense_date,
                                value: Date.current,
                                class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200" %>
             </div>
+            <!-- Tercero (opcional) -->
+            <div x-data="{
+              open: false,
+              search: '',
+              selected: '',
+              thirdParties: <%= @third_parties.map { |tp| { id: tp.id.to_s, name: tp.full_name } }.to_json %>,
+              get filtered() {
+                if (!this.search) return this.thirdParties;
+                const q = this.search.toLowerCase();
+                return this.thirdParties.filter(tp => tp.name.toLowerCase().includes(q));
+              },
+              selectParty(id, name) { this.selected = id; this.search = name; this.open = false; },
+              clear() { this.selected = ''; this.search = ''; }
+            }">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Tercero (opcional)</label>
+              <div class="relative">
+                <input type="text"
+                       x-model="search"
+                       @focus="open = true"
+                       @click.outside="open = false"
+                       placeholder="Buscar tercero..."
+                       autocomplete="off"
+                       class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200">
+                <input type="hidden" name="expense[third_party_id]" :value="selected">
+                <div x-show="open && search.length > 0"
+                     class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto"
+                     style="display:none;">
+                  <template x-for="tp in filtered" :key="tp.id">
+                    <div @click="selectParty(tp.id, tp.name)"
+                         class="px-3 py-2 text-sm cursor-pointer hover:bg-green-50 text-gray-800"
+                         x-text="tp.name"></div>
+                  </template>
+                  <template x-if="filtered.length === 0">
+                    <div class="px-3 py-2 text-sm text-gray-500">
+                      No encontrado.
+                      <%= link_to "Crear tercero", third_parties_path, class: "text-blue-600 hover:underline ml-1" %>
+                    </div>
+                  </template>
+                </div>
+              </div>
+              <button type="button" @click="clear()" class="mt-1 text-xs text-gray-500 hover:text-red-600 hover:underline">Limpiar</button>
+            </div>
+            <!-- Cuenta (opcional) -->
+            <div>
+              <%= f.label :account_id, "Cuenta (opcional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+              <%= f.select :account_id,
+                           @accounts.map { |a| [a.name, a.id.to_s] },
+                           { include_blank: "Sin cuenta" },
+                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
+            </div>
           </div>
           <div class="flex justify-end">
-            <%= f.submit "Agregar Gasto", 
-                class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed",
-                id: "submit-btn",
-                onclick: "return validateExpenseForm();" %>
+            <%= f.submit "Agregar Gasto",
+                class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700",
+                id: "submit-btn" %>
           </div>
         <% end %>
       </div>
@@ -417,28 +468,14 @@
 </div>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-        const input = document.getElementById("quoted_value_input");
-        const textarea = document.getElementById("description-textarea");
+        const display = document.getElementById("project_expense_amount_display");
+        const raw = document.getElementById("project_expense_amount_raw");
 
-        // Auto-resize textarea
-        if (textarea) {
-            function autoResize() {
-                textarea.style.height = 'auto';
-                textarea.style.height = textarea.scrollHeight + 'px';
-            }
-            
-            textarea.addEventListener('input', autoResize);
-            autoResize(); // Initial resize
-        }
-
-        if (input) {
-            input.addEventListener("input", function () {
-                const cleanValue = input.value.replace(/\D/g, "");
-                input.value = cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            });
-
-            input.form.addEventListener("submit", function () {
-                input.value = input.value.replace(/\./g, "");
+        if (display && raw) {
+            display.addEventListener("input", function () {
+                const digits = this.value.replace(/\D/g, "");
+                this.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                raw.value = digits;
             });
         }
     });
@@ -459,44 +496,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Función para validar el formulario de gastos
-    function validateExpenseForm() {
-        const description = document.querySelector('textarea[name="expense[description]"]').value.trim();
-        const amount = document.querySelector('input[name="expense[amount]"]').value.trim();
-        const expenseType = document.querySelector('select[name="expense[expense_type]"]').value;
-        const expenseDate = document.querySelector('input[name="expense[expense_date]"]').value;
-        const submitBtn = document.getElementById('submit-btn');
-
-        // Validar campos obligatorios
-        if (!description) {
-            alert('La descripción del gasto es obligatoria');
-            return false;
-        }
-
-        if (!amount || amount === '0') {
-            alert('El valor del gasto es obligatorio y debe ser mayor a 0');
-            return false;
-        }
-
-        if (!expenseType) {
-            alert('El tipo de gasto es obligatorio');
-            return false;
-        }
-
-        if (!expenseDate) {
-            alert('La fecha del gasto es obligatoria');
-            return false;
-        }
-
-        // Si todo está bien, deshabilitar botón y mostrar efecto de carga
-        setTimeout(() => {
-            submitBtn.disabled = true;
-            submitBtn.value = '⏳ Agregando...';
-            submitBtn.style.opacity = '0.6';
-        }, 0);
-
-        return true;
-    }
 
 </script>
 

@@ -1,0 +1,152 @@
+<%= form_with model: expense, url: (expense.persisted? ? expense_path(expense) : expenses_path), class: "space-y-4" do |f| %>
+  <% if expense.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <ul class="list-disc pl-5 text-sm text-red-700 space-y-1">
+        <% expense.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <!-- Proyecto (opcional) -->
+  <div>
+    <%= f.label :project_id, "Proyecto (opcional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.select :project_id,
+                 @projects.map { |p| ["#{p.project_identifier} - #{p.name}", p.id.to_s] },
+                 { include_blank: "Sin proyecto", selected: expense.project_id&.to_s },
+                 class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+  </div>
+
+  <!-- Descripción -->
+  <div>
+    <%= f.label :description, "Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.text_area :description,
+                    placeholder: "Describe el gasto realizado...",
+                    rows: 2,
+                    class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 resize-none" %>
+  </div>
+
+  <!-- Tipo de gasto -->
+  <div>
+    <%= f.label :expense_type, "Tipo de gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.select :expense_type,
+                 Expense.expense_types.map { |k, _| [t("enums.expense.expense_type.#{k}"), k] },
+                 {},
+                 class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+  </div>
+
+  <!-- Valor -->
+  <div>
+    <%= f.label :amount, "Valor (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <input type="text"
+           id="standalone_amount_display"
+           placeholder="0"
+           inputmode="numeric"
+           autocomplete="off"
+           value="<%= expense.amount.to_i > 0 ? number_with_delimiter(expense.amount.to_i, delimiter: '.') : '' %>"
+           class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+    <%= f.hidden_field :amount, id: "standalone_amount_raw", value: expense.amount.to_i > 0 ? expense.amount.to_i : '' %>
+  </div>
+
+  <!-- Fecha del gasto -->
+  <div>
+    <%= f.label :expense_date, "Fecha del gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.date_field :expense_date,
+                     value: expense.expense_date&.strftime("%Y-%m-%d") || Date.current.strftime("%Y-%m-%d"),
+                     class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+  </div>
+
+  <!-- Tercero (opcional) - Alpine.js searchable dropdown -->
+  <div x-data="{
+    open: false,
+    search: '<%= expense.third_party&.full_name&.gsub("'", "\\'") %>',
+    selected: '<%= expense.third_party_id&.to_s %>',
+    selectedName: '<%= expense.third_party&.full_name&.gsub("'", "\\'") %>',
+    thirdParties: <%= @third_parties.map { |tp| { id: tp.id.to_s, name: tp.full_name } }.to_json %>,
+    get filtered() {
+      if (!this.search) return this.thirdParties;
+      const q = this.search.toLowerCase();
+      return this.thirdParties.filter(tp => tp.name.toLowerCase().includes(q));
+    },
+    selectParty(id, name) {
+      this.selected = id;
+      this.selectedName = name;
+      this.search = name;
+      this.open = false;
+    },
+    clear() {
+      this.selected = '';
+      this.selectedName = '';
+      this.search = '';
+    }
+  }">
+    <label class="block text-sm font-medium text-gray-700 mb-1">Tercero (opcional)</label>
+    <div class="relative">
+      <input type="text"
+             x-model="search"
+             @focus="open = true"
+             @click.outside="open = false"
+             placeholder="Buscar tercero..."
+             autocomplete="off"
+             class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+      <input type="hidden" name="expense[third_party_id]" :value="selected">
+
+      <div x-show="open && search.length > 0"
+           class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto"
+           style="display:none;">
+        <template x-for="tp in filtered" :key="tp.id">
+          <div @click="selectParty(tp.id, tp.name)"
+               class="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 text-gray-800"
+               x-text="tp.name">
+          </div>
+        </template>
+        <template x-if="filtered.length === 0">
+          <div class="px-3 py-2 text-sm text-gray-500">
+            No encontrado.
+            <%= link_to "Crear tercero", third_parties_path, class: "text-blue-600 hover:underline ml-1" %>
+          </div>
+        </template>
+      </div>
+    </div>
+    <button type="button"
+            @click="clear()"
+            class="mt-1 text-xs text-gray-500 hover:text-red-600 hover:underline">
+      Limpiar
+    </button>
+  </div>
+
+  <!-- Cuenta (opcional) -->
+  <div>
+    <%= f.label :account_id, "Cuenta (opcional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.select :account_id,
+                 @accounts.map { |a| [a.name, a.id.to_s] },
+                 { include_blank: "Sin cuenta", selected: expense.account_id&.to_s },
+                 class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+  </div>
+
+  <!-- Acciones -->
+  <div class="flex justify-between items-center pt-2">
+    <% if expense.persisted? %>
+      <%= link_to "Cancelar", expenses_path, class: "text-gray-600 hover:underline text-sm" %>
+    <% else %>
+      <button type="button" @click="open = false" class="text-gray-600 hover:underline text-sm">Cancelar</button>
+    <% end %>
+    <%= f.submit expense.persisted? ? "Actualizar" : "Registrar Gasto",
+                 class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium" %>
+  </div>
+<% end %>
+
+<script>
+  (function () {
+    const display = document.getElementById('standalone_amount_display');
+    const raw = document.getElementById('standalone_amount_raw');
+    if (!display || !raw) return;
+
+    display.addEventListener('input', function () {
+      const digits = this.value.replace(/\D/g, '');
+      this.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      raw.value = digits;
+    });
+  })();
+</script>

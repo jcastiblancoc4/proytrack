@@ -1,0 +1,14 @@
+<div class="max-w-4xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+  <div class="md:col-span-1 bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+    <h2 class="text-lg font-semibold text-blue-800 mb-2">Nueva Cuenta</h2>
+    <p class="text-sm text-gray-700 leading-relaxed">
+      Registra una cuenta bancaria (ahorro o corriente) o una cuenta de efectivo
+      para llevar el control de tus movimientos.
+    </p>
+  </div>
+
+  <div class="md:col-span-2 bg-white border border-blue-100 rounded-xl p-6 shadow-md">
+    <h1 class="text-2xl font-bold text-blue-800 mb-6">Crear Cuenta</h1>
+    <%= render "form", account: @account %>
+  </div>
+</div>

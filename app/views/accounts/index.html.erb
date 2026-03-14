@@ -1,0 +1,66 @@
+<div class="max-w-5xl mx-auto px-4 mt-6" x-data="{ open: <%= @account&.errors&.any? ? 'true' : 'false' %> }">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Mis Cuentas</h1>
+    <button @click="open = true"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded">
+      Nueva Cuenta
+    </button>
+  </div>
+
+  <!-- Modal -->
+  <div x-show="open"
+       x-transition:enter="transition ease-out duration-200"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+       style="display: none;">
+    <div @click.outside="open = false"
+         class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-lg font-bold text-gray-900">Nueva Cuenta</h2>
+        <button @click="open = false" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <%= render "form", account: @account || Account.new %>
+    </div>
+  </div>
+
+  <% if @accounts.any? %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% @accounts.each do |account| %>
+        <%= link_to account_path(account), class: "block bg-white rounded-xl shadow hover:shadow-md transition p-5 border border-gray-100" do %>
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <%= t("enums.account.account_type.#{account.account_type}") %>
+              </p>
+              <h2 class="text-lg font-bold text-gray-800 mt-0.5"><%= account.name %></h2>
+              <% if account.bank_name.present? %>
+                <p class="text-sm text-gray-500"><%= account.bank_name %></p>
+              <% end %>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full <%= account.cash? ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700' %>">
+              <%= account.cash? ? "Efectivo" : "Bancaria" %>
+            </span>
+          </div>
+          <p class="text-xl font-bold <%= account.balance.negative? ? 'text-red-600' : 'text-green-700' %>">
+            <%= number_to_currency(account.balance, unit: "$", separator: ",", delimiter: ".") %> COP
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-center py-16 text-gray-500">
+      <p class="text-lg font-medium">No tienes cuentas registradas.</p>
+      <button @click="open = true" class="mt-4 inline-block text-blue-600 hover:underline text-sm">
+        Crear primera cuenta
+      </button>
+    </div>
+  <% end %>
+</div>

@@ -1,11 +1,16 @@
 class ExpensesController < ApplicationController
-  before_action :set_project
+  before_action :authenticate_user!
+  before_action :set_project, if: -> { params[:project_id].present? }
   before_action :set_expense, only: [:edit, :update, :destroy]
-  before_action :check_edit_permission, only: [:new, :create, :edit, :update, :destroy]
-  before_action :check_expense_liquidation_status, only: [:edit, :update, :destroy]
+  before_action :check_edit_permission, only: [:new, :create, :edit, :update, :destroy], if: -> { @project.present? }
+  before_action :check_expense_liquidation_status, only: [:edit, :update, :destroy], if: -> { @project.present? }
 
+  # Standalone index (no project context)
   def index
-    @expenses = @project.expenses
+    @expenses = current_user.expenses.order(created_at: :desc)
+    @third_parties = current_user.third_parties.order(:first_name.asc)
+    @accounts = current_user.accounts.order(created_at: :desc)
+    @projects = current_user.projects.in(execution_status_cd: [0, 1]).order(created_at: :desc)
   end
 
   def new
@@ -13,40 +18,81 @@ class ExpensesController < ApplicationController
   end
 
   def create
-    @expense = @project.expenses.build(expense_params)
-    @expense.user = current_user
-    if @expense.save
-      # Redireccionar según el origen
-      if params[:from] == 'home'
-        redirect_to root_path, notice: "Gasto registrado exitosamente."
+    if @project.present?
+      # Nested under project
+      @expense = @project.expenses.build(expense_params)
+      @expense.user = current_user
+      if @expense.save
+        if params[:from] == 'home'
+          redirect_to root_path, notice: "Gasto registrado exitosamente."
+        else
+          redirect_to project_path(@project), notice: "Gasto registrado exitosamente."
+        end
       else
-        redirect_to project_path(@project), notice: "Gasto registrado exitosamente."
+        render :new, alert: "No se pudo guardar el gasto."
       end
     else
-      render :new, alert: "No se pudo guardar el gasto."
+      # Standalone
+      @expense = Expense.new(expense_params.except(:project_id))
+      @expense.user = current_user
+
+      project_id = expense_params[:project_id]
+      if project_id.present?
+        project = current_user.projects.find(project_id) rescue nil
+        @expense.project = project
+      end
+
+      if @expense.save
+        redirect_to expenses_path, notice: "Gasto registrado exitosamente."
+      else
+        @third_parties = current_user.third_parties.order(:first_name.asc)
+        @accounts = current_user.accounts.order(created_at: :desc)
+        @projects = current_user.projects.in(execution_status_cd: [0, 1]).order(created_at: :desc)
+        @expenses = current_user.expenses.order(created_at: :desc)
+        render :index, status: :unprocessable_entity
+      end
     end
   end
 
   def edit
+    unless @project.present?
+      @third_parties = current_user.third_parties.order(:first_name.asc)
+      @accounts = current_user.accounts.order(created_at: :desc)
+      @projects = current_user.projects.in(execution_status_cd: [0, 1]).order(created_at: :desc)
+    end
   end
 
   def update
     @expense.user = current_user if @expense.user.nil?
-    if @expense.update(expense_params)
-      # Redireccionar según el origen
-      if params[:from] == 'home'
-        redirect_to root_path, notice: "Gasto actualizado exitosamente."
+    if @expense.update(expense_params.except(:project_id))
+      if @project.present?
+        if params[:from] == 'home'
+          redirect_to root_path, notice: "Gasto actualizado exitosamente."
+        else
+          redirect_to project_path(@project), notice: "Gasto actualizado exitosamente."
+        end
       else
-        redirect_to project_path(@project), notice: "Gasto actualizado exitosamente."
+        redirect_to expenses_path, notice: "Gasto actualizado exitosamente."
       end
     else
-      render :edit, alert: "No se pudo actualizar el gasto."
+      if @project.present?
+        render :edit, alert: "No se pudo actualizar el gasto."
+      else
+        @third_parties = current_user.third_parties.order(:first_name.asc)
+        @accounts = current_user.accounts.order(created_at: :desc)
+        @projects = current_user.projects.in(execution_status_cd: [0, 1]).order(created_at: :desc)
+        render :edit, status: :unprocessable_entity
+      end
     end
   end
 
   def destroy
     @expense.destroy
-    redirect_to project_path(@project), notice: "Gasto eliminado exitosamente."
+    if @project.present?
+      redirect_to project_path(@project), notice: "Gasto eliminado exitosamente."
+    else
+      redirect_to expenses_path, notice: "Gasto eliminado exitosamente.", status: :see_other
+    end
   end
 
   private
@@ -56,7 +102,14 @@ class ExpensesController < ApplicationController
   end
 
   def set_expense
-    @expense = @project.expenses.find(params[:id])
+    if @project.present?
+      @expense = @project.expenses.find(params[:id])
+    else
+      @expense = current_user.expenses.find(params[:id])
+    end
+  rescue Mongoid::Errors::DocumentNotFound
+    flash[:alert] = "No se encontró el gasto."
+    redirect_to expenses_path
   end
 
   def check_edit_permission
@@ -78,6 +131,6 @@ class ExpensesController < ApplicationController
   end
 
   def expense_params
-    params.require(:expense).permit(:description, :amount, :expense_type, :expense_date)
+    params.require(:expense).permit(:description, :amount, :expense_type, :expense_date, :project_id, :third_party_id, :account_id)
   end
 end
