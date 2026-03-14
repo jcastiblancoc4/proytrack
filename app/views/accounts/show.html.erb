@@ -101,50 +101,117 @@
     </div>
 
     <% if @transactions.any? %>
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-          <tr>
-            <th class="px-4 py-3 text-left">Fecha</th>
-            <th class="px-4 py-3 text-left">Descripción</th>
-            <th class="px-4 py-3 text-left">Tipo</th>
-            <th class="px-4 py-3 text-right">Valor</th>
-            <th class="px-4 py-3 text-center">Acción</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          <% @transactions.each do |tx| %>
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
-                <%= tx.transaction_date&.strftime("%d/%m/%Y") || "-" %>
-              </td>
-              <td class="px-4 py-3 text-gray-800"><%= tx.description %></td>
-              <td class="px-4 py-3">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                  <%= tx.income? ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
-                  <%= t("enums.transaction.transaction_type.#{tx.transaction_type}") %>
-                </span>
-              </td>
-              <td class="px-4 py-3 text-right font-semibold <%= tx.income? ? 'text-green-700' : 'text-red-600' %>">
-                <%= tx.income? ? "+" : "-" %>
-                <%= number_to_currency(tx.amount, unit: "$", separator: ",", delimiter: ".") %>
-              </td>
-              <td class="px-4 py-3 text-center">
-                <div class="flex justify-center items-center gap-3">
-                  <% if tx.expense_id.present? %>
-                    <%= link_to "Ver gasto", edit_expense_path(tx.expense),
-                                class: "text-xs text-blue-600 hover:underline" %>
-                  <% end %>
-                  <%= button_to "Eliminar",
-                                account_transaction_path(@account, tx),
-                                method: :delete,
-                                class: "text-xs text-red-600 hover:underline bg-transparent border-0 cursor-pointer",
-                                form: { onsubmit: "return confirm('¿Eliminar esta transacción? El saldo se ajustará automáticamente.')" } %>
-                </div>
-              </td>
+      <!-- Tabla (escritorio) -->
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+            <tr>
+              <th class="px-4 py-3 text-left">Fecha</th>
+              <th class="px-4 py-3 text-left">Descripción</th>
+              <th class="px-4 py-3 text-left">Tipo</th>
+              <th class="px-4 py-3 text-right">Valor</th>
+              <th class="px-4 py-3 text-center">Acción</th>
             </tr>
-          <% end %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% @transactions.each do |tx| %>
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                  <%= tx.transaction_date&.strftime("%d/%m/%Y") || "-" %>
+                </td>
+                <td class="px-4 py-3 text-gray-800"><%= tx.description %></td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                    <%= tx.income? ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                    <%= t("enums.transaction.transaction_type.#{tx.transaction_type}") %>
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right font-semibold <%= tx.income? ? 'text-green-700' : 'text-red-600' %>">
+                  <%= tx.income? ? "+" : "-" %>
+                  <%= number_to_currency(tx.amount, unit: "$", separator: ",", delimiter: ".") %>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <div class="flex justify-center items-center gap-3">
+                    <% if tx.expense_id.present? %>
+                      <%= link_to "Ver gasto", edit_expense_path(tx.expense),
+                                  class: "text-xs text-blue-600 hover:underline" %>
+                      <span class="text-xs text-gray-400">Vinculado a gasto</span>
+                    <% else %>
+                      <%= button_to "Eliminar",
+                                    account_transaction_path(@account, tx),
+                                    method: :delete,
+                                    class: "text-xs text-red-600 hover:underline bg-transparent border-0 cursor-pointer",
+                                    form: { onsubmit: "return confirm('¿Eliminar esta transacción? El saldo se ajustará automáticamente.')" } %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tarjetas (móvil) -->
+      <div class="sm:hidden divide-y divide-gray-100">
+        <% @transactions.each do |tx| %>
+          <div class="px-4 py-4 hover:bg-gray-50 transition-colors">
+            <!-- Franja de color izquierda + contenido -->
+            <div class="flex items-stretch gap-3">
+              <!-- Indicador visual de tipo -->
+              <div class="w-1 rounded-full flex-shrink-0 <%= tx.income? ? 'bg-green-400' : 'bg-red-400' %>"></div>
+
+              <div class="flex-1 min-w-0">
+                <!-- Fila 1: descripción + monto -->
+                <div class="flex justify-between items-start gap-2">
+                  <p class="text-sm font-semibold text-gray-800 leading-snug">
+                    <%= tx.description.presence || "Sin descripción" %>
+                  </p>
+                  <p class="text-base font-bold flex-shrink-0 <%= tx.income? ? 'text-green-700' : 'text-red-600' %>">
+                    <%= tx.income? ? "+" : "−" %><%= number_to_currency(tx.amount, unit: "$", separator: ",", delimiter: ".") %>
+                  </p>
+                </div>
+
+                <!-- Fila 2: fecha + badge de tipo -->
+                <div class="flex items-center gap-2 mt-1.5">
+                  <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span class="text-xs text-gray-500"><%= tx.transaction_date&.strftime("%d/%m/%Y") || "-" %></span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                    <%= tx.income? ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' %>">
+                    <%= t("enums.transaction.transaction_type.#{tx.transaction_type}") %>
+                  </span>
+                </div>
+
+                <!-- Fila 3: acciones -->
+                <div class="flex items-center gap-3 mt-2.5">
+                  <% if tx.expense_id.present? %>
+                    <%= link_to edit_expense_path(tx.expense),
+                                class: "inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full transition-colors" do %>
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                      Ver gasto
+                    <% end %>
+                    <span class="inline-flex items-center text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Vinculado a gasto</span>
+                  <% else %>
+                    <%= button_to account_transaction_path(@account, tx),
+                                  method: :delete,
+                                  class: "inline-flex items-center gap-1 text-xs text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-full transition-colors border-0 cursor-pointer",
+                                  form: { onsubmit: "return confirm('¿Eliminar esta transacción? El saldo se ajustará automáticamente.')" } do %>
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                      Eliminar
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
     <% else %>
       <p class="text-center text-gray-500 py-10 text-sm">No hay movimientos registrados.</p>
     <% end %>

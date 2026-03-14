@@ -35,6 +35,7 @@ class User
   has_many :shared_by_me_projects, class_name: 'SharedProject', foreign_key: 'shared_by_id', inverse_of: :shared_by, dependent: :destroy
   has_many :accounts, dependent: :destroy
   has_many :third_parties, dependent: :destroy
+  has_many :expense_categories, dependent: :destroy
   has_many :settlements, dependent: :destroy
   has_many :shared_settlements, dependent: :destroy, inverse_of: :user
   has_many :shared_by_me_settlements, class_name: 'SharedSettlement', foreign_key: 'shared_by_id', inverse_of: :shared_by, dependent: :destroy

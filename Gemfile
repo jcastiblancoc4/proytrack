@@ -20,6 +20,8 @@ gem 'dotenv-rails'
 gem 'money-rails'
 gem 'simple_enum', '~> 2.3.0', require: 'simple_enum/mongoid'
 gem 'devise'
+gem 'caxlsx'
+gem 'caxlsx_rails'
 gem "importmap-rails"
 
 # Use Redis adapter to run Action Cable in production

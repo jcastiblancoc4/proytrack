@@ -38,10 +38,10 @@
         </div>
 
         <div>
-          <%= f.label :expense_type, "Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= f.select :expense_type,
-                       Expense.expense_types.map { |k, _| [t("enums.expense.expense_type.#{k}"), k] },
-                       {},
+          <%= f.label :expense_category_id, "Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.select :expense_category_id,
+                       @expense_categories.map { |c| [c.name, c.id.to_s] },
+                       { include_blank: "Seleccionar tipo...", selected: @expense.expense_category_id&.to_s },
                        class: "w-full border border-gray-300 rounded px-3 py-2" %>
         </div>
 

@@ -61,12 +61,14 @@
                        [["Cédula", "cedula"], ["NIT", "nit"], ["Pasaporte", "pasaporte"]],
                        { include_blank: "Seleccionar..." },
                        class: "w-full border border-gray-300 rounded px-3 py-2",
-                       id: "doc_type_person" %>
+                       id: "doc_type_person",
+                       "x-bind:disabled": "partyType !== 'person'" %>
         </div>
         <div x-show="partyType === 'company'" style="display:none">
           <input type="text" value="NIT" disabled
                  class="w-full border border-gray-200 rounded px-3 py-2 bg-gray-50 text-gray-500">
-          <input type="hidden" name="third_party[document_type]" value="nit" id="doc_type_company">
+          <input type="hidden" name="third_party[document_type]" value="nit" id="doc_type_company"
+                 x-bind:disabled="partyType !== 'company'">
         </div>
       </div>
       <div>

@@ -286,10 +286,10 @@
               <%= f.hidden_field :amount, id: "project_expense_amount_raw" %>
             </div>
             <div>
-              <%= f.label :expense_type, "Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.select :expense_type,
-                           Expense.expense_types.map { |k, _| [t("enums.expense.expense_type.#{k}"), k] },
-                           {},
+              <%= f.label :expense_category_id, "Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+              <%= f.select :expense_category_id,
+                           @expense_categories.map { |c| [c.name, c.id.to_s] },
+                           { include_blank: "Seleccionar tipo..." },
                            class: "w-full border border-gray-300 rounded px-3 py-2" %>
             </div>
             <div>
@@ -394,17 +394,20 @@
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Gasto</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Gasto</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Liquidación</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="bg-white divide-y divide-gray-200" x-data="{ editingId: null }">
                 <% @project.expenses.each do |expense| %>
                   <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <%= expense.expense_date&.strftime("%d/%m/%Y") || "N/A" %>
+                    </td>
                     <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs">
                       <div class="break-words">
                         <%= expense.description %>
@@ -412,14 +415,11 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        <%= t("enums.expense.expense_type.#{expense.expense_type}") %>
+                        <%= expense.expense_category&.name || "-" %>
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <%= number_to_currency(expense.amount, unit: "$", separator: ",", delimiter: ".") %> COP
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <%= expense.expense_date&.strftime("%d/%m/%Y") || "N/A" %>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= expense.status == 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-purple-100 text-purple-800' %>">
@@ -429,7 +429,11 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <% if @can_edit && !@project.in_liquidation? && !expense.in_liquidation? %>
                         <% if expense.persisted? %>
-                          <%= link_to "Editar", edit_project_expense_path(@project, expense, from: 'show'), class: "text-blue-600 hover:text-blue-900 mr-3" %>
+                          <button type="button"
+                                  @click="editingId = editingId === '<%= expense.id %>' ? null : '<%= expense.id %>'"
+                                  class="text-blue-600 hover:text-blue-900 mr-3">
+                            Editar
+                          </button>
                           <a href="#"
                              onclick="if(confirm('¿Estás seguro de eliminar este gasto?')) { document.getElementById('delete-expense-<%= expense.id %>').submit(); }"
                              class="text-red-600 hover:text-red-900">
@@ -445,6 +449,101 @@
                       <% else %>
                         <span class="text-gray-400">Solo lectura</span>
                       <% end %>
+                    </td>
+                  </tr>
+                  <!-- Fila de edición inline -->
+                  <tr x-show="editingId === '<%= expense.id %>'" style="display:none;">
+                    <td colspan="6" class="px-0 py-0">
+                      <div class="bg-blue-50 border-t border-b border-blue-100 px-6 py-5">
+                        <h3 class="text-sm font-semibold text-blue-800 mb-4">Editar Gasto</h3>
+                        <%= form_with model: [@project, expense], local: true, class: "space-y-4" do |f| %>
+                          <%= hidden_field_tag :from, 'show' %>
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                              <%= f.label :description, "Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                              <%= f.text_area :description,
+                                              class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 resize-none",
+                                              rows: 2,
+                                              placeholder: "Describe el gasto realizado..." %>
+                            </div>
+                            <div>
+                              <%= f.label :amount, "Valor (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                              <input type="text"
+                                     data-amount-raw="edit_amount_raw_<%= expense.id %>"
+                                     placeholder="0"
+                                     inputmode="numeric"
+                                     autocomplete="off"
+                                     value="<%= number_with_delimiter(expense.amount.to_i, delimiter: '.') %>"
+                                     class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+                              <%= f.hidden_field :amount, id: "edit_amount_raw_#{expense.id}", value: expense.amount.to_i %>
+                            </div>
+                            <div>
+                              <%= f.label :expense_category_id, "Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                              <%= f.select :expense_category_id,
+                                           @expense_categories.map { |c| [c.name, c.id.to_s] },
+                                           { include_blank: "Seleccionar tipo...", selected: expense.expense_category_id&.to_s },
+                                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
+                            </div>
+                            <div>
+                              <%= f.label :expense_date, "Fecha del Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                              <%= f.date_field :expense_date,
+                                               value: expense.expense_date&.strftime("%Y-%m-%d"),
+                                               class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+                            </div>
+                            <!-- Tercero (opcional) -->
+                            <div x-data="{
+                              open: false,
+                              search: '<%= j expense.third_party&.full_name.to_s %>',
+                              selected: '<%= expense.third_party_id&.to_s %>',
+                              thirdParties: <%= @third_parties.map { |tp| { id: tp.id.to_s, name: tp.full_name } }.to_json %>,
+                              get filtered() {
+                                if (!this.search) return this.thirdParties;
+                                const q = this.search.toLowerCase();
+                                return this.thirdParties.filter(tp => tp.name.toLowerCase().includes(q));
+                              },
+                              selectParty(id, name) { this.selected = id; this.search = name; this.open = false; },
+                              clear() { this.selected = ''; this.search = ''; }
+                            }">
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Tercero (opcional)</label>
+                              <div class="relative">
+                                <input type="text"
+                                       x-model="search"
+                                       @focus="open = true"
+                                       @click.outside="open = false"
+                                       placeholder="Buscar tercero..."
+                                       autocomplete="off"
+                                       class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+                                <input type="hidden" name="expense[third_party_id]" :value="selected">
+                                <div x-show="open && search.length > 0"
+                                     class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto"
+                                     style="display:none;">
+                                  <template x-for="tp in filtered" :key="tp.id">
+                                    <div @click="selectParty(tp.id, tp.name)"
+                                         class="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 text-gray-800"
+                                         x-text="tp.name"></div>
+                                  </template>
+                                  <template x-if="filtered.length === 0">
+                                    <div class="px-3 py-2 text-sm text-gray-500">No encontrado.</div>
+                                  </template>
+                                </div>
+                              </div>
+                              <button type="button" @click="clear()" class="mt-1 text-xs text-gray-500 hover:text-red-600 hover:underline">Limpiar</button>
+                            </div>
+                            <!-- Cuenta (opcional) -->
+                            <div>
+                              <%= f.label :account_id, "Cuenta (opcional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                              <%= f.select :account_id,
+                                           @accounts.map { |a| [a.name, a.id.to_s] },
+                                           { include_blank: "Sin cuenta", selected: expense.account_id&.to_s },
+                                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
+                            </div>
+                          </div>
+                          <div class="flex justify-between items-center pt-2">
+                            <button type="button" @click="editingId = null" class="text-gray-600 hover:underline text-sm">Cancelar</button>
+                            <%= f.submit "Actualizar Gasto", class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium" %>
+                          </div>
+                        <% end %>
+                      </div>
                     </td>
                   </tr>
                 <% end %>
@@ -478,6 +577,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 raw.value = digits;
             });
         }
+    });
+
+    // Formateo de monto para formularios de edición inline
+    document.addEventListener("input", function (e) {
+        const rawId = e.target.dataset.amountRaw;
+        if (!rawId) return;
+        const digits = e.target.value.replace(/\D/g, "");
+        e.target.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        const rawField = document.getElementById(rawId);
+        if (rawField) rawField.value = digits;
     });
 
     // Función para alternar el acordeón de gastos

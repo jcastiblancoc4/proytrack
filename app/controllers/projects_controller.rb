@@ -21,6 +21,7 @@ class ProjectsController < ApplicationController
     @can_share = @project.user == current_user
     @third_parties = current_user.third_parties.order(:first_name.asc)
     @accounts = current_user.accounts.order(created_at: :desc)
+    @expense_categories = current_user.expense_categories.order(name: :asc)
   end
 
   # GET /projects/new

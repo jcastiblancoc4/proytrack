@@ -20,10 +20,43 @@ class Transaction
   validates :description,      presence: { message: "La descripción es obligatoria" }
   validates :transaction_date, presence: { message: "La fecha es obligatoria" }
 
+  validate :account_has_sufficient_funds, if: -> { new_record? && transaction_type_cd == 1 && account.present? && amount.present? }
+
   after_create  :apply_to_balance
   after_destroy :revert_from_balance
+  before_update :capture_old_amount
+  after_update  :adjust_balance_on_amount_change
 
   private
+
+  def account_has_sufficient_funds
+    return unless account && amount
+
+    balance = account.reload.balance
+
+    if balance.to_i < amount.to_i
+      saldo = ActionController::Base.helpers.number_to_currency(
+        balance.to_i, unit: "$", separator: ",", delimiter: ".", precision: 0
+      )
+      errors.add(:base, "La cuenta \"#{account.name}\" no tiene fondos suficientes. Saldo disponible: #{saldo}")
+    end
+  end
+
+  def capture_old_amount
+    return unless amount_changed?
+    raw = amount_was
+    @old_amount = raw.is_a?(Hash) ? Money.new(raw["cents"], raw["currency_iso"]) : raw
+  end
+
+  def adjust_balance_on_amount_change
+    return unless @old_amount
+    account.reload
+    if transaction_type_cd == 1 # expense
+      account.set(balance: account.balance + @old_amount - amount)
+    else
+      account.set(balance: account.balance - @old_amount + amount)
+    end
+  end
 
   def apply_to_balance
     account.reload

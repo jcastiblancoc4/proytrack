@@ -19,8 +19,12 @@ class TransactionsController < ApplicationController
 
   def destroy
     @transaction = @account.transactions.find(params[:id])
-    @transaction.destroy
-    redirect_to @account, notice: "Transacción eliminada exitosamente.", status: :see_other
+    if @transaction.expense_id.present?
+      redirect_to @account, alert: "No se puede eliminar un movimiento asociado a un gasto. Elimina el gasto directamente.", status: :see_other
+    else
+      @transaction.destroy
+      redirect_to @account, notice: "Transacción eliminada exitosamente.", status: :see_other
+    end
   end
 
   private

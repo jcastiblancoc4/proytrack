@@ -10,8 +10,12 @@
   </div>
 
   <div class="mb-4">
-    <%= f.label :expense_type, "Tipo de Gasto", class: "block text-sm font-medium" %>
-    <%= f.select :expense_type, Expense.expense_types.map { |k, _| [k.humanize, k] }, {}, class: "w-full p-2 border rounded" %>
+    <%= f.label :expense_category_id, "Tipo de Gasto", class: "block text-sm font-medium" %>
+    <% categories = current_user.expense_categories.order(name: :asc) %>
+    <%= f.select :expense_category_id,
+                 categories.map { |c| [c.name, c.id.to_s] },
+                 { include_blank: "Seleccionar tipo...", selected: @expense&.expense_category_id&.to_s },
+                 class: "w-full p-2 border rounded" %>
   </div>
 
   <div class="flex gap-4">

@@ -15,7 +15,12 @@ Rails.application.routes.draw do
     resources :transactions, only: [:new, :create, :destroy]
   end
 
-  resources :expenses, only: [:index, :create, :edit, :update, :destroy]
+  resources :expenses, only: [:index, :create, :edit, :update, :destroy] do
+    collection do
+      get :export
+    end
+  end
+  resources :expense_categories, only: [:create, :update, :destroy]
 
   resources :third_parties, only: [:index, :create, :edit, :update, :destroy]
 
