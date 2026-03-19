@@ -1,28 +1,69 @@
 <div class="min-h-screen flex">
 
   <!-- Panel izquierdo: branding MC Ingenieros (solo desktop) -->
-  <div class="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white relative overflow-hidden"
-       style="background: linear-gradient(150deg, #0f3d22 0%, #1a6b3a 50%, #22c15e 100%)">
+  <div class="hidden lg:flex lg:w-1/2 flex-col justify-center gap-10 p-14 text-white relative overflow-hidden"
+       style="background: linear-gradient(150deg, #0f3d22 0%, #1a6b3a 55%, #22c15e 100%)">
 
     <!-- Círculos decorativos de fondo -->
     <div class="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10"
          style="background: radial-gradient(circle, #ffffff, transparent); transform: translate(30%, -30%)"></div>
-    <div class="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10"
+    <div class="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-10"
          style="background: radial-gradient(circle, #ffffff, transparent); transform: translate(-30%, 30%)"></div>
+    <div class="absolute top-1/2 right-0 w-48 h-48 rounded-full opacity-5"
+         style="background: radial-gradient(circle, #ffffff, transparent); transform: translate(40%, -50%)"></div>
 
-    <!-- Logo + nombre empresa -->
+    <!-- Logo -->
     <div class="relative z-10">
       <%= image_tag "mc_ingenieros_logo.png",
             alt: "MC Ingenieros SAS",
-            class: "h-16 w-auto mb-10 brightness-0 invert" %>
+            class: "h-14 w-auto brightness-0 invert" %>
+    </div>
 
-      <h2 class="text-4xl font-bold leading-tight mb-4">
+    <!-- Título + descripción -->
+    <div class="relative z-10">
+      <h2 class="text-4xl font-bold leading-tight mb-3">
         Gestión inteligente<br>de tus proyectos
       </h2>
-      <p class="text-white/70 text-lg leading-relaxed">
-        Control total sobre proyectos, gastos y equipos.<br>
-        Todo en un solo lugar.
+      <p class="text-white/65 text-base leading-relaxed">
+        La plataforma interna de MC Ingenieros para controlar proyectos, gastos y equipos desde un solo lugar.
       </p>
+    </div>
+
+    <!-- Características -->
+    <div class="relative z-10 space-y-4">
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(255,255,255,0.15)">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-sm">Seguimiento de proyectos</p>
+          <p class="text-white/60 text-xs mt-0.5">Monitorea el avance, estado y presupuesto de cada proyecto</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(255,255,255,0.15)">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-sm">Control de gastos</p>
+          <p class="text-white/60 text-xs mt-0.5">Registra y categoriza cada gasto por proyecto y cuenta</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(255,255,255,0.15)">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-sm">Gestión de cuentas</p>
+          <p class="text-white/60 text-xs mt-0.5">Cuentas bancarias, efectivo y tarjetas de crédito en un lugar</p>
+        </div>
+      </div>
     </div>
 
     <!-- Stats empresa -->
