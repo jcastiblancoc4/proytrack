@@ -4,8 +4,24 @@ class ProjectsController < ApplicationController
 
   # GET /projects or /projects.json
   def index
-    # Incluir proyectos propios y proyectos compartidos
-    @projects = current_user.projects + current_user.shared_with_me_projects
+    own_projects = Project.where(user: current_user).to_a
+    shared_projects = current_user.shared_with_me_projects.to_a
+    all_projects = own_projects + shared_projects
+
+    if params[:execution_status].present?
+      selected_statuses = Array(params[:execution_status]).reject(&:blank?)
+      if selected_statuses.any? && !selected_statuses.include?('todos')
+        all_projects = all_projects.select { |project| selected_statuses.include?(project.execution_status.to_s) }
+      end
+      @selected_statuses = selected_statuses.include?('todos') ? ['todos'] : selected_statuses
+    else
+      @selected_statuses = ['todos']
+    end
+
+    @projects = all_projects.sort_by do |project|
+      last_expense_date = project.expenses.max_by(&:updated_at)&.updated_at
+      [project.updated_at, last_expense_date].compact.max
+    end.reverse
   end
 
   # GET /projects/1 or /projects/1.json

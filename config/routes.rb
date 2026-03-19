@@ -3,7 +3,7 @@ Rails.application.routes.draw do
 
   devise_for :users
 
-  resources :projects, only: [:show, :new, :create, :edit, :update, :destroy] do
+  resources :projects, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
     member do
       patch :update_status
     end

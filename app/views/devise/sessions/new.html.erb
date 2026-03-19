@@ -1,7 +1,7 @@
 <div class="min-h-screen flex">
 
   <!-- Panel izquierdo: branding MC Ingenieros (solo desktop) -->
-  <div class="hidden lg:flex lg:w-1/2 flex-col items-center justify-center gap-8 py-10 px-14 text-white relative overflow-hidden"
+  <div class="hidden lg:flex lg:w-1/2 flex-col justify-center gap-8 py-10 px-14 text-white relative overflow-hidden"
        style="background: linear-gradient(150deg, #0f3d22 0%, #1a6b3a 55%, #22c15e 100%)">
 
     <!-- Círculos decorativos de fondo -->
@@ -13,14 +13,14 @@
          style="background: radial-gradient(circle, #ffffff, transparent); transform: translate(40%, -50%)"></div>
 
     <!-- Logo -->
-    <div class="relative z-10 w-full text-center">
+    <div class="relative z-10">
       <%= image_tag "mc_ingenieros_logo.png",
             alt: "MC Ingenieros SAS",
-            class: "h-20 w-auto brightness-0 invert mx-auto" %>
+            class: "h-20 w-auto brightness-0 invert" %>
     </div>
 
     <!-- Título + descripción -->
-    <div class="relative z-10 w-full text-center">
+    <div class="relative z-10">
       <h2 class="text-4xl font-bold leading-tight mb-3">
         Gestión inteligente<br>de tus proyectos
       </h2>
@@ -30,7 +30,7 @@
     </div>
 
     <!-- Características -->
-    <div class="relative z-10 w-full space-y-4">
+    <div class="relative z-10 space-y-4">
       <div class="flex items-start gap-4">
         <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(255,255,255,0.15)">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +67,7 @@
     </div>
 
     <!-- Stats empresa -->
-    <div class="relative z-10 w-full grid grid-cols-2 gap-4">
+    <div class="relative z-10 grid grid-cols-2 gap-4">
       <div class="rounded-2xl p-5" style="background: rgba(255,255,255,0.12)">
         <p class="text-4xl font-extrabold">120<span class="text-2xl">+</span></p>
         <p class="text-sm text-white/70 mt-1">Toneladas gestionadas</p>

@@ -2,35 +2,48 @@ class HomeController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    # Incluir proyectos propios y proyectos compartidos
-    own_projects = Project.where(user: current_user).to_a
-    shared_projects = current_user.shared_with_me_projects.to_a
+    # Proyectos activos (pendiente + ejecutando)
+    @active_projects = current_user.projects
+                                   .in(execution_status_cd: [0, 1])
+                                   .order(updated_at: :desc)
+                                   .limit(5)
+    @active_projects_count = current_user.projects.in(execution_status_cd: [0, 1]).count
+    @total_projects_count  = current_user.projects.count
 
-    # Combinar proyectos
-    all_projects = own_projects + shared_projects
+    # Cuentas
+    @accounts = current_user.accounts.order(created_at: :desc)
+    @total_balance = @accounts.select { |a| a.account_type.to_s != "credit" }
+                               .sum { |a| a.balance.to_i }
 
-    # Filtrar por estado de ejecución si se especificó
-    # Ahora soporta múltiples estados
-    if params[:execution_status].present?
-      # Convertir a array si viene como string o ya es array
-      selected_statuses = Array(params[:execution_status]).reject(&:blank?)
+    # Últimos gastos
+    @recent_expenses = current_user.expenses
+                                   .order(expense_date: :desc, created_at: :desc)
+                                   .limit(6)
 
-      # Filtrar solo si hay estados seleccionados y no incluye 'todos'
-      if selected_statuses.any? && !selected_statuses.include?('todos')
-        all_projects = all_projects.select { |project| selected_statuses.include?(project.execution_status.to_s) }
-      end
+    # Total gastos del mes actual
+    @monthly_expenses_total = current_user.expenses
+                                          .where(:expense_date.gte => Date.current.beginning_of_month,
+                                                 :expense_date.lte => Date.current.end_of_month)
+                                          .sum { |e| e.amount.to_i }
 
-      @selected_statuses = selected_statuses.include?('todos') ? ['todos'] : selected_statuses
-    else
-      @selected_statuses = ['todos']
-    end
+    # Preliquidación del mes actual
+    start_date = Date.current.beginning_of_month
+    end_date   = Date.current.end_of_month
 
-    # Ordenar por última actualización
-    @projects = all_projects.sort_by do |project|
-      last_expense_date = project.expenses.max_by(&:updated_at)&.updated_at
-      [project.updated_at, last_expense_date].compact.max
-    end.reverse
+    preliq_projects = Project.where(
+      user: current_user,
+      :settlement_date.gte => start_date,
+      :settlement_date.lte => end_date,
+      execution_status_cd: 4
+    )
+    preliq_expenses = Expense.where(
+      user: current_user,
+      :expense_date.gte => start_date,
+      :expense_date.lte => end_date,
+      status_cd: 0
+    )
+    @preliq_projects_value = preliq_projects.sum { |p| p.quoted_value.to_i }
+    @preliq_expenses_value = preliq_expenses.sum { |e| e.amount.to_i }
+    @preliq_difference     = @preliq_projects_value - @preliq_expenses_value
   end
-
-
 end
