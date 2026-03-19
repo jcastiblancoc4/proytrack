@@ -32,13 +32,23 @@ class Transaction
   def account_has_sufficient_funds
     return unless account && amount
 
-    balance = account.reload.balance
+    acct = account.reload
 
-    if balance.to_i < amount.to_i
-      saldo = ActionController::Base.helpers.number_to_currency(
-        balance.to_i, unit: "$", separator: ",", delimiter: ".", precision: 0
-      )
-      errors.add(:base, "La cuenta \"#{account.name}\" no tiene fondos suficientes. Saldo disponible: #{saldo}")
+    if acct.account_type.to_s == "credit"
+      disponible = acct.credit_limit - acct.balance
+      if disponible.to_i < amount.to_i
+        disponible_str = ActionController::Base.helpers.number_to_currency(
+          disponible.to_i, unit: "$", separator: ",", delimiter: ".", precision: 0
+        )
+        errors.add(:base, "La tarjeta \"#{acct.name}\" no tiene cupo disponible suficiente. Disponible: #{disponible_str}")
+      end
+    else
+      if acct.balance.to_i < amount.to_i
+        saldo = ActionController::Base.helpers.number_to_currency(
+          acct.balance.to_i, unit: "$", separator: ",", delimiter: ".", precision: 0
+        )
+        errors.add(:base, "La cuenta \"#{acct.name}\" no tiene fondos suficientes. Saldo disponible: #{saldo}")
+      end
     end
   end
 
@@ -50,23 +60,39 @@ class Transaction
 
   def adjust_balance_on_amount_change
     return unless @old_amount
-    account.reload
-    if transaction_type_cd == 1 # expense
-      account.set(balance: account.balance + @old_amount - amount)
+    acct = account.reload
+    if account.account_type.to_s == "credit"
+      if transaction_type_cd == 1 # compra: sube deuda
+        acct.set(balance: acct.balance - @old_amount + amount)
+      else # pago: baja deuda
+        acct.set(balance: acct.balance + @old_amount - amount)
+      end
     else
-      account.set(balance: account.balance - @old_amount + amount)
+      if transaction_type_cd == 1 # egreso
+        acct.set(balance: acct.balance + @old_amount - amount)
+      else
+        acct.set(balance: acct.balance - @old_amount + amount)
+      end
     end
   end
 
   def apply_to_balance
-    account.reload
-    new_balance = income? ? account.balance + amount : account.balance - amount
-    account.set(balance: new_balance)
+    acct = account.reload
+    if account.account_type.to_s == "credit" # pago reduce deuda, compra aumenta deuda
+      new_balance = income? ? acct.balance - amount : acct.balance + amount
+    else
+      new_balance = income? ? acct.balance + amount : acct.balance - amount
+    end
+    acct.set(balance: new_balance)
   end
 
   def revert_from_balance
-    account.reload
-    new_balance = income? ? account.balance - amount : account.balance + amount
-    account.set(balance: new_balance)
+    acct = account.reload
+    if account.account_type.to_s == "credit"
+      new_balance = income? ? acct.balance + amount : acct.balance - amount
+    else
+      new_balance = income? ? acct.balance - amount : acct.balance + amount
+    end
+    acct.set(balance: new_balance)
   end
 end

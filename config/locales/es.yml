@@ -105,6 +105,10 @@ es:
         savings:  "Ahorro"
         checking: "Corriente"
         cash:     "Efectivo"
+        credit:   "Crédito"
+      credit_subtype:
+        credit_card: "Tarjeta de Crédito"
+        revolving:   "Crédito Rotativo"
     transaction:
       transaction_type:
         income:  "Ingreso"

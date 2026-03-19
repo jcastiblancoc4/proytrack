@@ -39,19 +39,37 @@
             <div>
               <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <%= t("enums.account.account_type.#{account.account_type}") %>
+                <% if account.credit? %>
+                  · <%= t("enums.account.credit_subtype.#{account.credit_subtype}") %>
+                <% end %>
               </p>
               <h2 class="text-lg font-bold text-gray-800 mt-0.5"><%= account.name %></h2>
               <% if account.bank_name.present? %>
                 <p class="text-sm text-gray-500"><%= account.bank_name %></p>
               <% end %>
             </div>
-            <span class="text-xs px-2 py-1 rounded-full <%= account.cash? ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700' %>">
-              <%= account.cash? ? "Efectivo" : "Bancaria" %>
-            </span>
+            <% if account.cash? %>
+              <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">Efectivo</span>
+            <% elsif account.credit? %>
+              <span class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">Crédito</span>
+            <% else %>
+              <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">Bancaria</span>
+            <% end %>
           </div>
-          <p class="text-xl font-bold <%= account.balance.negative? ? 'text-red-600' : 'text-green-700' %>">
-            <%= number_to_currency(account.balance, unit: "$", separator: ",", delimiter: ".") %> COP
-          </p>
+          <% if account.credit? %>
+            <p class="text-xs text-gray-500 mb-0.5">Deuda actual</p>
+            <p class="text-xl font-bold <%= account.balance.positive? ? 'text-red-600' : 'text-green-700' %>">
+              <%= number_to_currency(account.balance, unit: "$", separator: ",", delimiter: ".") %> COP
+            </p>
+            <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+              <span>Cupo disponible: <span class="font-semibold text-gray-700"><%= number_to_currency(account.available_credit, unit: "$", separator: ",", delimiter: ".") %></span></span>
+              <span>Cupo total: <span class="font-semibold text-gray-700"><%= number_to_currency(account.credit_limit, unit: "$", separator: ",", delimiter: ".") %></span></span>
+            </div>
+          <% else %>
+            <p class="text-xl font-bold <%= account.balance.negative? ? 'text-red-600' : 'text-green-700' %>">
+              <%= number_to_currency(account.balance, unit: "$", separator: ",", delimiter: ".") %> COP
+            </p>
+          <% end %>
         <% end %>
       <% end %>
     </div>

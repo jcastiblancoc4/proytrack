@@ -44,13 +44,23 @@ class Expense
   def account_has_sufficient_funds
     return unless account && amount
 
-    balance = account.reload.balance
+    acct = account.reload
 
-    if balance.to_i < amount.to_i
-      saldo = ActionController::Base.helpers.number_to_currency(
-        balance.to_i, unit: "$", separator: ",", delimiter: ".", precision: 0
-      )
-      errors.add(:base, "La cuenta \"#{account.name}\" no tiene fondos suficientes. Saldo disponible: #{saldo}")
+    if acct.account_type.to_s == "credit"
+      disponible = acct.credit_limit - acct.balance
+      if disponible.to_i < amount.to_i
+        disponible_str = ActionController::Base.helpers.number_to_currency(
+          disponible.to_i, unit: "$", separator: ",", delimiter: ".", precision: 0
+        )
+        errors.add(:base, "La tarjeta \"#{acct.name}\" no tiene cupo disponible suficiente. Disponible: #{disponible_str}")
+      end
+    else
+      if acct.balance.to_i < amount.to_i
+        saldo = ActionController::Base.helpers.number_to_currency(
+          acct.balance.to_i, unit: "$", separator: ",", delimiter: ".", precision: 0
+        )
+        errors.add(:base, "La cuenta \"#{acct.name}\" no tiene fondos suficientes. Saldo disponible: #{saldo}")
+      end
     end
   end
 

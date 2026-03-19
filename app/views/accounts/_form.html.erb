@@ -12,7 +12,7 @@
   <div>
     <%= f.label :name, "Nombre de la cuenta", class: "block text-sm font-medium text-gray-700 mb-1" %>
     <%= f.text_field :name,
-                     placeholder: "Ej: Cuenta principal, Efectivo oficina",
+                     placeholder: "Ej: Cuenta principal, Tarjeta Visa",
                      class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
   </div>
 
@@ -23,18 +23,19 @@
                  {},
                  class: "w-full border border-gray-300 rounded px-3 py-2",
                  id: "account_account_type",
-                 onchange: "toggleBankField()" %>
+                 onchange: "toggleAccountFields()" %>
   </div>
 
+  <!-- Campos para cuentas bancarias y crédito -->
   <div id="bank-field" class="<%= account.requires_bank? ? '' : 'hidden' %>">
     <div class="mb-4">
-      <%= f.label :bank_name, "Banco", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :bank_name, "Banco / Entidad", class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.select :bank_name,
                    [["Selecciona un banco", ""]] + Account::BANKS.map { |b| [b, b] },
                    {},
                    class: "w-full border border-gray-300 rounded px-3 py-2" %>
     </div>
-    <div>
+    <div id="account-number-field">
       <%= f.label :account_number, "Número de cuenta", class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.text_field :account_number,
                        placeholder: "Ej: 1234567890",
@@ -42,9 +43,35 @@
     </div>
   </div>
 
+  <!-- Campos específicos de crédito -->
+  <div id="credit-fields" class="<%= account.credit? ? '' : 'hidden' %> space-y-4">
+    <div>
+      <%= f.label :credit_subtype, "Subtipo de crédito", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.select :credit_subtype,
+                   Account.credit_subtypes.map { |k, _| [t("enums.account.credit_subtype.#{k}"), k] },
+                   {},
+                   class: "w-full border border-gray-300 rounded px-3 py-2" %>
+    </div>
+    <div>
+      <%= f.label :credit_limit, "Cupo total (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <input type="text"
+             id="credit_limit_display"
+             placeholder="0"
+             inputmode="numeric"
+             autocomplete="off"
+             value="<%= account.credit_limit&.positive? ? number_to_currency(account.credit_limit, unit: '', separator: ',', delimiter: '.', precision: 0).strip : '' %>"
+             class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+      <%= f.hidden_field :credit_limit, id: "credit_limit_raw" %>
+      <p class="text-xs text-gray-500 mt-1">Cupo máximo aprobado de la tarjeta o crédito.</p>
+    </div>
+  </div>
+
   <% unless account.persisted? %>
     <div>
-      <%= f.label :initial_balance, "Saldo inicial (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <label class="block text-sm font-medium text-gray-700 mb-1" id="initial-balance-label">
+        <span id="label-regular">Saldo inicial (COP)</span>
+        <span id="label-credit" class="hidden">Deuda actual (COP)</span>
+      </label>
       <input type="text"
              id="initial_balance_display"
              placeholder="0"
@@ -52,7 +79,8 @@
              autocomplete="off"
              class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
       <%= f.hidden_field :initial_balance, id: "initial_balance_raw" %>
-      <p class="text-xs text-gray-500 mt-1">Se registrará automáticamente como una transacción de "Saldo inicial".</p>
+      <p class="text-xs text-gray-500 mt-1" id="initial-balance-hint-regular">Se registrará automáticamente como una transacción de "Saldo inicial".</p>
+      <p class="text-xs text-gray-500 mt-1 hidden" id="initial-balance-hint-credit">Si ya tienes deuda en este crédito, ingrésala aquí. Si es una cuenta nueva, deja en 0.</p>
     </div>
   <% end %>
 
@@ -68,25 +96,59 @@
 <% end %>
 
 <script>
-  function toggleBankField() {
-    const typeSelect = document.getElementById('account_account_type');
-    const bankField  = document.getElementById('bank-field');
-    const bankSelect = bankField.querySelector('select');
-    const needsBank  = typeSelect.value === 'savings' || typeSelect.value === 'checking';
+  function toggleAccountFields() {
+    const typeSelect   = document.getElementById('account_account_type');
+    const bankField    = document.getElementById('bank-field');
+    const accountNumField = document.getElementById('account-number-field');
+    const creditFields = document.getElementById('credit-fields');
+    const labelRegular = document.getElementById('label-regular');
+    const labelCredit  = document.getElementById('label-credit');
+    const hintRegular  = document.getElementById('initial-balance-hint-regular');
+    const hintCredit   = document.getElementById('initial-balance-hint-credit');
+
+    const isCredit   = typeSelect.value === 'credit';
+    const needsBank  = typeSelect.value === 'savings' || typeSelect.value === 'checking' || isCredit;
+
     bankField.classList.toggle('hidden', !needsBank);
-    if (!needsBank) bankSelect.value = '';
+    if (creditFields) creditFields.classList.toggle('hidden', !isCredit);
+
+    if (labelRegular) labelRegular.classList.toggle('hidden', isCredit);
+    if (labelCredit)  labelCredit.classList.toggle('hidden', !isCredit);
+    if (hintRegular)  hintRegular.classList.toggle('hidden', isCredit);
+    if (hintCredit)   hintCredit.classList.toggle('hidden', !isCredit);
+
+    if (!needsBank) {
+      const bankSelect = bankField.querySelector('select');
+      if (bankSelect) bankSelect.value = '';
+    }
   }
 
+  // Formateo del saldo/deuda inicial
   (function () {
     const display = document.getElementById('initial_balance_display');
     const raw     = document.getElementById('initial_balance_raw');
     if (!display || !raw) return;
-
     display.addEventListener('input', function () {
       const digits = this.value.replace(/\D/g, '');
-      const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      this.value = formatted;
+      this.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
       raw.value  = digits;
     });
+  })();
+
+  // Formateo del cupo de crédito
+  (function () {
+    const display = document.getElementById('credit_limit_display');
+    const raw     = document.getElementById('credit_limit_raw');
+    if (!display || !raw) return;
+    display.addEventListener('input', function () {
+      const digits = this.value.replace(/\D/g, '');
+      this.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      raw.value  = digits;
+    });
+    // Sincronizar valor inicial si ya existe
+    if (display.value) {
+      const digits = display.value.replace(/\D/g, '');
+      raw.value = digits;
+    }
   })();
 </script>
