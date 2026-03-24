@@ -31,6 +31,10 @@ Rails.application.routes.draw do
     resources :shared_settlements, only: [:create, :destroy]
   end
 
+  resources :inspection_forms do
+    resources :form_responses, only: %i[new create show destroy]
+  end
+
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 end

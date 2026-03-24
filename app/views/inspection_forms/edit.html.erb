@@ -1,0 +1,234 @@
+<%
+  prefill_json = @inspection_form.questions.map do |q|
+    {
+      question:         q.question,
+      type:             q.question_type_cd.to_s,
+      written_response: q.written_response.to_s,
+      options:          q.options || [],
+      boxes:            q.boxes   || []
+    }
+  end.to_json
+%>
+
+<div class="max-w-4xl mx-auto mt-4 px-4 pb-10"
+     x-data="inspectionFormBuilder(<%= prefill_json.html_safe %>)"
+     x-init="init()">
+
+  <!-- Título -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <%= @inspection_form.code %>
+      </span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800">Editar Formulario de Inspección</h1>
+    <p class="text-sm text-gray-500 mt-1">Las preguntas existentes se reemplazarán con los cambios guardados.</p>
+  </div>
+
+  <% if @inspection_form.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <h3 class="text-sm font-medium text-red-800 mb-2">Se encontraron errores:</h3>
+      <ul class="list-disc pl-5 space-y-1 text-sm text-red-700">
+        <% @inspection_form.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: @inspection_form, local: true do |f| %>
+    <!-- Datos del formulario -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-100">
+        Datos del formulario
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <%= f.label :name, "Nombre del formulario", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :name,
+                class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+        </div>
+        <div>
+          <%= f.label :issue, "Asunto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :issue,
+                class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+        </div>
+        <div>
+          <%= f.label :objective, "Objetivo", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :objective,
+                class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de preguntas -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+        <h2 class="text-base font-semibold text-gray-700 flex items-center gap-2">
+          Preguntas
+          <span class="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full"
+                x-text="questions.length + ' agregada(s)'"></span>
+        </h2>
+        <button type="button" @click="addQuestion()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-green-700 hover:bg-green-800 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Agregar pregunta
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <template x-for="(q, index) in questions" :key="q.id">
+          <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-sm font-medium text-gray-600" x-text="'Pregunta ' + (index + 1)"></span>
+              <button type="button" @click="removeQuestion(index)" class="text-red-400 hover:text-red-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Texto de la pregunta *</label>
+              <input type="text"
+                     :name="'questions[' + index + '][question]'"
+                     x-model="q.question"
+                     placeholder="Escribe la pregunta aquí..."
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none bg-white">
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de pregunta *</label>
+              <select :name="'questions[' + index + '][question_type_cd]'"
+                      x-model="q.type"
+                      @change="onTypeChange(q)"
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none bg-white">
+                <option value="0">Respuesta escrita</option>
+                <option value="1">Opciones (selección única)</option>
+                <option value="2">Casillas (múltiple selección)</option>
+              </select>
+            </div>
+
+            <div x-show="q.type == '0'" class="mb-3">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Instrucción adicional (opcional)</label>
+              <input type="text"
+                     :name="'questions[' + index + '][written_response]'"
+                     x-model="q.written_response"
+                     placeholder="Ej: Describa el estado observado..."
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none bg-white">
+            </div>
+
+            <div x-show="q.type == '1'" class="mb-2">
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-xs font-medium text-gray-600">Opciones de respuesta *</label>
+                <button type="button" @click="addOption(q)"
+                        class="text-xs text-green-700 hover:text-green-900 font-medium flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Agregar opción
+                </button>
+              </div>
+              <div class="space-y-2">
+                <template x-for="(opt, oi) in q.options" :key="oi">
+                  <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0"></span>
+                    <input type="text"
+                           :name="'questions[' + index + '][options][]'"
+                           x-model="q.options[oi]"
+                           :placeholder="'Opción ' + (oi + 1)"
+                           class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none bg-white">
+                    <button type="button" @click="removeOption(q, oi)" class="text-red-400 hover:text-red-600">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                      </svg>
+                    </button>
+                  </div>
+                </template>
+                <p x-show="q.options.length === 0" class="text-xs text-gray-400 italic pl-7">Agrega al menos una opción</p>
+              </div>
+            </div>
+
+            <div x-show="q.type == '2'" class="mb-2">
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-xs font-medium text-gray-600">Casillas de selección *</label>
+                <button type="button" @click="addBox(q)"
+                        class="text-xs text-green-700 hover:text-green-900 font-medium flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Agregar casilla
+                </button>
+              </div>
+              <div class="space-y-2">
+                <template x-for="(box, bi) in q.boxes" :key="bi">
+                  <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded border-2 border-gray-300 flex-shrink-0"></span>
+                    <input type="text"
+                           :name="'questions[' + index + '][boxes][]'"
+                           x-model="q.boxes[bi]"
+                           :placeholder="'Casilla ' + (bi + 1)"
+                           class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none bg-white">
+                    <button type="button" @click="removeBox(q, bi)" class="text-red-400 hover:text-red-600">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                      </svg>
+                    </button>
+                  </div>
+                </template>
+                <p x-show="q.boxes.length === 0" class="text-xs text-gray-400 italic pl-7">Agrega al menos una casilla</p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <div x-show="questions.length === 0"
+             class="border border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <p class="text-gray-400 text-sm">No hay preguntas. Haz clic en "Agregar pregunta" para comenzar.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <%= link_to inspection_form_path(@inspection_form), class: "text-sm text-gray-500 hover:text-gray-700" do %>
+        Cancelar
+      <% end %>
+      <%= f.submit "Guardar Cambios",
+            class: "inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white font-medium px-6 py-2.5 rounded-lg transition-colors cursor-pointer" %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  function inspectionFormBuilder(prefill) {
+    return {
+      questions: [],
+      nextId: 0,
+      init() {
+        if (prefill && prefill.length) {
+          prefill.forEach(q => {
+            this.questions.push({
+              id: this.nextId++,
+              question: q.question || '',
+              type: String(q.type || '0'),
+              written_response: q.written_response || '',
+              options: q.options || [],
+              boxes: q.boxes || []
+            });
+          });
+        }
+      },
+      addQuestion() {
+        this.questions.unshift({ id: this.nextId++, question: '', type: '0', written_response: '', options: [], boxes: [] });
+      },
+      removeQuestion(index) { this.questions.splice(index, 1); },
+      onTypeChange(q) { q.options = []; q.boxes = []; q.written_response = ''; },
+      addOption(q) { q.options.push(''); },
+      removeOption(q, i) { q.options.splice(i, 1); },
+      addBox(q) { q.boxes.push(''); },
+      removeBox(q, i) { q.boxes.splice(i, 1); }
+    };
+  }
+</script>

@@ -1,0 +1,54 @@
+<div class="max-w-5xl mx-auto mt-6 px-4">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Formularios de Inspección</h1>
+      <p class="text-sm text-gray-500 mt-1"><%= @inspection_forms.count %> formulario(s) registrado(s)</p>
+    </div>
+    <%= link_to new_inspection_form_path,
+          class: "inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nuevo Formulario
+    <% end %>
+  </div>
+
+  <% if @inspection_forms.empty? %>
+    <div class="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
+      <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6m-6 4h4"/>
+      </svg>
+      <p class="text-gray-500 font-medium">No hay formularios registrados</p>
+      <p class="text-gray-400 text-sm mt-1">Crea el primer formulario de inspección</p>
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% @inspection_forms.each do |form| %>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <div class="p-5">
+            <div class="flex items-start justify-between mb-3">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <%= form.code %>
+              </span>
+              <span class="text-xs text-gray-400"><%= form.questions.count %> pregunta(s)</span>
+            </div>
+            <h3 class="font-semibold text-gray-800 text-sm mb-1 truncate"><%= form.name %></h3>
+            <p class="text-xs text-gray-500 mb-1 truncate"><strong>Asunto:</strong> <%= form.issue %></p>
+            <p class="text-xs text-gray-500 line-clamp-2"><strong>Objetivo:</strong> <%= form.objective %></p>
+          </div>
+          <div class="border-t border-gray-100 px-5 py-3 flex items-center gap-3">
+            <%= link_to inspection_form_path(form),
+                  class: "text-xs text-green-700 hover:text-green-900 font-medium" do %>Ver<% end %>
+            <%= link_to edit_inspection_form_path(form),
+                  class: "text-xs text-blue-600 hover:text-blue-800 font-medium" do %>Editar<% end %>
+            <%= button_to inspection_form_path(form),
+                  method: :delete,
+                  form: { data: { turbo_confirm: "¿Eliminar el formulario #{form.code}?" } },
+                  class: "text-xs text-red-500 hover:text-red-700 font-medium bg-transparent border-none p-0 cursor-pointer" do %>Eliminar<% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
