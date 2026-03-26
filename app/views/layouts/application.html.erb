@@ -33,15 +33,16 @@
   <% if user_signed_in? %>
     <%
       user_initials = current_user.email.split("@").first.upcase.first(2)
-      nav_items = [
-        { label: "Inicio",        path: root_path,          active: current_page?(root_path),                              icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-        { label: "Proyectos",     path: projects_path,      active: request.path.start_with?("/projects"),                 icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" },
-        { label: "Cuentas",       path: accounts_path,      active: request.path.start_with?("/accounts"),                 icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" },
-        { label: "Gastos",        path: expenses_path,      active: request.path.start_with?("/expenses"),                 icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" },
-        { label: "Liquidaciones", path: settlements_path,   active: request.path.start_with?("/settlements"),              icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-        { label: "Terceros",      path: third_parties_path,    active: request.path.start_with?("/third_parties"),     icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
-        { label: "Inspecciones",  path: inspection_forms_path, active: request.path.start_with?("/inspection_forms"), icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6m-6 4h4" },
+      all_nav_items = [
+        { label: "Inicio",        path: root_path,             active: current_page?(root_path),                              admin_only: true,  icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+        { label: "Proyectos",     path: projects_path,         active: request.path.start_with?("/projects"),                 admin_only: true,  icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" },
+        { label: "Cuentas",       path: accounts_path,         active: request.path.start_with?("/accounts"),                 admin_only: true,  icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" },
+        { label: "Gastos",        path: expenses_path,         active: request.path.start_with?("/expenses"),                 admin_only: true,  icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" },
+        { label: "Liquidaciones", path: settlements_path,      active: request.path.start_with?("/settlements"),              admin_only: true,  icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+        { label: "Terceros",      path: third_parties_path,    active: request.path.start_with?("/third_parties"),            admin_only: true,  icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
+        { label: "Inspecciones",  path: inspection_forms_path, active: request.path.start_with?("/inspection_forms"),         admin_only: false, icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6m-6 4h4" },
       ]
+      nav_items = admin_user? ? all_nav_items : all_nav_items.reject { |i| i[:admin_only] }
     %>
 
     <header x-data="{ open: false, userOpen: false }" style="background: linear-gradient(135deg, #0f3d22 0%, #1a6b3a 100%)">
@@ -98,7 +99,16 @@
                 <p class="text-xs text-white/60">Sesión iniciada como</p>
                 <p class="text-sm font-semibold text-white truncate"><%= current_user.email %></p>
               </div>
-              <div class="p-2">
+              <div class="p-2 space-y-0.5">
+                <% if admin_user? %>
+                  <%= link_to managed_users_path, class: "flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors font-medium" do %>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Administrar usuarios
+                  <% end %>
+                  <div class="border-t border-gray-100 my-1"></div>
+                <% end %>
                 <%= button_to "Cerrar sesión", destroy_user_session_path,
                       method: :delete,
                       class: "w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium",
@@ -157,8 +167,16 @@
           <% end %>
         </div>
 
-        <!-- Cerrar sesión -->
-        <div class="px-3 pb-3 pt-1 border-t border-gray-100">
+        <!-- Administrar usuarios y cerrar sesión -->
+        <div class="px-3 pb-3 pt-1 border-t border-gray-100 space-y-0.5">
+          <% if admin_user? %>
+            <%= link_to managed_users_path, class: "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors" do %>
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              Administrar usuarios
+            <% end %>
+          <% end %>
           <%= button_to "Cerrar sesión", destroy_user_session_path,
                 method: :delete,
                 class: "w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors",

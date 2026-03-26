@@ -3,15 +3,25 @@ class FormResponse
   include Mongoid::Timestamps
 
   field :inspection_datetime, type: DateTime
+  field :form_version,        type: Integer
 
   belongs_to :inspection_form
-  belongs_to :responsible, class_name: 'ThirdParty'
+  belongs_to :user
   has_many :responses, dependent: :destroy
 
   before_validation :set_inspection_datetime, on: :create
 
   validates :inspection_form, presence: { message: "El formulario es obligatorio" }
-  validates :responsible,     presence: { message: "El responsable es obligatorio" }
+  validates :user,            presence: { message: "El usuario es obligatorio" }
+
+  def current_version?
+    form_version == inspection_form&.version
+  end
+
+  def respondent_name
+    profile = user&.profile
+    profile ? profile.full_name : user&.email&.split("@")&.first
+  end
 
   private
 

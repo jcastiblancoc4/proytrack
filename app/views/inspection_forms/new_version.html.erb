@@ -1,16 +1,25 @@
+<script>
+  var prefillQuestions = <%= raw @prefill_questions.to_json %>;
+</script>
+
 <div class="max-w-4xl mx-auto mt-4 px-4 pb-10"
-     x-data="inspectionFormBuilder()"
-     x-init="init()">
+     x-data="inspectionFormBuilder(prefillQuestions)">
 
   <!-- Título -->
   <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-      <svg class="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M12 11v4m0 0l-2-2m2 2l2-2"/>
-      </svg>
-      Nuevo Formulario de Inspección
-    </h1>
-    <p class="text-sm text-gray-500 mt-1">El código se generará automáticamente al guardar.</p>
+    <div class="flex items-center gap-3 mb-1">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+        <%= @source_form.code %>
+      </span>
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+        Nueva versión v<%= @next_version %>
+      </span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800">Crear nueva versión</h1>
+    <p class="text-sm text-gray-500 mt-1">
+      Basada en <strong><%= @source_form.name %></strong> (v<%= @source_form.version %>).
+      El código <strong><%= @source_form.code %></strong> se mantiene automáticamente.
+    </p>
   </div>
 
   <% if @inspection_form.errors.any? %>
@@ -24,7 +33,7 @@
     </div>
   <% end %>
 
-  <%= form_with model: @inspection_form, local: true do |f| %>
+  <%= form_with url: create_version_inspection_form_path(@source_form), method: :post, local: true do |f| %>
     <!-- Datos del formulario -->
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-6">
       <h2 class="text-base font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-100">
@@ -32,22 +41,22 @@
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="md:col-span-2">
-          <%= f.label :name, "Nombre del formulario", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= f.text_field :name,
-                placeholder: "Ej: Inspección de equipos eléctricos",
-                class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del formulario</label>
+          <input type="text" name="inspection_form[name]" value="<%= @inspection_form.name %>"
+                 placeholder="Ej: Inspección de equipos eléctricos"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none">
         </div>
         <div>
-          <%= f.label :issue, "Asunto", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= f.text_field :issue,
-                placeholder: "Ej: Revisión mensual",
-                class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Asunto</label>
+          <input type="text" name="inspection_form[issue]" value="<%= @inspection_form.issue %>"
+                 placeholder="Ej: Revisión mensual"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none">
         </div>
         <div>
-          <%= f.label :objective, "Objetivo", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= f.text_field :objective,
-                placeholder: "Ej: Verificar el estado de los equipos",
-                class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Objetivo</label>
+          <input type="text" name="inspection_form[objective]" value="<%= @inspection_form.objective %>"
+                 placeholder="Ej: Verificar el estado de los equipos"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none">
         </div>
       </div>
     </div>
@@ -72,7 +81,6 @@
       <div class="space-y-4">
         <template x-for="(q, index) in questions" :key="q.id">
           <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-            <!-- Encabezado de pregunta -->
             <div class="flex items-center justify-between mb-3">
               <span class="text-sm font-medium text-gray-600" x-text="'Pregunta ' + (index + 1)"></span>
               <button type="button" @click="removeQuestion(index)"
@@ -83,7 +91,6 @@
               </button>
             </div>
 
-            <!-- Texto de la pregunta -->
             <div class="mb-3">
               <label class="block text-xs font-medium text-gray-600 mb-1">Texto de la pregunta *</label>
               <input type="text"
@@ -93,7 +100,6 @@
                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none bg-white">
             </div>
 
-            <!-- Tipo de pregunta -->
             <div class="mb-3">
               <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de pregunta *</label>
               <select :name="'questions[' + index + '][question_type_cd]'"
@@ -106,7 +112,6 @@
               </select>
             </div>
 
-            <!-- Respuesta escrita: instrucción opcional -->
             <div x-show="q.type == '0'" class="mb-3">
               <label class="block text-xs font-medium text-gray-600 mb-1">Instrucción adicional (opcional)</label>
               <input type="text"
@@ -116,7 +121,6 @@
                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none bg-white">
             </div>
 
-            <!-- Opciones (tipo 1) -->
             <div x-show="q.type == '1'" class="mb-2">
               <div class="flex items-center justify-between mb-2">
                 <label class="block text-xs font-medium text-gray-600">Opciones de respuesta *</label>
@@ -151,7 +155,6 @@
               </div>
             </div>
 
-            <!-- Casillas (tipo 2) -->
             <div x-show="q.type == '2'" class="mb-2">
               <div class="flex items-center justify-between mb-2">
                 <label class="block text-xs font-medium text-gray-600">Casillas de selección *</label>
@@ -197,11 +200,16 @@
 
     <!-- Botones de acción -->
     <div class="flex items-center justify-between">
-      <%= link_to inspection_forms_path, class: "text-sm text-gray-500 hover:text-gray-700" do %>
+      <%= link_to inspection_form_path(@source_form), class: "text-sm text-gray-500 hover:text-gray-700" do %>
         Cancelar
       <% end %>
-      <%= f.submit "Guardar Formulario",
-            class: "inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white font-medium px-6 py-2.5 rounded-lg transition-colors cursor-pointer" %>
+      <button type="submit"
+              class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+        Guardar versión <%= @next_version %>
+      </button>
     </div>
   <% end %>
 </div>
@@ -226,23 +234,10 @@
         }
       },
       addQuestion() {
-        this.questions.push({
-          id: this.nextId++,
-          question: '',
-          type: '0',
-          written_response: '',
-          options: [],
-          boxes: []
-        });
+        this.questions.push({ id: this.nextId++, question: '', type: '0', written_response: '', options: [], boxes: [] });
       },
-      removeQuestion(index) {
-        this.questions.splice(index, 1);
-      },
-      onTypeChange(q) {
-        q.options = [];
-        q.boxes = [];
-        q.written_response = '';
-      },
+      removeQuestion(index) { this.questions.splice(index, 1); },
+      onTypeChange(q) { q.options = []; q.boxes = []; q.written_response = ''; },
       addOption(q) { q.options.push(''); },
       removeOption(q, i) { q.options.splice(i, 1); },
       addBox(q) { q.boxes.push(''); },

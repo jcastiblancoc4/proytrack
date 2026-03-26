@@ -89,6 +89,10 @@ es:
         one: "casi 1 año"
         other: "casi %{count} años"
   enums:
+    user:
+      role:
+        admin: "Administrador"
+        collaborator: "Colaborador"
     project:
       execution_status:
         pending: "Pendiente"
@@ -129,6 +133,35 @@ es:
     messages:
       not_saved: "No se pudo guardar el registro. Corrige los errores e inténtalo de nuevo."
       confirmation: "no coincide con la confirmación"
+  mongoid:
+    attributes:
+      user:
+        profile: "Perfil"
+        email: "Correo electrónico"
+        password: "Contraseña"
+        password_confirmation: "Confirmación de contraseña"
+      user_profile:
+        first_name: "Nombre"
+        last_name: "Apellido"
+        phone_number: "Número de contacto"
+        position_cd: "Cargo"
+        position: "Cargo"
+    errors:
+      models:
+        user:
+          attributes:
+            profile:
+              invalid: "es inválido"
+            password_confirmation:
+              confirmation: "no coincide con la contraseña"
+        user_profile:
+          attributes:
+            first_name:
+              blank: "no puede estar en blanco"
+            last_name:
+              blank: "no puede estar en blanco"
+            position_cd:
+              blank: "no puede estar en blanco"
   activemodel:
     errors:
       models:
@@ -136,10 +169,3 @@ es:
           attributes:
             password_confirmation:
               confirmation: "no coincide con la contraseña"
-    mongoid:
-      errors:
-        models:
-          user:
-            attributes:
-              password_confirmation:
-                confirmation: "no coincide con la contraseña"

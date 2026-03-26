@@ -1,0 +1,104 @@
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Usuarios</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Gestiona los usuarios de tu equipo</p>
+    </div>
+    <%= link_to new_managed_user_path, class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors", style: "background: linear-gradient(135deg, #0f3d22, #1a6b3a)" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nuevo usuario
+    <% end %>
+  </div>
+
+  <% if @managed_users.empty? %>
+    <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background-color: #dcfce7">
+        <svg class="w-7 h-7 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h3 class="text-base font-semibold text-gray-900 mb-1">No hay usuarios aún</h3>
+      <p class="text-sm text-gray-500 mb-4">Crea el primer usuario de tu equipo.</p>
+      <%= link_to "Crear usuario", new_managed_user_path, class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg", style: "background: linear-gradient(135deg, #0f3d22, #1a6b3a)" %>
+    </div>
+  <% else %>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-100">
+        <thead>
+          <tr style="background: linear-gradient(135deg, #0f3d22, #1a6b3a)">
+            <th class="px-5 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">Usuario</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">Correo</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">Rol</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">Cargo</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wider">Contacto</th>
+            <th class="px-5 py-3 text-right text-xs font-semibold text-white/80 uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% @managed_users.each do |managed_user| %>
+            <% profile = managed_user.profile %>
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background: linear-gradient(135deg, #0f3d22, #1a6b3a)">
+                    <% if profile %>
+                      <%= profile.first_name.first.upcase %><%= profile.last_name.first.upcase %>
+                    <% else %>
+                      <%= managed_user.email.first.upcase %>
+                    <% end %>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">
+                    <%= profile ? profile.full_name : managed_user.email.split("@").first %>
+                  </span>
+                </div>
+              </td>
+              <td class="px-5 py-3 text-sm text-gray-600"><%= managed_user.email %></td>
+              <td class="px-5 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                  Colaborador
+                </span>
+              </td>
+              <td class="px-5 py-3">
+                <% if profile %>
+                  <% badge_color = profile.inspector? ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700" %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= badge_color %>">
+                    <%= profile.position.to_s.capitalize %>
+                  </span>
+                <% else %>
+                  <span class="text-xs text-gray-400">Sin perfil</span>
+                <% end %>
+              </td>
+              <td class="px-5 py-3 text-sm text-gray-600">
+                <%= profile&.phone_number.presence || "-" %>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <%= link_to edit_managed_user_path(managed_user), class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors" do %>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Editar
+                  <% end %>
+                  <%= button_to managed_user_path(managed_user), method: :delete,
+                        class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors",
+                        form_class: "inline",
+                        data: { turbo_confirm: "¿Estás seguro de eliminar este usuario?" } do %>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Eliminar
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+</div>

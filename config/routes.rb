@@ -31,8 +31,15 @@ Rails.application.routes.draw do
     resources :shared_settlements, only: [:create, :destroy]
   end
 
-  resources :inspection_forms do
-    resources :form_responses, only: %i[new create show destroy]
+  resources :managed_users, only: [:index, :new, :create, :edit, :update, :destroy]
+
+  resources :inspection_forms, except: [:edit, :update] do
+    member do
+      get  :new_version
+      post :create_version
+      get  :versions
+    end
+    resources :form_responses, only: %i[new create show]
   end
 
   # Health check

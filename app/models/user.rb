@@ -1,11 +1,12 @@
 class User
   include Mongoid::Document
   include Mongoid::Timestamps
+  include SimpleEnum::Mongoid
 
-  # Include default devise modules. Others available are:
-  # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
+
+  as_enum :role, { admin: 0, collaborator: 1 }, field: { type: Integer, default: 0 }
 
   ## Database authenticatable
   field :email,              type: String, default: ""
@@ -28,6 +29,12 @@ class User
 
   ## Rememberable
   field :remember_created_at, type: Time
+
+  field :owner_id, type: BSON::ObjectId
+
+  belongs_to :owner, class_name: 'User', optional: true
+  has_many :managed_users, class_name: 'User', foreign_key: 'owner_id', dependent: :destroy
+  has_one :profile, class_name: 'UserProfile', dependent: :destroy
 
   has_many :projects, dependent: :destroy
   has_many :expenses, dependent: :nullify

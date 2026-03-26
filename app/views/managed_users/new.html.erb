@@ -1,0 +1,17 @@
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+      <%= link_to "Usuarios", managed_users_path, class: "hover:text-gray-700 transition-colors" %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-gray-700 font-medium">Nuevo usuario</span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900">Crear usuario</h1>
+  </div>
+
+  <%= render "form",
+        form_url: managed_users_path,
+        form_method: :post,
+        submit_label: "Crear usuario" %>
+</div>

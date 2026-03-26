@@ -1,0 +1,71 @@
+<div class="max-w-4xl mx-auto mt-6 px-4">
+  <!-- Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-2 mb-2">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+        <%= @inspection_form.code %>
+      </span>
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+        Versiones anteriores
+      </span>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800"><%= @inspection_form.name %></h1>
+    <p class="text-sm text-gray-500 mt-1">
+      <%= @previous_versions.count %> versión(es) inactiva(s) registrada(s)
+    </p>
+  </div>
+
+  <% if @previous_versions.empty? %>
+    <div class="bg-white border border-dashed border-gray-300 rounded-xl p-10 text-center">
+      <p class="text-gray-400 text-sm">No hay versiones anteriores para este formulario.</p>
+    </div>
+  <% else %>
+    <div class="space-y-3">
+      <% @previous_versions.each do |form| %>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm px-5 py-4">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center flex-shrink-0 text-sm font-bold">
+                v<%= form.version %>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-800"><%= form.name %></p>
+                <p class="text-xs text-gray-500">
+                  <strong>Asunto:</strong> <%= form.issue %> &middot;
+                  <strong>Objetivo:</strong> <%= form.objective %>
+                </p>
+                <p class="text-xs text-gray-400 mt-0.5">
+                  Creado el <%= form.created_at.strftime("%d/%m/%Y") %> &middot;
+                  <%= form.questions.where(version: form.version).count %> pregunta(s) &middot;
+                  <%= form.form_responses.count %> respuesta(s)
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-200">
+                Inactivo
+              </span>
+              <%= link_to inspection_form_path(form),
+                    class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                Ver detalle
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="mt-6">
+    <%= link_to inspection_form_path(@inspection_form), class: "text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Volver al formulario activo
+    <% end %>
+  </div>
+</div>

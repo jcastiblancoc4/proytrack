@@ -11,29 +11,29 @@
 
   <!-- Header -->
   <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-6">
-    <div class="flex items-start justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="text-xl font-bold text-gray-800 mb-1">Registro de Inspección</h1>
-        <p class="text-sm text-gray-500"><%= @inspection_form.name %></p>
-      </div>
-      <%= button_to inspection_form_form_response_path(@inspection_form, @form_response),
-            method: :delete,
-            form: { data: { turbo_confirm: "¿Eliminar este registro de inspección?" } },
-            class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors self-start" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        Eliminar
-      <% end %>
+    <div>
+      <h1 class="text-xl font-bold text-gray-800 mb-1">Registro de Inspección</h1>
+      <p class="text-sm text-gray-500"><%= @inspection_form.name %></p>
     </div>
 
     <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="bg-gray-50 rounded-lg p-3">
-        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Responsable</p>
-        <p class="text-sm font-semibold text-gray-800"><%= @form_response.responsible.full_name %></p>
-        <p class="text-xs text-gray-500">
-          <%= @form_response.responsible.document_type_label %> <%= @form_response.responsible.document_number %>
-        </p>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Respondido por</p>
+        <p class="text-sm font-semibold text-gray-800"><%= @form_response.respondent_name %></p>
+        <% if @form_response.user&.profile %>
+          <p class="text-xs text-gray-500"><%= @form_response.user.profile.position.to_s.capitalize %></p>
+        <% end %>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-3">
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Versión del formulario</p>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-sm font-semibold text-gray-800">v<%= @form_response.form_version %></span>
+          <% if @form_response.current_version? %>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Versión actual</span>
+          <% else %>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Versión anterior</span>
+          <% end %>
+        </div>
       </div>
       <div class="bg-gray-50 rounded-lg p-3">
         <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Fecha y hora de inspección</p>
@@ -52,48 +52,40 @@
     Respuestas (<%= @form_response.responses.count %>)
   </h2>
 
-  <% responses_by_question = @form_response.responses.index_by(&:question_id) %>
-
   <div class="space-y-4">
-    <% @inspection_form.questions.each_with_index do |q, i| %>
-      <% resp = responses_by_question[q.id] %>
+    <% @form_response.responses.each_with_index do |resp, i| %>
+      <% question = resp.question %>
       <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
         <div class="flex items-start gap-3 mb-3">
           <span class="flex-shrink-0 w-7 h-7 rounded-full bg-green-700 text-white text-xs font-bold flex items-center justify-center mt-0.5">
             <%= i + 1 %>
           </span>
           <div class="flex-1">
-            <p class="font-medium text-gray-800 mb-2"><%= q.question %></p>
+            <p class="font-medium text-gray-800 mb-2"><%= resp.question_text.presence || question&.question || "Pregunta eliminada" %></p>
 
-            <% if resp.nil? %>
-              <p class="text-sm text-gray-400 italic">Sin respuesta</p>
+            <% if resp.string_answer.present? %>
+              <% if question&.options? %>
+                <div class="space-y-1">
+                  <% (question.options).each do |opt| %>
+                    <div class="flex items-center gap-2">
+                      <% selected = resp.string_answer == opt %>
+                      <span class="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                                   <%= selected ? 'border-green-600 bg-green-600' : 'border-gray-300' %>">
+                        <% if selected %><span class="w-2 h-2 rounded-full bg-white"></span><% end %>
+                      </span>
+                      <span class="text-sm <%= selected ? 'text-green-700 font-medium' : 'text-gray-500' %>"><%= opt %></span>
+                    </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                  <p class="text-sm text-gray-800"><%= resp.string_answer %></p>
+                </div>
+              <% end %>
 
-            <% elsif q.written_response? %>
-              <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
-                <p class="text-sm text-gray-800"><%= resp.string_answer.presence || "—" %></p>
-              </div>
-
-            <% elsif q.options? %>
+            <% elsif resp.array_answer.any? %>
               <div class="space-y-1">
-                <% q.options.each do |opt| %>
-                  <div class="flex items-center gap-2">
-                    <% selected = resp.string_answer == opt %>
-                    <span class="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0
-                                 <%= selected ? 'border-green-600 bg-green-600' : 'border-gray-300' %>">
-                      <% if selected %>
-                        <span class="w-2 h-2 rounded-full bg-white"></span>
-                      <% end %>
-                    </span>
-                    <span class="text-sm <%= selected ? 'text-green-700 font-medium' : 'text-gray-500' %>">
-                      <%= opt %>
-                    </span>
-                  </div>
-                <% end %>
-              </div>
-
-            <% elsif q.boxes? %>
-              <div class="space-y-1">
-                <% q.boxes.each do |box| %>
+                <% (question&.boxes || resp.array_answer).each do |box| %>
                   <% checked = resp.array_answer.include?(box) %>
                   <div class="flex items-center gap-2">
                     <span class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0
@@ -104,12 +96,13 @@
                         </svg>
                       <% end %>
                     </span>
-                    <span class="text-sm <%= checked ? 'text-green-700 font-medium' : 'text-gray-500' %>">
-                      <%= box %>
-                    </span>
+                    <span class="text-sm <%= checked ? 'text-green-700 font-medium' : 'text-gray-500' %>"><%= box %></span>
                   </div>
                 <% end %>
               </div>
+
+            <% else %>
+              <p class="text-sm text-gray-400 italic">Sin respuesta</p>
             <% end %>
           </div>
         </div>

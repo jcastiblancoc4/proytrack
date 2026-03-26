@@ -7,12 +7,13 @@ class Question
   field :written_response,  type: String
   field :options,           type: Array, default: []
   field :boxes,             type: Array, default: []
+  field :version,           type: Integer, default: 1
 
   as_enum :question_type, { written_response: 0, options: 1, boxes: 2 },
           field: { type: Integer, default: 0 }
 
   belongs_to :inspection_form
-  has_many :responses, dependent: :destroy
+  has_many :responses
 
   validates :question, presence: { message: "El texto de la pregunta es obligatorio" }
 end

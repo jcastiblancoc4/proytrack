@@ -3,34 +3,69 @@
   <div class="bg-white border border-gray-200 rounded-xl shadow-sm mb-6 p-6">
     <div class="flex items-start justify-between flex-wrap gap-4">
       <div>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 mb-2">
-          <%= @inspection_form.code %>
-        </span>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+            <%= @inspection_form.code %>
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            v<%= @inspection_form.version %>
+          </span>
+          <% if @inspection_form.active? %>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Activo</span>
+          <% else %>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">Inactivo</span>
+          <% end %>
+        </div>
         <h1 class="text-2xl font-bold text-gray-800"><%= @inspection_form.name %></h1>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
-        <%= link_to new_inspection_form_form_response_path(@inspection_form),
-              class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-green-700 border border-green-700 rounded-lg hover:bg-green-800 transition-colors" do %>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h4M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
-          </svg>
-          Responder formulario
+        <% previous_count = InspectionForm.where(code: @inspection_form.code, :active.ne => true).count %>
+        <% if previous_count > 0 %>
+          <%= link_to versions_inspection_form_path(@inspection_form),
+                class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors" do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Versiones anteriores (<%= previous_count %>)
+          <% end %>
         <% end %>
-        <%= link_to edit_inspection_form_path(@inspection_form),
-              class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors" do %>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-          </svg>
-          Editar
+        <% if @inspection_form.active? %>
+          <%= link_to new_inspection_form_form_response_path(@inspection_form),
+                class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-green-700 border border-green-700 rounded-lg hover:bg-green-800 transition-colors" do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h4M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
+            </svg>
+            Responder formulario
+          <% end %>
         <% end %>
-        <%= button_to inspection_form_path(@inspection_form),
-              method: :delete,
-              form: { data: { turbo_confirm: "¿Eliminar el formulario #{@inspection_form.code}?" } },
-              class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors" do %>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
-          Eliminar
+        <% if admin_user? %>
+          <% if @inspection_form.latest_version? %>
+            <%= link_to new_version_inspection_form_path(@inspection_form),
+                  class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Nueva versión
+            <% end %>
+          <% end %>
+          <% if @inspection_form.form_responses.exists? %>
+            <span class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed" title="No se puede eliminar: tiene respuestas registradas">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Eliminar
+            </span>
+          <% else %>
+          <%= button_to inspection_form_path(@inspection_form),
+                method: :delete,
+                form: { data: { turbo_confirm: "¿Eliminar el formulario #{@inspection_form.code}?" } },
+                class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors" do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Eliminar
+          <% end %>
+          <% end %>
         <% end %>
       </div>
     </div>
@@ -55,15 +90,15 @@
       <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
-      Preguntas (<%= @inspection_form.questions.count %>)
+      Preguntas (<%= @inspection_form.current_questions.count %>)
     </h2>
 
-    <% if @inspection_form.questions.empty? %>
+    <% if @inspection_form.current_questions.empty? %>
       <div class="bg-white border border-dashed border-gray-300 rounded-xl p-8 text-center">
         <p class="text-gray-400 text-sm">Este formulario no tiene preguntas aún.</p>
       </div>
     <% else %>
-      <% @inspection_form.questions.each_with_index do |q, i| %>
+      <% @inspection_form.current_questions.each_with_index do |q, i| %>
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
           <div class="flex items-start gap-3">
             <span class="flex-shrink-0 w-7 h-7 rounded-full bg-green-700 text-white text-xs font-bold flex items-center justify-center mt-0.5">
@@ -87,20 +122,18 @@
                 <div class="mt-2 border border-dashed border-gray-300 rounded-lg p-3 bg-gray-50">
                   <p class="text-xs text-gray-400 italic">Campo de respuesta libre</p>
                 </div>
-
               <% elsif q.options? %>
                 <ul class="mt-2 space-y-1">
-                  <% q.options.each_with_index do |opt, oi| %>
+                  <% q.options.each do |opt| %>
                     <li class="flex items-center gap-2 text-sm text-gray-700">
                       <span class="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0"></span>
                       <%= opt %>
                     </li>
                   <% end %>
                 </ul>
-
               <% elsif q.boxes? %>
                 <ul class="mt-2 space-y-1">
-                  <% q.boxes.each_with_index do |box, bi| %>
+                  <% q.boxes.each do |box| %>
                     <li class="flex items-center gap-2 text-sm text-gray-700">
                       <span class="w-4 h-4 rounded border-2 border-gray-300 flex-shrink-0"></span>
                       <%= box %>
@@ -123,11 +156,13 @@
       </svg>
       Historial de inspecciones
       <span class="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-        <%= @inspection_form.form_responses.count %>
+        <%= admin_user? ? @inspection_form.form_responses.count : @inspection_form.form_responses.where(user: current_user).count %>
       </span>
     </h2>
 
-    <% responses = @inspection_form.form_responses.order(inspection_datetime: :desc) %>
+    <% responses = admin_user? ?
+          @inspection_form.form_responses.order(inspection_datetime: :desc) :
+          @inspection_form.form_responses.where(user: current_user).order(inspection_datetime: :desc) %>
     <% if responses.empty? %>
       <div class="bg-white border border-dashed border-gray-300 rounded-xl p-8 text-center">
         <p class="text-gray-400 text-sm">Aún no se han registrado inspecciones para este formulario.</p>
@@ -143,20 +178,25 @@
                 </svg>
               </div>
               <div>
-                <p class="text-sm font-semibold text-gray-800"><%= fr.responsible.full_name %></p>
+                <p class="text-sm font-semibold text-gray-800"><%= fr.respondent_name %></p>
                 <p class="text-xs text-gray-500">
                   <%= fr.inspection_datetime.strftime("%d/%m/%Y · %H:%M") %> hrs
                 </p>
               </div>
             </div>
             <div class="flex items-center gap-3">
+              <% if fr.current_version? %>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  v<%= fr.form_version %> · actual
+                </span>
+              <% else %>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                  v<%= fr.form_version %> · anterior
+                </span>
+              <% end %>
               <span class="text-xs text-gray-400"><%= fr.responses.count %> resp.</span>
               <%= link_to inspection_form_form_response_path(@inspection_form, fr),
                     class: "text-sm text-green-700 hover:text-green-900 font-medium" do %>Ver<% end %>
-              <%= button_to inspection_form_form_response_path(@inspection_form, fr),
-                    method: :delete,
-                    form: { data: { turbo_confirm: "¿Eliminar este registro de inspección?" } },
-                    class: "text-sm text-red-500 hover:text-red-700 font-medium bg-transparent border-none p-0 cursor-pointer" do %>Eliminar<% end %>
             </div>
           </div>
         <% end %>
