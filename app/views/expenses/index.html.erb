@@ -372,6 +372,8 @@
             <th class="px-4 py-3 text-left">Proyecto</th>
             <th class="px-4 py-3 text-left">Tercero</th>
             <th class="px-4 py-3 text-left">Cuenta</th>
+            <th class="px-4 py-3 text-left">Soporte</th>
+            <th class="px-4 py-3 text-left">N° Factura</th>
             <th class="px-4 py-3 text-right">Valor</th>
             <th class="px-4 py-3 text-center">Acciones</th>
           </tr>
@@ -408,6 +410,14 @@
                 <% else %>
                   <span class="text-gray-400 text-xs">-</span>
                 <% end %>
+              </td>
+              <td class="px-4 py-3 text-xs">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  <%= expense.support_type_label %>
+                </span>
+              </td>
+              <td class="px-4 py-3 text-xs text-gray-600">
+                <%= expense.invoice_number.present? ? expense.invoice_number : "N/A" %>
               </td>
               <td class="px-4 py-3 text-right font-semibold text-gray-800 whitespace-nowrap">
                 <%= number_to_currency(expense.amount, unit: "$", separator: ",", delimiter: ".") %>

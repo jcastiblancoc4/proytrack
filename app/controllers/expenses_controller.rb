@@ -1,5 +1,6 @@
 class ExpensesController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
   before_action :set_project, if: -> { params[:project_id].present? }
   before_action :set_expense, only: [:edit, :update, :destroy]
   before_action :check_edit_permission, only: [:new, :create, :edit, :update, :destroy], if: -> { @project.present? }
@@ -211,7 +212,7 @@ class ExpensesController < ApplicationController
   end
 
   def expense_params
-    params.require(:expense).permit(:description, :amount, :expense_category_id, :expense_date, :project_id, :third_party_id, :account_id)
+    params.require(:expense).permit(:description, :amount, :expense_category_id, :expense_date, :project_id, :third_party_id, :account_id, :support_type_cd, :invoice_number)
   end
 
   def apply_filters(scope)

@@ -6,6 +6,7 @@ class Expense
   field :description, type: String
   field :amount, type: Money, default: Money.new(0, 'COP')
   field :expense_date, type: Date
+  field :invoice_number, type: String
 
   belongs_to :project, optional: true
   belongs_to :user
@@ -36,10 +37,34 @@ class Expense
     in_liquidation: 1,
   }, field: { type: Integer, default: 0 }
 
+  as_enum :support_type, {
+    no_support: 0,
+    electronic_invoice: 1,
+    cash_receipt: 2,
+    support_document: 3,
+  }, field: { type: Integer, default: 0 }
+
+  SUPPORT_TYPE_LABELS = {
+    'no_support'         => 'Sin soporte',
+    'electronic_invoice' => 'Factura electrónica',
+    'cash_receipt'       => 'Recibo de caja',
+    'support_document'   => 'Documento soporte'
+  }.freeze
+
+  def support_type_label
+    SUPPORT_TYPE_LABELS[support_type.to_s] || 'Sin soporte'
+  end
+
+  before_save :clear_invoice_number_unless_electronic_invoice
+
   after_create  :create_account_transaction
   after_update  :sync_account_transaction_amount
 
   private
+
+  def clear_invoice_number_unless_electronic_invoice
+    self.invoice_number = nil if !electronic_invoice? && invoice_number.present?
+  end
 
   def account_has_sufficient_funds
     return unless account && amount
