@@ -1,5 +1,6 @@
 class SettlementsController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
   before_action :set_settlement, only: [:show, :update, :destroy]
   before_action :authorize_access, only: [:show]
   before_action :authorize_edit, only: [:update, :destroy]

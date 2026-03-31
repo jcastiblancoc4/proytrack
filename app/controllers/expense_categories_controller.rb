@@ -1,5 +1,6 @@
 class ExpenseCategoriesController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
   before_action :set_category, only: [:update, :destroy]
 
   def create

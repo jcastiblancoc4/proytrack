@@ -1,5 +1,6 @@
 class HomeController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
 
   def index
     # Proyectos activos (pendiente + ejecutando)

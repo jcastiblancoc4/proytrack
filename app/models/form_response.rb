@@ -4,6 +4,7 @@ class FormResponse
 
   field :inspection_datetime, type: DateTime
   field :form_version,        type: Integer
+  field :pdf_report,          type: String
 
   belongs_to :inspection_form
   belongs_to :user

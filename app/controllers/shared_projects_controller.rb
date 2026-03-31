@@ -1,5 +1,6 @@
 class SharedProjectsController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
   before_action :set_project, only: [:create, :destroy]
   before_action :set_shared_project, only: [:destroy]
 

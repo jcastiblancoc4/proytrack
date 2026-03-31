@@ -1,5 +1,6 @@
 class ProjectsController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
   before_action :set_project, only: %i[ show edit update destroy update_status ]
 
   # GET /projects or /projects.json

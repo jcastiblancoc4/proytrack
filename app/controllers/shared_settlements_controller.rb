@@ -1,5 +1,6 @@
 class SharedSettlementsController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
   before_action :set_settlement, only: [:create, :destroy]
 
   def create

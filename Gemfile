@@ -22,6 +22,9 @@ gem 'simple_enum', '~> 2.3.0', require: 'simple_enum/mongoid'
 gem 'devise'
 gem 'caxlsx'
 gem 'caxlsx_rails'
+gem 'carrierwave'
+gem 'prawn'
+gem 'prawn-table'
 gem "importmap-rails"
 
 # Use Redis adapter to run Action Cable in production

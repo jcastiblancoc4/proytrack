@@ -81,3 +81,12 @@ ci_deploy_key.b64
 contexto.md
 cursor.deb
 env_file
+
+# Ignore generated PDFs
+/public/uploads/
+
+# Ignore Claude memory
+/memory/
+
+# Ignore scratch files
+prueba.rb

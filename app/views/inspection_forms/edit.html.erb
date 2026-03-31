@@ -1,18 +1,48 @@
-<%
-  prefill_json = @inspection_form.questions.map do |q|
+<script>
+  function inspectionFormBuilder(prefill) {
+    const initial = (prefill || []).map((q, i) => ({
+      _key: i,
+      db_id: q.id || '',
+      question: q.question || '',
+      type: String(q.type || '0'),
+      written_response: q.written_response || '',
+      options: q.options || [],
+      boxes: q.boxes || []
+    }));
+    return {
+      questions: initial,
+      nextKey: initial.length,
+      removedIds: [],
+      addQuestion() {
+        this.questions.push({ _key: this.nextKey++, db_id: '', question: '', type: '0', written_response: '', options: [], boxes: [] });
+      },
+      removeQuestion(index) {
+        const q = this.questions[index];
+        if (q.db_id) this.removedIds.push(q.db_id);
+        this.questions.splice(index, 1);
+      },
+      onTypeChange(q) { q.options = []; q.boxes = []; q.written_response = ''; },
+      addOption(q) { q.options.push(''); },
+      removeOption(q, i) { q.options.splice(i, 1); },
+      addBox(q) { q.boxes.push(''); },
+      removeBox(q, i) { q.boxes.splice(i, 1); }
+    };
+  }
+
+  var prefillQuestions = <%= raw @inspection_form.current_questions.map { |q|
     {
+      id:               q.id.to_s,
       question:         q.question,
       type:             q.question_type_cd.to_s,
       written_response: q.written_response.to_s,
       options:          q.options || [],
       boxes:            q.boxes   || []
     }
-  end.to_json
-%>
+  }.to_json %>;
+</script>
 
 <div class="max-w-4xl mx-auto mt-4 px-4 pb-10"
-     x-data="inspectionFormBuilder(<%= prefill_json.html_safe %>)"
-     x-init="init()">
+     x-data="inspectionFormBuilder(prefillQuestions)">
 
   <!-- Título -->
   <div class="mb-6">
@@ -79,7 +109,7 @@
       </div>
 
       <div class="space-y-4">
-        <template x-for="(q, index) in questions" :key="q.id">
+        <template x-for="(q, index) in questions" :key="q._key">
           <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
             <div class="flex items-center justify-between mb-3">
               <span class="text-sm font-medium text-gray-600" x-text="'Pregunta ' + (index + 1)"></span>
@@ -89,6 +119,8 @@
                 </svg>
               </button>
             </div>
+
+            <input type="hidden" :name="'questions[' + index + '][id]'" :value="q.db_id">
 
             <div class="mb-3">
               <label class="block text-xs font-medium text-gray-600 mb-1">Texto de la pregunta *</label>
@@ -191,6 +223,11 @@
       </div>
     </div>
 
+    <!-- Hidden inputs for explicitly removed questions -->
+    <template x-for="rid in removedIds" :key="rid">
+      <input type="hidden" name="removed_question_ids[]" :value="rid">
+    </template>
+
     <div class="flex items-center justify-between">
       <%= link_to inspection_form_path(@inspection_form), class: "text-sm text-gray-500 hover:text-gray-700" do %>
         Cancelar
@@ -201,34 +238,3 @@
   <% end %>
 </div>
 
-<script>
-  function inspectionFormBuilder(prefill) {
-    return {
-      questions: [],
-      nextId: 0,
-      init() {
-        if (prefill && prefill.length) {
-          prefill.forEach(q => {
-            this.questions.push({
-              id: this.nextId++,
-              question: q.question || '',
-              type: String(q.type || '0'),
-              written_response: q.written_response || '',
-              options: q.options || [],
-              boxes: q.boxes || []
-            });
-          });
-        }
-      },
-      addQuestion() {
-        this.questions.unshift({ id: this.nextId++, question: '', type: '0', written_response: '', options: [], boxes: [] });
-      },
-      removeQuestion(index) { this.questions.splice(index, 1); },
-      onTypeChange(q) { q.options = []; q.boxes = []; q.written_response = ''; },
-      addOption(q) { q.options.push(''); },
-      removeOption(q, i) { q.options.splice(i, 1); },
-      addBox(q) { q.boxes.push(''); },
-      removeBox(q, i) { q.boxes.splice(i, 1); }
-    };
-  }
-</script>

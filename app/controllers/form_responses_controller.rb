@@ -20,6 +20,7 @@ class FormResponsesController < ApplicationController
 
     if @form_response.save
       build_responses(@form_response)
+      attach_pdf(@form_response)
       redirect_to inspection_form_form_response_path(@inspection_form, @form_response),
                   notice: "Inspección registrada exitosamente."
     else
@@ -50,6 +51,20 @@ class FormResponsesController < ApplicationController
     @form_response = @inspection_form.form_responses.find(params[:id])
   rescue Mongoid::Errors::DocumentNotFound
     redirect_to inspection_form_path(@inspection_form), alert: "Registro no encontrado."
+  end
+
+  def attach_pdf(form_response)
+    tempfile = InspectionFormPdf.generate_tempfile(form_response)
+    relative_path = "uploads/form_responses/#{form_response.id}/inspeccion_#{form_response.id}.pdf"
+    dest = Rails.root.join('public', relative_path)
+    FileUtils.mkdir_p(dest.dirname)
+    FileUtils.cp(tempfile.path, dest.to_s)
+    form_response.update(pdf_report: relative_path)
+  rescue => e
+    Rails.logger.error "PDF generation failed for FormResponse #{form_response.id}: #{e.message}"
+  ensure
+    tempfile&.close
+    tempfile&.unlink
   end
 
   def build_responses(form_response)

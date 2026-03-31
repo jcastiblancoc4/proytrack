@@ -1,5 +1,6 @@
 class ThirdPartiesController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
   before_action :set_third_party, only: [:show, :edit, :update, :destroy]
 
   def index

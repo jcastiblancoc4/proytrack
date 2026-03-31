@@ -1,5 +1,6 @@
 class TransactionsController < ApplicationController
   before_action :authenticate_user!
+  before_action :require_admin!
   before_action :set_account
 
   def new
