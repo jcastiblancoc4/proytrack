@@ -39,7 +39,11 @@ Rails.application.routes.draw do
       post :create_version
       get  :versions
     end
-    resources :form_responses, only: %i[new create show]
+    resources :form_responses, only: %i[new create show] do
+      member do
+        get :download_pdf
+      end
+    end
   end
 
   # Health check

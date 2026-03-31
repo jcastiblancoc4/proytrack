@@ -17,7 +17,7 @@
         <p class="text-sm text-gray-500"><%= @inspection_form.name %></p>
       </div>
       <% if @form_response.pdf_report.present? %>
-        <%= link_to "/#{@form_response.pdf_report}", target: "_blank",
+        <%= link_to download_pdf_inspection_form_form_response_path(@inspection_form, @form_response), target: "_blank",
               class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors" do %>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

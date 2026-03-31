@@ -2,9 +2,19 @@ class FormResponsesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_inspection_form
   before_action :require_active_form!, only: [:new, :create]
-  before_action :set_form_response, only: [:show]
+  before_action :set_form_response, only: [:show, :download_pdf]
 
   def show
+  end
+
+  def download_pdf
+    if @form_response.pdf_report.present?
+      path = Rails.root.join('public', @form_response.pdf_report)
+      send_file path, type: 'application/pdf', disposition: 'inline', filename: "inspeccion_#{@form_response.id}.pdf"
+    else
+      redirect_to inspection_form_form_response_path(@inspection_form, @form_response),
+                  alert: "El PDF no está disponible."
+    end
   end
 
   def new
