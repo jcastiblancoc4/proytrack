@@ -86,6 +86,22 @@
       </div>
     <% end %>
 
+    <!-- Firma -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5 mb-6">
+      <h2 class="text-base font-semibold text-gray-700 mb-1">Firma del responsable</h2>
+      <p class="text-xs text-gray-500 mb-3">Dibuja tu firma en el recuadro de abajo.</p>
+      <div class="border border-gray-300 rounded-lg overflow-hidden bg-white" style="touch-action: none;">
+        <canvas id="signature-canvas" class="w-full block" style="height: 160px; cursor: crosshair;"></canvas>
+      </div>
+      <div class="flex justify-end mt-2">
+        <button type="button" id="clear-signature"
+                class="text-xs text-gray-400 hover:text-red-500 underline transition-colors">
+          Limpiar firma
+        </button>
+      </div>
+      <input type="hidden" name="signature_data" id="signature-data">
+    </div>
+
     <!-- Acciones -->
     <div class="flex items-center justify-between">
       <%= link_to inspection_forms_path,
@@ -99,4 +115,73 @@
       </button>
     </div>
   <% end %>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('signature-canvas');
+      const input  = document.getElementById('signature-data');
+      const ctx    = canvas.getContext('2d');
+      let drawing  = false;
+      let hasDrawn = false;
+
+      function resize() {
+        const ratio  = window.devicePixelRatio || 1;
+        const rect   = canvas.getBoundingClientRect();
+        canvas.width  = rect.width  * ratio;
+        canvas.height = rect.height * ratio;
+        ctx.scale(ratio, ratio);
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth   = 2;
+        ctx.lineCap     = 'round';
+        ctx.lineJoin    = 'round';
+      }
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const src  = e.touches ? e.touches[0] : e;
+        return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+      }
+
+      function onStart(e) {
+        e.preventDefault();
+        drawing = true;
+        const p = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+      }
+
+      function onMove(e) {
+        e.preventDefault();
+        if (!drawing) return;
+        hasDrawn = true;
+        const p = getPos(e);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+      }
+
+      function onStop(e) {
+        e.preventDefault();
+        drawing = false;
+        if (hasDrawn) input.value = canvas.toDataURL('image/png');
+      }
+
+      canvas.addEventListener('mousedown',  onStart);
+      canvas.addEventListener('mousemove',  onMove);
+      canvas.addEventListener('mouseup',    onStop);
+      canvas.addEventListener('mouseleave', onStop);
+      canvas.addEventListener('touchstart', onStart, { passive: false });
+      canvas.addEventListener('touchmove',  onMove,  { passive: false });
+      canvas.addEventListener('touchend',   onStop);
+
+      document.getElementById('clear-signature').addEventListener('click', function () {
+        const rect = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        input.value = '';
+        hasDrawn = false;
+      });
+
+      resize();
+      window.addEventListener('resize', function () { resize(); });
+    })();
+  </script>
 </div>

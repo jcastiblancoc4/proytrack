@@ -94,23 +94,16 @@ class InspectionFormPdf
   def build_questions(pdf)
     w = pdf.bounds.width
 
-    header = [
-      { content: 'PREGUNTA',   font_style: :bold, align: :center, background_color: 'EEEEEE' },
-      { content: 'RESPUESTA',  font_style: :bold, align: :center, background_color: 'EEEEEE' }
-    ]
-
-    rows = @fr.responses.map do |resp|
+    rows = @fr.responses.each_with_index.flat_map do |resp, i|
       question_text = resp.question_text.presence || resp.question&.question || 'Pregunta eliminada'
-      [{ content: question_text }, { content: format_answer(resp) }]
+      answer        = format_answer(resp)
+      [
+        [{ content: "#{i + 1}. #{question_text}", font_style: :bold, background_color: 'EEEEEE', size: 9, padding: [5, 8, 5, 8] }],
+        [{ content: answer, size: 9, padding: [5, 8, 5, 8] }]
+      ]
     end
 
-    data = [header] + rows
-
-    pdf.table(data, width: w, cell_style: { border_width: 0.5, border_color: '000000', padding: [5, 6, 5, 6], size: 9 }) do |t|
-      t.columns(0).width = w * 0.55
-      t.columns(1).width = w * 0.45
-      t.row(0).border_width = 0.5
-    end
+    pdf.table(rows, width: w, cell_style: { border_width: 0.5, border_color: '000000' })
   end
 
   def format_answer(resp)
@@ -126,10 +119,18 @@ class InspectionFormPdf
   def build_signature(pdf)
     w         = pdf.bounds.width
     sig_width = w * 0.4
+    sig_x     = (w - sig_width) / 2.0
+    sig_path  = @fr.signature_path.present? ? Rails.root.join('public', @fr.signature_path).to_s : nil
 
-    pdf.bounding_box([0, pdf.cursor], width: sig_width) do
-      pdf.text 'Firma del responsable:', size: 9, style: :bold
-      pdf.move_down 40
+    pdf.bounding_box([sig_x, pdf.cursor], width: sig_width) do
+      pdf.text 'Firma del responsable:', size: 9, style: :bold, align: :center
+      pdf.move_down 6
+      if sig_path && File.exist?(sig_path)
+        pdf.image sig_path, fit: [sig_width - 16, 50], position: :center
+        pdf.move_down 4
+      else
+        pdf.move_down 40
+      end
       pdf.stroke { pdf.horizontal_rule }
       pdf.move_down 4
       pdf.text @fr.respondent_name, size: 9, align: :center

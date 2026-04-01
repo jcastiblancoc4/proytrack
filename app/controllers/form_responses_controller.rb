@@ -30,6 +30,7 @@ class FormResponsesController < ApplicationController
 
     if @form_response.save
       build_responses(@form_response)
+      save_signature(@form_response, params[:signature_data])
       attach_pdf(@form_response)
       redirect_to inspection_form_form_response_path(@inspection_form, @form_response),
                   notice: "Inspección registrada exitosamente."
@@ -75,6 +76,19 @@ class FormResponsesController < ApplicationController
   ensure
     tempfile&.close
     tempfile&.unlink
+  end
+
+  def save_signature(form_response, signature_data)
+    return unless signature_data.present?
+    base64 = signature_data.sub(/\Adata:image\/\w+;base64,/, '')
+    binary = Base64.decode64(base64)
+    relative_path = "uploads/form_responses/#{form_response.id}/signature_#{form_response.id}.png"
+    dest = Rails.root.join('public', relative_path)
+    FileUtils.mkdir_p(dest.dirname)
+    File.binwrite(dest.to_s, binary)
+    form_response.update(signature_path: relative_path)
+  rescue => e
+    Rails.logger.error "Signature save failed for FormResponse #{form_response.id}: #{e.message}"
   end
 
   def build_responses(form_response)

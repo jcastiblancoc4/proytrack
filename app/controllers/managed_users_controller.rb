@@ -41,16 +41,18 @@ class ManagedUsersController < ApplicationController
   end
 
   def update
-    profile = @managed_user.profile || @managed_user.build_profile
+    @profile = @managed_user.profile || @managed_user.build_profile
+    @profile.assign_attributes(profile_params)
 
     user_updated = user_update_params[:password].blank? ?
       @managed_user.update_without_password(user_update_params.except(:password, :password_confirmation)) :
       @managed_user.update(user_update_params)
 
-    if user_updated && profile.update(profile_params)
+    profile_saved = @profile.save
+
+    if user_updated && profile_saved
       redirect_to managed_users_path, notice: "Usuario actualizado exitosamente."
     else
-      @profile = profile
       render :edit, status: :unprocessable_entity
     end
   end
