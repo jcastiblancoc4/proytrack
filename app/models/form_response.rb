@@ -21,7 +21,7 @@ class FormResponse
 
   def respondent_name
     profile = user&.profile
-    profile ? profile.full_name : user&.email&.split("@")&.first
+    profile ? profile.full_name : user&.email
   end
 
   private

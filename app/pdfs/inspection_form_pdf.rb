@@ -27,6 +27,8 @@ class InspectionFormPdf
     build_info(pdf)
     pdf.move_down 6
     build_questions(pdf)
+    pdf.move_down 20
+    build_signature(pdf)
     build_footer(pdf)
 
     pdf.render_file(tempfile.path)
@@ -118,6 +120,19 @@ class InspectionFormPdf
       resp.array_answer.join(', ')
     else
       '—'
+    end
+  end
+
+  def build_signature(pdf)
+    w         = pdf.bounds.width
+    sig_width = w * 0.4
+
+    pdf.bounding_box([0, pdf.cursor], width: sig_width) do
+      pdf.text 'Firma del responsable:', size: 9, style: :bold
+      pdf.move_down 40
+      pdf.stroke { pdf.horizontal_rule }
+      pdf.move_down 4
+      pdf.text @fr.respondent_name, size: 9, align: :center
     end
   end
 
