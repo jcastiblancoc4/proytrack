@@ -122,12 +122,11 @@ class InspectionFormPdf
   end
 
   def build_footer(pdf)
-    pdf.repeat(:all) do
-      pdf.bounding_box([0, pdf.bounds.absolute_bottom + 18], width: pdf.bounds.width) do
-        pdf.stroke { pdf.horizontal_rule }
-        pdf.move_down 4
-        pdf.text FOOTER_TEXT, size: 7, align: :center, color: '555555'
-      end
+    pdf.go_to_page(pdf.page_count)
+    pdf.bounding_box([0, pdf.bounds.absolute_bottom + 18], width: pdf.bounds.width) do
+      pdf.stroke { pdf.horizontal_rule }
+      pdf.move_down 4
+      pdf.text FOOTER_TEXT, size: 7, align: :center, color: '555555'
     end
   end
 end
