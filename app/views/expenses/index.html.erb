@@ -363,19 +363,20 @@
 
   <% if @expenses.any? %>
     <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-      <table class="w-full text-sm">
+      <div class="overflow-x-auto">
+      <table class="w-full text-sm table-fixed">
         <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
           <tr>
-            <th class="px-4 py-3 text-left">Fecha</th>
-            <th class="px-4 py-3 text-left">Descripción</th>
-            <th class="px-4 py-3 text-left">Tipo</th>
-            <th class="px-4 py-3 text-left">Proyecto</th>
-            <th class="px-4 py-3 text-left">Tercero</th>
-            <th class="px-4 py-3 text-left">Cuenta</th>
-            <th class="px-4 py-3 text-left">Soporte</th>
-            <th class="px-4 py-3 text-left">N° Factura</th>
-            <th class="px-4 py-3 text-right">Valor</th>
-            <th class="px-4 py-3 text-center">Acciones</th>
+            <th class="px-4 py-3 text-left w-24">Fecha</th>
+            <th class="px-4 py-3 text-left w-48">Descripción</th>
+            <th class="px-4 py-3 text-left w-24">Tipo</th>
+            <th class="px-4 py-3 text-left w-24">Proyecto</th>
+            <th class="px-4 py-3 text-left w-28">Tercero</th>
+            <th class="px-4 py-3 text-left w-24">Cuenta</th>
+            <th class="px-4 py-3 text-left w-20">Soporte</th>
+            <th class="px-4 py-3 text-left w-24">N° Factura</th>
+            <th class="px-4 py-3 text-right w-28">Valor</th>
+            <th class="px-4 py-3 text-center w-24">Acciones</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -384,7 +385,7 @@
               <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
                 <%= expense.expense_date&.strftime("%d/%m/%Y") || "-" %>
               </td>
-              <td class="px-4 py-3 font-medium text-gray-800 max-w-xs truncate">
+              <td class="px-4 py-3 font-medium text-gray-800 truncate">
                 <%= expense.description %>
               </td>
               <td class="px-4 py-3">
@@ -435,6 +436,7 @@
           <% end %>
         </tbody>
       </table>
+      </div>
     </div>
   <% else %>
     <div class="text-center py-16 text-gray-500" x-data>
