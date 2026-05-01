@@ -1,0 +1,69 @@
+wb = xlsx_package.workbook
+
+header_style  = wb.styles.add_style bg_color: "1F4E79", fg_color: "FFFFFF", b: true, sz: 11,
+                                     alignment: { horizontal: :center, vertical: :center, wrap_text: true },
+                                     border: { style: :thin, color: "FFFFFF" }
+income_style  = wb.styles.add_style fg_color: "166534", bg_color: "F0FDF4",
+                                     border: { style: :thin, color: "E2E8F0" }
+expense_style = wb.styles.add_style fg_color: "991B1B", bg_color: "FFF1F2",
+                                     border: { style: :thin, color: "E2E8F0" }
+amount_income  = wb.styles.add_style fg_color: "166534", bg_color: "F0FDF4", num_fmt: 4,
+                                      border: { style: :thin, color: "E2E8F0" }
+amount_expense = wb.styles.add_style fg_color: "991B1B", bg_color: "FFF1F2", num_fmt: 4,
+                                      border: { style: :thin, color: "E2E8F0" }
+date_income   = wb.styles.add_style num_fmt: 14, fg_color: "166534", bg_color: "F0FDF4",
+                                     border: { style: :thin, color: "E2E8F0" }
+date_expense  = wb.styles.add_style num_fmt: 14, fg_color: "991B1B", bg_color: "FFF1F2",
+                                     border: { style: :thin, color: "E2E8F0" }
+total_style   = wb.styles.add_style b: true, bg_color: "E2E8F0",
+                                     border: { style: :thin, color: "CCCCCC" }
+total_amount  = wb.styles.add_style b: true, bg_color: "E2E8F0", num_fmt: 4,
+                                     border: { style: :thin, color: "CCCCCC" }
+
+is_credit = @account.account_type.to_s == "credit"
+
+wb.add_worksheet(name: "Movimientos") do |sheet|
+  sheet.add_row(
+    ["Fecha", "Descripción", "Tipo", "Valor (COP)"],
+    style: [header_style, header_style, header_style, header_style],
+    height: 20
+  )
+
+  @transactions.each do |tx|
+    is_income = tx.income?
+    row_style = is_income ? income_style  : expense_style
+    row_date  = is_income ? date_income   : date_expense
+    row_amt   = is_income ? amount_income : amount_expense
+
+    if is_credit
+      tipo = is_income ? "Pago" : "Compra"
+    else
+      tipo = is_income ? "Ingreso" : "Egreso"
+    end
+
+    sheet.add_row(
+      [tx.transaction_date, tx.description, tipo, tx.amount.to_f],
+      style: [row_date, row_style, row_style, row_amt]
+    )
+  end
+
+  total_ingresos = @transactions.select(&:income?).sum { |t| t.amount.to_f }
+  total_egresos  = @transactions.reject(&:income?).sum { |t| t.amount.to_f }
+  saldo          = total_ingresos - total_egresos
+
+  sheet.add_row []
+  sheet.add_row(
+    ["", is_credit ? "Total pagos" : "Total ingresos", "", total_ingresos],
+    style: [total_style, total_style, total_style, total_amount]
+  )
+  sheet.add_row(
+    ["", is_credit ? "Total compras" : "Total egresos", "", total_egresos],
+    style: [total_style, total_style, total_style, total_amount]
+  )
+  sheet.add_row(
+    ["", "Saldo en cuenta", "", saldo],
+    style: [total_style, total_style, total_style, total_amount]
+  )
+
+  sheet.column_widths 14, 45, 14, 18
+end

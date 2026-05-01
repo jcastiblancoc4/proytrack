@@ -1,7 +1,7 @@
 class AccountsController < ApplicationController
   before_action :authenticate_user!
   before_action :require_admin!
-  before_action :set_account, only: [:show, :edit, :update, :destroy]
+  before_action :set_account, only: [:show, :edit, :update, :destroy, :export_xlsx]
 
   def index
     @accounts = current_user.accounts.order(created_at: :desc)
@@ -10,6 +10,16 @@ class AccountsController < ApplicationController
   def show
     @transactions = @account.transactions.order(transaction_date: :desc, created_at: :desc)
     @new_transaction = Transaction.new
+  end
+
+  def export_xlsx
+    @transactions = @account.transactions.order(transaction_date: :asc, created_at: :asc)
+    respond_to do |format|
+      format.xlsx do
+        response.headers['Content-Disposition'] =
+          "attachment; filename=\"movimientos_#{@account.name.parameterize}_#{Date.current.strftime('%Y%m%d')}.xlsx\""
+      end
+    end
   end
 
   def new

@@ -13,6 +13,9 @@ Rails.application.routes.draw do
 
   resources :accounts do
     resources :transactions, only: [:new, :create, :destroy]
+    member do
+      get :export_xlsx
+    end
   end
 
   resources :expenses, only: [:index, :create, :edit, :update, :destroy] do
