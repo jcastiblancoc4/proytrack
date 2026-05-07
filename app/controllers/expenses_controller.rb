@@ -108,16 +108,18 @@ class ExpensesController < ApplicationController
       end
     else
       # Standalone
+      project_id = expense_params[:project_id]
       @expense = Expense.new(expense_params.except(:project_id))
       @expense.user = current_user
 
-      project_id = expense_params[:project_id]
       if project_id.present?
         project = current_user.projects.find(project_id) rescue nil
         @expense.project = project
+      else
+        @expense.errors.add(:project_id, "Debe seleccionar un proyecto")
       end
 
-      if @expense.save
+      if project_id.present? && @expense.save
         redirect_to expenses_path, notice: "Gasto registrado exitosamente."
       else
         @third_parties      = current_user.third_parties.order(:first_name.asc)
@@ -138,29 +140,45 @@ class ExpensesController < ApplicationController
     unless @project.present?
       @third_parties = current_user.third_parties.order(:first_name.asc)
       @accounts      = current_user.accounts.order(created_at: :desc)
-      @projects      = current_user.projects.in(execution_status_cd: [0, 1]).order(created_at: :desc)
+      @projects      = current_user.projects.order(created_at: :desc)
     end
   end
 
   def update
     @expense.user = current_user if @expense.user.nil?
-    if @expense.update(expense_params.except(:project_id))
-      if @project.present?
+
+    if @project.present?
+      if @expense.update(expense_params.except(:project_id))
         if params[:from] == 'home'
           redirect_to root_path, notice: "Gasto actualizado exitosamente."
         else
           redirect_to project_path(@project), notice: "Gasto actualizado exitosamente."
         end
       else
-        redirect_to expenses_path, notice: "Gasto actualizado exitosamente."
+        render :edit, alert: "No se pudo actualizar el gasto."
       end
     else
-      if @project.present?
-        render :edit, alert: "No se pudo actualizar el gasto."
+      project_id = expense_params[:project_id]
+
+      unless project_id.present?
+        @expense.errors.add(:project_id, "Debe seleccionar un proyecto")
+        @third_parties      = current_user.third_parties.order(:first_name.asc)
+        @accounts           = current_user.accounts.order(created_at: :desc)
+        @projects           = current_user.projects.order(created_at: :desc)
+        @expense_categories = current_user.expense_categories.order(name: :asc)
+        render :edit, status: :unprocessable_entity and return
+      end
+
+      new_project = current_user.projects.find(project_id) rescue nil
+      @expense.project = new_project
+      @expense.assign_attributes(expense_params.except(:project_id))
+
+      if @expense.save
+        redirect_to expenses_path, notice: "Gasto actualizado exitosamente."
       else
-        @third_parties = current_user.third_parties.order(:first_name.asc)
-        @accounts = current_user.accounts.order(created_at: :desc)
-        @projects = current_user.projects.in(execution_status_cd: [0, 1]).order(created_at: :desc)
+        @third_parties      = current_user.third_parties.order(:first_name.asc)
+        @accounts           = current_user.accounts.order(created_at: :desc)
+        @projects           = current_user.projects.order(created_at: :desc)
         @expense_categories = current_user.expense_categories.order(name: :asc)
         render :edit, status: :unprocessable_entity
       end
