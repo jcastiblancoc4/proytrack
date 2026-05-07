@@ -5,7 +5,7 @@
       <div class="flex-1">
         <h1 class="text-xl sm:text-2xl font-extrabold text-blue-900 text-center sm:text-left">Proyectos Registrados</h1>
         <p class="text-xs sm:text-sm text-gray-600 mt-1 text-center sm:text-left">
-          Mostrando <%= @projects.count %> de <%= @projects.count %> <%= @projects.count == 1 ? 'proyecto' : 'proyectos' %>
+          Mostrando <%= @projects.count %> de <%= @total_projects %> <%= @total_projects == 1 ? 'proyecto' : 'proyectos' %>
         </p>
       </div>
 
@@ -14,8 +14,10 @@
         <!-- Filtro estilo Excel -->
         <div class="relative" x-data="{ open: false }" @click.away="open = false">
           <%
-            has_active_filters = @selected_statuses != ['todos'] && @selected_statuses.any?
-            active_filter_count = has_active_filters ? @selected_statuses.count : 0
+            has_status_filter = @selected_statuses != ['todos'] && @selected_statuses.any?
+            has_date_filter   = @date_from.present? || @date_to.present?
+            has_active_filters = has_status_filter || has_date_filter
+            active_filter_count = (has_status_filter ? @selected_statuses.count : 0) + (has_date_filter ? 1 : 0)
           %>
           <button @click="open = !open"
                   type="button"
@@ -26,14 +28,20 @@
             </svg>
             <span class="flex-1 text-center">
               <% if has_active_filters %>
-                <%= active_filter_count == 1 ? t("enums.project.execution_status.#{@selected_statuses.first}") : "#{active_filter_count} filtros" %>
+                <% if active_filter_count == 1 && has_status_filter %>
+                  <%= t("enums.project.execution_status.#{@selected_statuses.first}") %>
+                <% elsif active_filter_count == 1 && has_date_filter %>
+                  Por fecha
+                <% else %>
+                  <%= active_filter_count %> filtros
+                <% end %>
               <% else %>
                 Filtrar
               <% end %>
             </span>
             <!-- Badge siempre presente pero invisible cuando no hay filtro -->
             <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white rounded-full <%= has_active_filters ? 'bg-green-600' : 'bg-transparent text-transparent' %>">
-              <%= has_active_filters ? @projects.count : '0' %>
+              <%= @projects.count %>
             </span>
             <svg class="w-4 h-4 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -73,6 +81,8 @@
             <!-- Lista de opciones -->
             <div class="py-2 max-h-96 overflow-y-auto">
               <%= form_with url: projects_path, method: :get, local: true, id: 'filter-form' do |f| %>
+                <%= hidden_field_tag :sort_by, @sort_by %>
+                <%= hidden_field_tag :sort_direction, @sort_direction %>
                 <%
                   filter_options = [
                     { value: 'todos', label: 'Todos los estados', icon: '📋', color: 'bg-gray-100 text-gray-800', is_all: true },
@@ -119,6 +129,31 @@
               <% end %>
             </div>
 
+            <!-- Filtro por fecha de registro -->
+            <div class="px-4 py-3 border-t border-gray-100">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Fecha de registro</p>
+              <div class="flex flex-col gap-2">
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Desde</label>
+                  <input type="date"
+                         name="date_from"
+                         form="filter-form"
+                         value="<%= @date_from&.strftime('%Y-%m-%d') %>"
+                         onchange="submitFilterWithDebounce()"
+                         class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring focus:ring-blue-200 focus:border-blue-400">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Hasta</label>
+                  <input type="date"
+                         name="date_to"
+                         form="filter-form"
+                         value="<%= @date_to&.strftime('%Y-%m-%d') %>"
+                         onchange="submitFilterWithDebounce()"
+                         class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring focus:ring-blue-200 focus:border-blue-400">
+                </div>
+              </div>
+            </div>
+
             <!-- Footer con información -->
             <% if has_active_filters %>
               <div class="px-4 py-3 bg-blue-50 border-t border-blue-100 rounded-b-lg">
@@ -133,6 +168,92 @@
                 </div>
               </div>
             <% end %>
+          </div>
+        </div>
+
+        <!-- Ordenar por -->
+        <div class="relative" x-data="{ open: false }" @click.away="open = false">
+          <button @click="open = !open"
+                  type="button"
+                  class="w-full sm:w-auto sm:min-w-[180px] inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 text-sm font-semibold rounded transition-all duration-200 shadow-sm">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M6 12h12M9 18h6"></path>
+            </svg>
+            <span class="flex-1 text-center">
+              <%= @sort_by == 'created_at' ? 'Fecha de creación' : 'Últ. actualización' %>
+            </span>
+            <svg class="w-4 h-4 flex-shrink-0 transition-transform duration-200 <%= @sort_direction == 'asc' ? 'rotate-180' : '' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16l4 4m0 0l4-4m-4 4V4M21 8l-4-4m0 0L13 8m4-4v16"></path>
+            </svg>
+            <svg class="w-4 h-4 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+
+          <div x-show="open"
+               x-transition:enter="transition ease-out duration-100"
+               x-transition:enter-start="transform opacity-0 scale-95"
+               x-transition:enter-end="transform opacity-100 scale-100"
+               x-transition:leave="transition ease-in duration-75"
+               x-transition:leave-start="transform opacity-100 scale-100"
+               x-transition:leave-end="transform opacity-0 scale-95"
+               x-cloak
+               class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200"
+               style="z-index: 9999; position: absolute !important;">
+
+            <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+              <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M6 12h12M9 18h6"></path>
+                </svg>
+                Ordenar por
+              </h3>
+            </div>
+
+            <div class="py-2">
+              <% [['updated_at', 'Últ. actualización', '🔄'], ['created_at', 'Fecha de creación', '📅']].each do |value, label, icon| %>
+                <label class="flex items-center px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors duration-150 group">
+                  <input type="radio"
+                         name="sort_by"
+                         form="filter-form"
+                         value="<%= value %>"
+                         <%= 'checked' if @sort_by == value %>
+                         onchange="document.getElementById('filter-form').submit()"
+                         class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                  <div class="ml-3 flex-1 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="text-lg"><%= icon %></span>
+                      <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900"><%= label %></span>
+                    </div>
+                    <% if @sort_by == value %>
+                      <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                      </svg>
+                    <% end %>
+                  </div>
+                </label>
+              <% end %>
+            </div>
+
+            <!-- Dirección -->
+            <div class="border-t border-gray-100 px-4 py-3">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Dirección</p>
+              <div class="flex gap-2">
+                <% [['desc', '↓ Más reciente'], ['asc', '↑ Más antiguo']].each do |dir, label| %>
+                  <label class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded border-2 cursor-pointer text-xs font-medium transition-all duration-150
+                                <%= @sort_direction == dir ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50' %>">
+                    <input type="radio"
+                           name="sort_direction"
+                           form="filter-form"
+                           value="<%= dir %>"
+                           <%= 'checked' if @sort_direction == dir %>
+                           onchange="document.getElementById('filter-form').submit()"
+                           class="sr-only">
+                    <%= label %>
+                  </label>
+                <% end %>
+              </div>
+            </div>
           </div>
         </div>
 

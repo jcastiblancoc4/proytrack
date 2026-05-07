@@ -9,6 +9,8 @@ class ProjectsController < ApplicationController
     shared_projects = current_user.shared_with_me_projects.to_a
     all_projects = own_projects + shared_projects
 
+    @total_projects = all_projects.count
+
     if params[:execution_status].present?
       selected_statuses = Array(params[:execution_status]).reject(&:blank?)
       if selected_statuses.any? && !selected_statuses.include?('todos')
@@ -19,10 +21,25 @@ class ProjectsController < ApplicationController
       @selected_statuses = ['todos']
     end
 
-    @projects = all_projects.sort_by do |project|
-      last_expense_date = project.expenses.max_by(&:updated_at)&.updated_at
-      [project.updated_at, last_expense_date].compact.max
-    end.reverse
+    @date_from = params[:date_from].present? ? (Date.parse(params[:date_from]) rescue nil) : nil
+    @date_to   = params[:date_to].present?   ? (Date.parse(params[:date_to])   rescue nil) : nil
+
+    all_projects = all_projects.select { |p| p.created_at.to_date >= @date_from } if @date_from
+    all_projects = all_projects.select { |p| p.created_at.to_date <= @date_to   } if @date_to
+
+    @sort_by        = %w[created_at updated_at].include?(params[:sort_by])        ? params[:sort_by]        : 'updated_at'
+    @sort_direction = %w[asc desc].include?(params[:sort_direction]) ? params[:sort_direction] : 'desc'
+
+    sorted = all_projects.sort_by do |project|
+      if @sort_by == 'created_at'
+        project.created_at
+      else
+        last_expense_date = project.expenses.max_by(&:updated_at)&.updated_at
+        [project.updated_at, last_expense_date].compact.max
+      end
+    end
+
+    @projects = @sort_direction == 'desc' ? sorted.reverse : sorted
   end
 
   # GET /projects/1 or /projects/1.json
