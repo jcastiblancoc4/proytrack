@@ -3,8 +3,8 @@ require 'prawn/table'
 
 class InspectionFormPdf
   LOGO_PATH   = Rails.root.join('app', 'assets', 'images', 'mc_ingenieros_logo.png').to_s
-  FOOTER_TEXT = 'Este documento es para uso exclusivo de MC INGENIEROS SAS   ' \
-                'Se prohíbe su reproducción total o parcial.'
+  FOOTER_TEXT = 'ESTE DOCUMENTO ES PARA USO EXCLUSIVO DE MC INGENIEROS SAS   ' \
+                'SE PROHIBE SU REPRODUCCION TOTAL O PARCIAL.'
 
   def self.generate_tempfile(form_response)
     new(form_response).generate_tempfile
@@ -50,7 +50,7 @@ class InspectionFormPdf
     data = [[
       logo_cell,
       { content: @form.name.upcase, align: :center, font_style: :bold, size: 12, valign: :center, padding: [8, 6, 8, 6] },
-      { content: "Codigo: #{@form.code}\nVersion: #{@form.version}\nFecha: #{date}", size: 9, valign: :center, padding: [6, 8, 6, 8] }
+      { content: "CODIGO: #{@form.code}\nVERSION: #{@form.version}\nFECHA: #{date}", size: 9, valign: :center, padding: [6, 8, 6, 8] }
     ]]
 
     pdf.table(data, width: pdf.bounds.width) do |t|
@@ -62,28 +62,40 @@ class InspectionFormPdf
   end
 
   def build_info(pdf)
-    fecha = @fr.inspection_datetime.strftime('%Y-%m-%d')
-    hora  = @fr.inspection_datetime.strftime('%H:%M:%S')
+    fecha = @fr.inspection_datetime.strftime('%d/%m/%Y')
+    hora  = @fr.inspection_datetime.strftime('%H:%M')
     w     = pdf.bounds.width
     half  = w / 2.0
 
     cell_style = { border_width: 0.5, border_color: '000000', padding: [4, 6, 4, 6], size: 9 }
 
-    # Tema
-    pdf.table([[{ content: "Tema: #{@form.issue}" }]], width: w, cell_style: cell_style)
+    pdf.table([[{ content: "TEMA: #{@form.issue.upcase}" }]], width: w, cell_style: cell_style)
+    pdf.table([[{ content: "OBJETIVO: #{@form.objective.upcase}" }]], width: w, cell_style: cell_style)
 
-    # Objetivo
-    pdf.table([[{ content: "Objetivo: #{@form.objective}" }]], width: w, cell_style: cell_style)
-
-    # Responsable / Fecha — Lugar / Hora
     pdf.table([
       [
-        { content: "Responsable: #{@fr.respondent_name}" },
-        { content: "Fecha: #{fecha}" }
-      ],
+        { content: "CLIENTE: #{@fr.cliente.to_s.upcase}" },
+        { content: "PROYECTO: #{@fr.proyecto.to_s.upcase}" }
+      ]
+    ], width: w, cell_style: cell_style) do |t|
+      t.columns(0).width = half
+      t.columns(1).width = half
+    end
+
+    pdf.table([
       [
-        { content: 'Lugar:' },
-        { content: "Hora: #{hora}" }
+        { content: "CIUDAD: #{@fr.ciudad.to_s.upcase}" },
+        { content: "RESPONSABLE: #{@fr.responsable.to_s.upcase}" }
+      ]
+    ], width: w, cell_style: cell_style) do |t|
+      t.columns(0).width = half
+      t.columns(1).width = half
+    end
+
+    pdf.table([
+      [
+        { content: "DILIGENCIADO POR: #{@fr.respondent_name.upcase}" },
+        { content: "FECHA: #{fecha}    HORA: #{hora}" }
       ]
     ], width: w, cell_style: cell_style) do |t|
       t.columns(0).width = half
@@ -92,25 +104,64 @@ class InspectionFormPdf
   end
 
   def build_questions(pdf)
-    w = pdf.bounds.width
+    w          = pdf.bounds.width
+    cell_style = { border_width: 0.5, border_color: '000000' }
 
-    rows = @fr.responses.each_with_index.flat_map do |resp, i|
-      question_text = resp.question_text.presence || resp.question&.question || 'Pregunta eliminada'
-      answer        = format_answer(resp)
-      [
-        [{ content: "#{i + 1}. #{question_text}", font_style: :bold, background_color: 'EEEEEE', size: 9, padding: [5, 8, 5, 8] }],
-        [{ content: answer, size: 9, padding: [5, 8, 5, 8] }]
-      ]
+    @fr.responses.each_with_index do |resp, i|
+      question_text = (resp.question_text.presence || resp.question&.question || 'Pregunta eliminada').upcase
+
+      if resp.question&.options? || resp.question&.boxes?
+        options  = resp.question.options? ? resp.question.options : resp.question.boxes
+        selected = resp.question.options? ? [resp.string_answer.to_s] : Array(resp.array_answer)
+        n        = options.size
+
+        q_col_w  = (w * 0.40).round(1)
+        opt_w    = ((w - q_col_w) / n.to_f).round(1)
+        # ajuste de la última columna para cubrir exactamente el ancho total
+        widths   = [q_col_w] + (n - 1).times.map { opt_w } + [w - q_col_w - opt_w * (n - 1)]
+
+        # Fila 1: pregunta (rowspan 2) + etiqueta de cada opción
+        row1 = [
+          { content: "#{i + 1}. #{question_text}", font_style: :bold,
+            background_color: 'EEEEEE', size: 9, padding: [5, 8, 5, 8],
+            valign: :center, rowspan: 2 },
+          *options.map { |opt|
+            { content: opt.upcase, size: 9, align: :center, valign: :center,
+              padding: [4, 4, 2, 4], background_color: 'EEEEEE' }
+          }
+        ]
+
+        # Fila 2: X debajo de la(s) opción(es) seleccionada(s)
+        row2 = options.map { |opt|
+          selected.include?(opt) ?
+            { content: 'X', size: 11, font_style: :bold, align: :center,
+              valign: :center, padding: [2, 4, 4, 4] } :
+            { content: '', padding: [2, 4, 4, 4] }
+        }
+
+        pdf.table([row1, row2], width: w, cell_style: cell_style) do |t|
+          widths.each_with_index { |cw, j| t.columns(j).width = cw }
+        end
+
+      else
+        answer = format_answer(resp)
+        pdf.table(
+          [
+            [{ content: "#{i + 1}. #{question_text}", font_style: :bold,
+               background_color: 'EEEEEE', size: 9, padding: [5, 8, 5, 8] }],
+            [{ content: answer, size: 9, padding: [5, 8, 5, 8] }]
+          ],
+          width: w, cell_style: cell_style
+        )
+      end
     end
-
-    pdf.table(rows, width: w, cell_style: { border_width: 0.5, border_color: '000000' })
   end
 
   def format_answer(resp)
     if resp.string_answer.present?
-      resp.string_answer
+      resp.string_answer.upcase
     elsif resp.array_answer.any?
-      resp.array_answer.join(', ')
+      resp.array_answer.join(', ').upcase
     else
       '—'
     end
@@ -122,8 +173,10 @@ class InspectionFormPdf
     sig_x     = (w - sig_width) / 2.0
     sig_path  = @fr.signature_path.present? ? Rails.root.join('public', @fr.signature_path).to_s : nil
 
+    pdf.start_new_page if pdf.cursor < 110
+
     pdf.bounding_box([sig_x, pdf.cursor], width: sig_width) do
-      pdf.text 'Firma del responsable:', size: 9, style: :bold, align: :center
+      pdf.text 'FIRMA DEL RESPONSABLE:', size: 9, style: :bold, align: :center
       pdf.move_down 6
       if sig_path && File.exist?(sig_path)
         pdf.image sig_path, fit: [sig_width - 16, 50], position: :center
@@ -133,7 +186,7 @@ class InspectionFormPdf
       end
       pdf.stroke { pdf.horizontal_rule }
       pdf.move_down 4
-      pdf.text @fr.respondent_name, size: 9, align: :center
+      pdf.text @fr.respondent_name.upcase, size: 9, align: :center
     end
   end
 

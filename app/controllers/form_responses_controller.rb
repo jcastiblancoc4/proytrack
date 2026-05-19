@@ -10,7 +10,8 @@ class FormResponsesController < ApplicationController
   def download_pdf
     if @form_response.pdf_report.present?
       path = Rails.root.join('public', @form_response.pdf_report)
-      send_file path, type: 'application/pdf', disposition: 'inline', filename: "inspeccion_#{@form_response.id}.pdf"
+      send_file path, type: 'application/pdf', disposition: 'inline',
+                filename: "inspeccion_#{@form_response.id}.pdf"
     else
       redirect_to inspection_form_form_response_path(@inspection_form, @form_response),
                   alert: "El PDF no está disponible."
@@ -25,7 +26,11 @@ class FormResponsesController < ApplicationController
     @form_response = FormResponse.new(
       inspection_form: @inspection_form,
       user:            current_user,
-      form_version:    @inspection_form.version
+      form_version:    @inspection_form.version,
+      cliente:         params[:cliente].to_s.strip,
+      proyecto:        params[:proyecto].to_s.strip,
+      ciudad:          params[:ciudad].to_s.strip,
+      responsable:     params[:responsable].to_s.strip
     )
 
     if @form_response.save

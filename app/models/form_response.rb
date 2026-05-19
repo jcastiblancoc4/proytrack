@@ -6,6 +6,10 @@ class FormResponse
   field :form_version,        type: Integer
   field :pdf_report,          type: String
   field :signature_path,      type: String
+  field :cliente,             type: String
+  field :proyecto,            type: String
+  field :ciudad,              type: String
+  field :responsable,         type: String
 
   belongs_to :inspection_form
   belongs_to :user
