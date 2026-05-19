@@ -1,587 +1,563 @@
-<div class="min-h-screen bg-gray-50 py-4
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Header del proyecto -->
-    <div class="bg-white shadow rounded-lg mb-6">
-      <div class="px-6 py-4 border-b border-gray-200">
-        <div class="flex justify-between items-start">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900"><%= @project.name %></h1>
-            <p class="text-gray-600 mt-1">🆔 ID: <%= @project.project_identifier %></p>
-            <p class="text-gray-600">Orden de compra: <%= @project.purchase_order %></p>
-            <p class="text-gray-600">Localidad: <%= @project.locality %></p>
-            <% if @project.settlement_date.present? %>
-              <p class="text-gray-600 mt-2">📅 Fecha de liquidación: <span class="font-semibold text-green-700"><%= @project.settlement_date.strftime("%d/%m/%Y") %></span></p>
-            <% end %>
-          </div>
-          <div class="text-right">
-            <p class="text-2xl font-bold text-green-600">
-              <%= number_to_currency(@project.quoted_value, unit: "$", separator: ",", delimiter: ".") %> COP
-            </p>
-            <p class="text-sm text-gray-500">Valor cotizado</p>
-          </div>
-        </div>
-      </div>
-      
-      
-      <!-- Estados del proyecto -->
-      <div class="px-6 py-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 mb-2">Estado de Pago</h3>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= @project.payment_status == 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
-              <%= t("enums.project.payment_status.#{@project.payment_status}") %>
-            </span>
-          </div>
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 mb-2">Estado de Ejecución</h3>
-            <div class="flex items-center gap-2">
-              <%
-                status_styles = {
-                  'pending' => 'background-color: #f3f4f6; color: #1f2937;',
-                  'running' => 'background-color: #dbeafe; color: #1e3a8a;',
-                  'stop' => 'background-color: #fed7aa; color: #c2410c;',
-                  'cancelled' => 'background-color: #fecaca; color: #991b1b;',
-                  'ended' => 'background-color: #d1fae5; color: #065f46;',
-                  'in_liquidation' => 'background-color: #f3e8ff; color: #7e22ce;'
-                }
-                current_style = status_styles[@project.execution_status] || 'background-color: #f3f4f6; color: #1f2937;'
-              %>
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium" style="<%= current_style %>">
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <%
+      status_badge = {
+        'pending'        => 'bg-gray-100 text-gray-700',
+        'running'        => 'bg-blue-100 text-blue-800',
+        'stop'           => 'bg-orange-100 text-orange-700',
+        'cancelled'      => 'bg-red-100 text-red-800',
+        'ended'          => 'bg-green-100 text-green-800',
+        'in_liquidation' => 'bg-purple-100 text-purple-800'
+      }
+      status_border = {
+        'pending'        => 'border-l-gray-300',
+        'running'        => 'border-l-blue-400',
+        'stop'           => 'border-l-orange-400',
+        'cancelled'      => 'border-l-red-400',
+        'ended'          => 'border-l-green-500',
+        'in_liquidation' => 'border-l-purple-400'
+      }
+      total_spent   = @project.expenses.sum { |e| e.amount.to_i }
+      quoted        = @project.quoted_value.to_i
+      balance       = quoted - total_spent
+      pct_used      = quoted > 0 ? [(total_spent.to_f / quoted * 100).round(1), 100].min : 0
+      balance_color = balance > 1_000_000 ? 'text-green-600' : balance >= 0 ? 'text-orange-500' : 'text-red-600'
+      bar_color     = pct_used >= 100 ? 'bg-red-500' : pct_used >= 85 ? 'bg-orange-400' : 'bg-green-500'
+    %>
+
+    <!-- ── Volver ──────────────────────────────────────────────── -->
+    <%= link_to projects_path,
+          class: "inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors cursor-pointer" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Volver a Proyectos
+    <% end %>
+
+    <!-- ── Header del Proyecto ────────────────────────────────── -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 <%= status_border[@project.execution_status] || 'border-l-gray-300' %> overflow-hidden">
+      <div class="px-6 py-5">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <!-- Info izquierda -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap mb-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-xs font-mono font-semibold">
+                <%= @project.project_identifier %>
+              </span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= status_badge[@project.execution_status] || 'bg-gray-100 text-gray-700' %>">
                 <%= t("enums.project.execution_status.#{@project.execution_status}") %>
               </span>
-              <% if @can_edit && !@project.in_liquidation? %>
-                <button type="button" onclick="toggleStatusModal()" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= @project.payment_status == 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' %>">
+                <%= t("enums.project.payment_status.#{@project.payment_status}") %>
+              </span>
+            </div>
+
+            <h1 class="text-2xl font-bold text-gray-900 mb-3"><%= @project.name %></h1>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <% if @project.purchase_order.present? %>
+                <div class="flex items-center gap-2 text-gray-600">
+                  <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                   </svg>
-                  Actualizar
-                </button>
+                  <span>OC: <strong><%= @project.purchase_order %></strong></span>
+                </div>
+              <% end %>
+              <% if @project.locality.present? %>
+                <div class="flex items-center gap-2 text-gray-600">
+                  <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  <span><%= @project.locality %></span>
+                </div>
+              <% end %>
+              <% if @project.settlement_date.present? %>
+                <div class="flex items-center gap-2 text-gray-600">
+                  <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span>Liquidación: <strong class="text-green-700"><%= @project.settlement_date.strftime("%d/%m/%Y") %></strong></span>
+                </div>
               <% end %>
             </div>
           </div>
-            <div class="flex flex-col items-start space-y-2">
-              <% if @project.in_liquidation? %>
-                <div class="bg-purple-100 border-2 border-purple-300 px-3 py-2 rounded-lg w-full">
-                  <div class="flex items-center gap-2 mb-1">
-                    <svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                    <span class="text-purple-800 text-sm font-semibold">
-                      Proyecto en Liquidación
-                    </span>
-                  </div>
-                  <p class="text-purple-700 text-xs mb-2">
-                    No se puede editar ni agregar gastos
-                  </p>
-                  <% if @project.settlement.present? %>
-                    <%= link_to settlement_path(@project.settlement), class: "inline-flex items-center gap-1 text-xs font-medium text-purple-700 hover:text-purple-900 bg-purple-200 hover:bg-purple-300 px-2 py-1 rounded transition-colors" do %>
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                      </svg>
-                      Ver Liquidación <%= @project.settlement.period_name %>
-                    <% end %>
-                  <% end %>
-                </div>
-              <% elsif @can_edit %>
-                <%= link_to "Editar Proyecto", edit_project_path(@project, from: 'show'),
-                    class: "bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-center text-sm w-full" %>
 
-                <a href="#" onclick="if(confirm('¿Estás seguro de eliminar este proyecto? Esta acción no se puede deshacer.')) { document.getElementById('delete-project-<%= @project.id %>').submit(); }" class="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-center text-sm w-full">Eliminar Proyecto</a>
-                <%= form_with url: project_path(@project), method: :delete, local: true, html: { id: "delete-project-#{@project.id}", style: "display: none;" } do |f| %><% end %>
+          <!-- Acciones derecha -->
+          <div class="flex flex-col gap-2 items-start lg:items-end flex-shrink-0">
+            <div class="text-right">
+              <p class="text-2xl font-bold text-green-700">
+                <%= number_to_currency(@project.quoted_value, unit: "$", separator: ",", delimiter: ".") %>
+              </p>
+              <p class="text-xs text-gray-400">Valor cotizado COP</p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <% if @project.in_liquidation? %>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  En Liquidación
+                </span>
+                <% if @project.settlement.present? %>
+                  <%= link_to settlement_path(@project.settlement),
+                        class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition-colors cursor-pointer" do %>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Ver Liquidación
+                  <% end %>
+                <% end %>
+              <% elsif @can_edit %>
+                <% if @can_edit && !@project.in_liquidation? %>
+                  <button type="button" onclick="toggleStatusModal()"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-colors cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Estado
+                  </button>
+                <% end %>
+                <%= link_to edit_project_path(@project, from: 'show'),
+                      class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-colors cursor-pointer" do %>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                  Editar
+                <% end %>
+                <button type="button"
+                        onclick="if(confirm('¿Estás seguro de eliminar este proyecto? Esta acción no se puede deshacer.')) { document.getElementById('delete-project-<%= @project.id %>').submit(); }"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition-colors cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                  Eliminar
+                </button>
+                <%= form_with url: project_path(@project), method: :delete, local: true,
+                      html: { id: "delete-project-#{@project.id}", style: "display:none;" } do |f| %><% end %>
               <% else %>
-                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                  Solo Lectura
+                <span class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-lg">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  Solo lectura
                 </span>
               <% end %>
             </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Resumen de gastos -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0 ml-2">
-              <div class="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center">
-                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="ml-5 w-0 flex-1 ml-2">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Total Gastado</dt>
-                <dd class="text-lg font-medium text-gray-900">
-                  <%= number_to_currency(@project.expenses.sum(&:amount), unit: "$", separator: ",", delimiter: ".") %> COP
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0 ml-2">
-              <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
-                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="ml-5 w-0 flex-1 ml-2">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Saldo Restante</dt>
-                <dd class="text-lg font-medium text-gray-900">
-                  <%= number_to_currency(@project.quoted_value - @project.expenses.sum(&:amount), unit: "$", separator: ",", delimiter: ".") %> COP
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white overflow-hidden shadow rounded-lg">
-        <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0 ml-2">
-              <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="ml-5 w-0 flex-1 ml-2">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Total Gastos</dt>
-                <dd class="text-lg font-medium text-gray-900">
-                  <%= @project.expenses.count %> gastos
-                </dd>
-              </dl>
-            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Sección de usuarios con acceso al proyecto -->
+    <!-- ── KPI Cards ─────────────────────────────────────────── -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Total Gastado -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Total Gastado</span>
+          <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-gray-900">
+          <%= number_to_currency(total_spent, unit: "$", separator: ",", delimiter: ".") %>
+        </p>
+        <p class="text-xs text-gray-400 mt-1"><%= @project.expenses.count %> gastos registrados</p>
+        <!-- Barra de progreso -->
+        <div class="mt-3">
+          <div class="flex justify-between text-xs text-gray-400 mb-1">
+            <span>Ejecución presupuestal</span>
+            <span><%= pct_used %>%</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-1.5">
+            <div class="<%= bar_color %> h-1.5 rounded-full transition-all duration-500" style="width: <%= pct_used %>%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saldo Restante -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Saldo Restante</span>
+          <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl font-bold <%= balance_color %>">
+          <%= number_to_currency(balance, unit: "$", separator: ",", delimiter: ".") %>
+        </p>
+        <p class="text-xs text-gray-400 mt-1">de <%= number_to_currency(quoted, unit: "$", separator: ",", delimiter: ".") %> cotizado</p>
+      </div>
+
+      <!-- Total Gastos -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Registros</span>
+          <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-4xl font-bold text-gray-900"><%= @project.expenses.count %></p>
+        <p class="text-xs text-gray-400 mt-1">gastos en este proyecto</p>
+      </div>
+    </div>
+
+    <!-- ── Usuarios con acceso ────────────────────────────────── -->
     <% if @can_share %>
-      <div class="bg-white shadow rounded-lg mb-6">
-        <!-- Header con título y botón para agregar -->
-        <div class="px-6 py-4 border-b border-gray-200">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-              </svg>
-              <h2 class="text-lg font-medium text-gray-900">
-                Usuarios con Acceso
-              </h2>
-              <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                <%= @project.shared_projects.count %>
-              </span>
-            </div>
-            <button type="button" onclick="toggleShareModal()" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-              </svg>
-              Compartir Proyecto
-            </button>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <h2 class="text-sm font-semibold text-gray-800">Usuarios con Acceso</h2>
+            <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white bg-green-600 rounded-full">
+              <%= @project.shared_projects.count %>
+            </span>
           </div>
+          <button type="button" onclick="toggleShareModal()"
+                  class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-green-700 hover:bg-green-800 rounded-lg transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+            </svg>
+            Compartir
+          </button>
         </div>
-
-        <!-- Lista de usuarios con acceso -->
         <div class="px-6 py-4">
           <% if @project.shared_projects.any? %>
             <div class="space-y-2">
-              <% @project.shared_projects.includes(:user, :shared_by).each do |shared_project| %>
-                <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
-                  <div class="flex items-center space-x-3 flex-1">
-                    <div class="flex-shrink-0">
-                      <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                        <span class="text-white font-semibold text-sm"><%= shared_project.user.email[0].upcase %></span>
-                      </div>
+              <% @project.shared_projects.includes(:user, :shared_by).each do |sp| %>
+                <div class="flex items-center justify-between p-3 bg-gray-50 hover:bg-green-50 border border-gray-100 hover:border-green-200 rounded-xl transition-all duration-150">
+                  <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="w-9 h-9 bg-green-700 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span class="text-white text-sm font-bold"><%= sp.user.email[0].upcase %></span>
                     </div>
-                    <div class="flex-1">
-                      <p class="text-sm font-semibold text-gray-900"><%= shared_project.user.email %></p>
-                      <div class="flex items-center space-x-2 mt-0.5">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                          Solo lectura
-                        </span>
-                        <span class="text-xs text-gray-500">
-                          • <%= time_ago_in_words(shared_project.created_at) %>
-                        </span>
-                      </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold text-gray-800 truncate"><%= sp.user.email %></p>
+                      <p class="text-xs text-gray-400">Solo lectura · compartido hace <%= time_ago_in_words(sp.created_at) %></p>
                     </div>
                   </div>
-                  <button onclick="if(confirm('¿Revocar acceso a <%= shared_project.user.email %>?')) { document.getElementById('revoke-<%= shared_project.id %>').submit(); }"
-                          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-all duration-200">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  <button onclick="if(confirm('¿Revocar acceso a <%= sp.user.email %>?')) { document.getElementById('revoke-<%= sp.id %>').submit(); }"
+                          class="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition-colors cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"/>
                     </svg>
-                    <span>Quitar</span>
+                    Quitar
                   </button>
-                  <%= form_with url: project_shared_project_path(@project, shared_project), method: :delete, local: true, html: { id: "revoke-#{shared_project.id}", style: "display: none;" } do |f| %>
-                  <% end %>
+                  <%= form_with url: project_shared_project_path(@project, sp), method: :delete, local: true,
+                        html: { id: "revoke-#{sp.id}", style: "display:none;" } do |f| %><% end %>
                 </div>
               <% end %>
+            </div>
+          <% else %>
+            <p class="text-sm text-gray-400 text-center py-4">No se ha compartido con ningún usuario aún.</p>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- ── Agregar Gasto ──────────────────────────────────────── -->
+    <% if @can_edit && !@project.in_liquidation? %>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-red-400"></span>
+          <h2 class="text-sm font-semibold text-gray-800">Agregar Nuevo Gasto</h2>
+        </div>
+        <div class="px-6 py-5">
+          <% if @expense && @expense.errors.any? %>
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-5">
+              <div class="flex gap-3">
+                <svg class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                  <h3 class="text-sm font-semibold text-red-800 mb-1">Se encontraron <%= pluralize(@expense.errors.count, "error") %>:</h3>
+                  <ul class="list-disc pl-4 space-y-1 text-sm text-red-700">
+                    <% @expense.errors.full_messages.each do |msg| %>
+                      <li><%= msg %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <%= form_with model: [@project, Expense.new], local: true, class: "space-y-4" do |f| %>
+            <%= hidden_field_tag :from, 'show' %>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="md:col-span-2">
+                <%= f.label :description, "Descripción", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                <%= f.text_area :description, rows: 2, placeholder: "Describe el gasto realizado...",
+                                id: "description-textarea",
+                                class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none resize-none" %>
+              </div>
+              <div>
+                <%= f.label :amount, "Valor (COP)", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                <input type="text" id="project_expense_amount_display" placeholder="0" inputmode="numeric" autocomplete="off"
+                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none">
+                <%= f.hidden_field :amount, id: "project_expense_amount_raw" %>
+              </div>
+              <div>
+                <%= f.label :expense_category_id, "Tipo de Gasto", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                <%= f.select :expense_category_id,
+                             @expense_categories.map { |c| [c.name, c.id.to_s] },
+                             { include_blank: "Seleccionar tipo..." },
+                             class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+              </div>
+              <div>
+                <%= f.label :expense_date, "Fecha del Gasto", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                <%= f.date_field :expense_date, value: Date.current,
+                                 class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+              </div>
+              <!-- Tercero (opcional) -->
+              <div x-data="{
+                open: false, search: '', selected: '',
+                thirdParties: <%= @third_parties.map { |tp| { id: tp.id.to_s, name: tp.full_name } }.to_json %>,
+                get filtered() { if (!this.search) return this.thirdParties; const q = this.search.toLowerCase(); return this.thirdParties.filter(tp => tp.name.toLowerCase().includes(q)); },
+                selectParty(id, name) { this.selected = id; this.search = name; this.open = false; },
+                clear() { this.selected = ''; this.search = ''; }
+              }">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tercero (opcional)</label>
+                <div class="relative">
+                  <input type="text" x-model="search" @focus="open = true" @click.outside="open = false"
+                         placeholder="Buscar tercero..." autocomplete="off"
+                         class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none">
+                  <input type="hidden" name="expense[third_party_id]" :value="selected">
+                  <div x-show="open && search.length > 0"
+                       class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto" style="display:none;">
+                    <template x-for="tp in filtered" :key="tp.id">
+                      <div @click="selectParty(tp.id, tp.name)"
+                           class="px-3 py-2.5 text-sm cursor-pointer hover:bg-green-50 text-gray-800" x-text="tp.name"></div>
+                    </template>
+                    <template x-if="filtered.length === 0">
+                      <div class="px-3 py-2.5 text-sm text-gray-500">
+                        No encontrado.
+                        <%= link_to "Crear tercero", third_parties_path, class: "text-green-700 hover:underline ml-1" %>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+                <button type="button" @click="clear()" class="mt-1 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer">Limpiar</button>
+              </div>
+              <!-- Cuenta -->
+              <div>
+                <%= f.label :account_id, "Cuenta (opcional)", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                <%= f.select :account_id, @accounts.map { |a| [a.name, a.id.to_s] },
+                             { include_blank: "Sin cuenta" },
+                             class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+              </div>
+              <!-- Soporte -->
+              <div x-data="{ supportType: '0' }">
+                <%= f.label :support_type_cd, "Tipo de Soporte", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                <%= f.select :support_type_cd,
+                             [["Sin soporte", 0], ["Factura electrónica", 1], ["Recibo de caja", 2], ["Documento soporte", 3]],
+                             { selected: 0 },
+                             class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none",
+                             "x-model": "supportType" %>
+                <div x-show="supportType === '1'" x-cloak class="mt-3">
+                  <%= f.label :invoice_number, "Número de Factura", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                  <%= f.text_field :invoice_number, placeholder: "Ingresa el número de factura...",
+                                   class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-end pt-2">
+              <%= f.submit "Agregar Gasto", id: "submit-btn",
+                  class: "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 rounded-xl transition-colors cursor-pointer" %>
             </div>
           <% end %>
         </div>
       </div>
     <% end %>
 
-    <!-- Formulario para agregar gasto -->
-    <% if @can_edit && !@project.in_liquidation? %>
-      <div class="bg-white shadow rounded-lg mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h2 class="text-lg font-medium text-gray-900">Agregar Nuevo Gasto</h2>
+    <!-- ── Gastos Registrados ─────────────────────────────────── -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <button id="expenses-accordion-toggle"
+              class="w-full flex items-center justify-between px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
+              onclick="toggleExpensesAccordion()">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <h2 class="text-sm font-semibold text-gray-800">Gastos Registrados</h2>
+          <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white bg-amber-500 rounded-full">
+            <%= @project.expenses.count %>
+          </span>
         </div>
-        <div class="px-6 py-4">
-          <% if @expense && @expense.errors.any? %>
-          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                </svg>
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">
-                  Se encontraron <%= pluralize(@expense.errors.count, "error") %>:
-                </h3>
-                <div class="mt-2 text-sm text-red-700">
-                  <ul class="list-disc pl-5 space-y-1">
-                    <% @expense.errors.full_messages.each do |message| %>
-                      <li><%= message %></li>
-                    <% end %>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        <% end %>
-        <%= form_with model: [@project, Expense.new], local: true, class: "space-y-4" do |f| %>
-          <%= hidden_field_tag :from, 'show' %>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="md:col-span-2">
-              <%= f.label :description, "Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.text_area :description,
-                              class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200 resize-none",
-                              rows: 2,
-                              id: "description-textarea",
-                              placeholder: "Describe el gasto realizado..." %>
-            </div>
-            <div>
-              <%= f.label :amount, "Valor (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <input type="text"
-                     id="project_expense_amount_display"
-                     placeholder="0"
-                     inputmode="numeric"
-                     autocomplete="off"
-                     class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200">
-              <%= f.hidden_field :amount, id: "project_expense_amount_raw" %>
-            </div>
-            <div>
-              <%= f.label :expense_category_id, "Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.select :expense_category_id,
-                           @expense_categories.map { |c| [c.name, c.id.to_s] },
-                           { include_blank: "Seleccionar tipo..." },
-                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
-            </div>
-            <div>
-              <%= f.label :expense_date, "Fecha del Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.date_field :expense_date,
-                               value: Date.current,
-                               class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200" %>
-            </div>
-            <!-- Tercero (opcional) -->
-            <div x-data="{
-              open: false,
-              search: '',
-              selected: '',
-              thirdParties: <%= @third_parties.map { |tp| { id: tp.id.to_s, name: tp.full_name } }.to_json %>,
-              get filtered() {
-                if (!this.search) return this.thirdParties;
-                const q = this.search.toLowerCase();
-                return this.thirdParties.filter(tp => tp.name.toLowerCase().includes(q));
-              },
-              selectParty(id, name) { this.selected = id; this.search = name; this.open = false; },
-              clear() { this.selected = ''; this.search = ''; }
-            }">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Tercero (opcional)</label>
-              <div class="relative">
-                <input type="text"
-                       x-model="search"
-                       @focus="open = true"
-                       @click.outside="open = false"
-                       placeholder="Buscar tercero..."
-                       autocomplete="off"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200">
-                <input type="hidden" name="expense[third_party_id]" :value="selected">
-                <div x-show="open && search.length > 0"
-                     class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto"
-                     style="display:none;">
-                  <template x-for="tp in filtered" :key="tp.id">
-                    <div @click="selectParty(tp.id, tp.name)"
-                         class="px-3 py-2 text-sm cursor-pointer hover:bg-green-50 text-gray-800"
-                         x-text="tp.name"></div>
-                  </template>
-                  <template x-if="filtered.length === 0">
-                    <div class="px-3 py-2 text-sm text-gray-500">
-                      No encontrado.
-                      <%= link_to "Crear tercero", third_parties_path, class: "text-blue-600 hover:underline ml-1" %>
-                    </div>
-                  </template>
-                </div>
-              </div>
-              <button type="button" @click="clear()" class="mt-1 text-xs text-gray-500 hover:text-red-600 hover:underline">Limpiar</button>
-            </div>
-            <!-- Cuenta (opcional) -->
-            <div>
-              <%= f.label :account_id, "Cuenta (opcional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.select :account_id,
-                           @accounts.map { |a| [a.name, a.id.to_s] },
-                           { include_blank: "Sin cuenta" },
-                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
-            </div>
-            <!-- Tipo de soporte + N° Factura -->
-            <div x-data="{ supportType: '0' }">
-              <%= f.label :support_type_cd, "Tipo de Soporte", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.select :support_type_cd,
-                           [["Sin soporte", 0], ["Factura electrónica", 1], ["Recibo de caja", 2], ["Documento soporte", 3]],
-                           { selected: 0 },
-                           class: "w-full border border-gray-300 rounded px-3 py-2",
-                           "x-model": "supportType" %>
-              <div x-show="supportType === '1'" x-cloak class="mt-3">
-                <%= f.label :invoice_number, "Número de Factura", class: "block text-sm font-medium text-gray-700 mb-1" %>
-                <%= f.text_field :invoice_number,
-                                 placeholder: "Ingresa el número de factura...",
-                                 class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200" %>
-              </div>
-            </div>
-          </div>
-          <div class="flex justify-end">
-            <%= f.submit "Agregar Gasto",
-                class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700",
-                id: "submit-btn" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-    <% end %>
+        <svg id="expenses-accordion-icon" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
 
-    <!-- Lista de gastos - Acordeón -->
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-6 py-4 border-b border-gray-200">
-        <button 
-          id="expenses-accordion-toggle" 
-          class="flex items-center justify-between w-full text-left focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg p-2 -m-2"
-          onclick="toggleExpensesAccordion()"
-        >
-          <h2 class="text-lg font-medium text-gray-900 flex items-center">
-            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Gastos Registrados
-            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              <%= @project.expenses.count %>
-            </span>
-          </h2>
-          <svg 
-            id="expenses-accordion-icon" 
-            class="w-5 h-5 text-gray-500 transform transition-transform duration-200" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-      </div>
-      
-      <div id="expenses-accordion-content" class="hidden overflow-hidden">
+      <div id="expenses-accordion-content" class="hidden">
         <% if @project.expenses.any? %>
           <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Gasto</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Soporte</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Factura</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Liquidación</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Descripción</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Tipo</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Soporte</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">N° Factura</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Valor</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Estado</th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-20"></th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200" x-data="{ editingId: null }">
+              <tbody class="divide-y divide-gray-100" x-data="{ editingId: null }">
                 <% @project.expenses.each do |expense| %>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <%= expense.expense_date&.strftime("%d/%m/%Y") || "N/A" %>
+                  <tr class="hover:bg-gray-50 transition-colors duration-100 group">
+                    <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      <%= expense.expense_date&.strftime("%d/%m/%Y") || "—" %>
                     </td>
-                    <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs">
-                      <div class="break-words">
-                        <%= expense.description %>
-                      </div>
+                    <td class="px-4 py-3 max-w-xs">
+                      <p class="text-sm font-medium text-gray-800 truncate"><%= expense.description %></p>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        <%= expense.expense_category&.name || "-" %>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                        <%= expense.expense_category&.name || "—" %>
                       </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                         <%= expense.support_type_label %>
                       </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <%= expense.invoice_number.present? ? expense.invoice_number : "N/A" %>
+                    <td class="px-4 py-3 text-xs text-gray-500">
+                      <%= expense.invoice_number.present? ? expense.invoice_number : "—" %>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <%= number_to_currency(expense.amount, unit: "$", separator: ",", delimiter: ".") %> COP
+                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                      <span class="text-sm font-bold text-red-600">
+                        -<%= number_to_currency(expense.amount, unit: "$", separator: ",", delimiter: ".") %>
+                      </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= expense.status == 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-purple-100 text-purple-800' %>">
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= expense.status == 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700' %>">
                         <%= t("enums.expense.status.#{expense.status}") %>
                       </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <% if @can_edit && !@project.in_liquidation? && !expense.in_liquidation? %>
-                        <% if expense.persisted? %>
+                    <td class="px-4 py-3">
+                      <% if @can_edit && !@project.in_liquidation? && !expense.in_liquidation? && expense.persisted? %>
+                        <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                           <button type="button"
                                   @click="editingId = editingId === '<%= expense.id %>' ? null : '<%= expense.id %>'"
-                                  class="text-blue-600 hover:text-blue-900 mr-3">
-                            Editar
+                                  class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-green-700 hover:bg-green-50 transition-colors cursor-pointer"
+                                  title="Editar">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
                           </button>
-                          <a href="#"
-                             onclick="if(confirm('¿Estás seguro de eliminar este gasto?')) { document.getElementById('delete-expense-<%= expense.id %>').submit(); }"
-                             class="text-red-600 hover:text-red-900">
-                            Eliminar
-                          </a>
-                          <%= form_with url: project_expense_path(@project, expense), method: :delete, local: true, html: { id: "delete-expense-#{expense.id}", style: "display: none;" } do |f| %>
-                          <% end %>
-                        <% else %>
-                          <span class="text-gray-400">N/A</span>
-                        <% end %>
+                          <button type="button"
+                                  onclick="if(confirm('¿Eliminar este gasto?')) { document.getElementById('delete-expense-<%= expense.id %>').submit(); }"
+                                  class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                  title="Eliminar">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                          </button>
+                          <%= form_with url: project_expense_path(@project, expense), method: :delete, local: true,
+                                html: { id: "delete-expense-#{expense.id}", style: "display:none;" } do |f| %><% end %>
+                        </div>
                       <% elsif expense.in_liquidation? %>
-                        <span class="text-purple-600">En liquidación</span>
-                      <% else %>
-                        <span class="text-gray-400">Solo lectura</span>
+                        <span class="text-xs text-purple-500">En liquidación</span>
                       <% end %>
                     </td>
                   </tr>
+
                   <!-- Fila de edición inline -->
                   <tr x-show="editingId === '<%= expense.id %>'" style="display:none;">
                     <td colspan="8" class="px-0 py-0">
-                      <div class="bg-blue-50 border-t border-b border-blue-100 px-6 py-5">
-                        <h3 class="text-sm font-semibold text-blue-800 mb-4">Editar Gasto</h3>
+                      <div class="bg-green-50 border-t border-b border-green-100 px-6 py-5">
+                        <h3 class="text-sm font-semibold text-green-800 mb-4 flex items-center gap-2">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                          </svg>
+                          Editar Gasto
+                        </h3>
                         <%= form_with model: [@project, expense], local: true, class: "space-y-4" do |f| %>
                           <%= hidden_field_tag :from, 'show' %>
                           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
-                              <%= f.label :description, "Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
-                              <%= f.text_area :description,
-                                              class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 resize-none",
-                                              rows: 2,
-                                              placeholder: "Describe el gasto realizado..." %>
+                              <%= f.label :description, "Descripción", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                              <%= f.text_area :description, rows: 2, placeholder: "Describe el gasto...",
+                                              class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none resize-none" %>
                             </div>
                             <div>
-                              <%= f.label :amount, "Valor (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-                              <input type="text"
-                                     data-amount-raw="edit_amount_raw_<%= expense.id %>"
-                                     placeholder="0"
-                                     inputmode="numeric"
-                                     autocomplete="off"
+                              <%= f.label :amount, "Valor (COP)", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                              <input type="text" data-amount-raw="edit_amount_raw_<%= expense.id %>"
+                                     placeholder="0" inputmode="numeric" autocomplete="off"
                                      value="<%= number_with_delimiter(expense.amount.to_i, delimiter: '.') %>"
-                                     class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+                                     class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none">
                               <%= f.hidden_field :amount, id: "edit_amount_raw_#{expense.id}", value: expense.amount.to_i %>
                             </div>
                             <div>
-                              <%= f.label :expense_category_id, "Tipo de Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                              <%= f.label :expense_category_id, "Tipo de Gasto", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
                               <%= f.select :expense_category_id,
                                            @expense_categories.map { |c| [c.name, c.id.to_s] },
                                            { include_blank: "Seleccionar tipo...", selected: expense.expense_category_id&.to_s },
-                                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
+                                           class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
                             </div>
                             <div>
-                              <%= f.label :expense_date, "Fecha del Gasto", class: "block text-sm font-medium text-gray-700 mb-1" %>
-                              <%= f.date_field :expense_date,
-                                               value: expense.expense_date&.strftime("%Y-%m-%d"),
-                                               class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+                              <%= f.label :expense_date, "Fecha del Gasto", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                              <%= f.date_field :expense_date, value: expense.expense_date&.strftime("%Y-%m-%d"),
+                                               class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
                             </div>
-                            <!-- Tercero (opcional) -->
                             <div x-data="{
-                              open: false,
-                              search: '<%= j expense.third_party&.full_name.to_s %>',
+                              open: false, search: '<%= j expense.third_party&.full_name.to_s %>',
                               selected: '<%= expense.third_party_id&.to_s %>',
                               thirdParties: <%= @third_parties.map { |tp| { id: tp.id.to_s, name: tp.full_name } }.to_json %>,
-                              get filtered() {
-                                if (!this.search) return this.thirdParties;
-                                const q = this.search.toLowerCase();
-                                return this.thirdParties.filter(tp => tp.name.toLowerCase().includes(q));
-                              },
+                              get filtered() { if (!this.search) return this.thirdParties; const q = this.search.toLowerCase(); return this.thirdParties.filter(tp => tp.name.toLowerCase().includes(q)); },
                               selectParty(id, name) { this.selected = id; this.search = name; this.open = false; },
                               clear() { this.selected = ''; this.search = ''; }
                             }">
-                              <label class="block text-sm font-medium text-gray-700 mb-1">Tercero (opcional)</label>
+                              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tercero (opcional)</label>
                               <div class="relative">
-                                <input type="text"
-                                       x-model="search"
-                                       @focus="open = true"
-                                       @click.outside="open = false"
-                                       placeholder="Buscar tercero..."
-                                       autocomplete="off"
-                                       class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200">
+                                <input type="text" x-model="search" @focus="open = true" @click.outside="open = false"
+                                       placeholder="Buscar tercero..." autocomplete="off"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none">
                                 <input type="hidden" name="expense[third_party_id]" :value="selected">
                                 <div x-show="open && search.length > 0"
-                                     class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto"
-                                     style="display:none;">
+                                     class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto" style="display:none;">
                                   <template x-for="tp in filtered" :key="tp.id">
-                                    <div @click="selectParty(tp.id, tp.name)"
-                                         class="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 text-gray-800"
-                                         x-text="tp.name"></div>
+                                    <div @click="selectParty(tp.id, tp.name)" class="px-3 py-2.5 text-sm cursor-pointer hover:bg-green-50 text-gray-800" x-text="tp.name"></div>
                                   </template>
                                   <template x-if="filtered.length === 0">
-                                    <div class="px-3 py-2 text-sm text-gray-500">No encontrado.</div>
+                                    <div class="px-3 py-2.5 text-sm text-gray-500">No encontrado.</div>
                                   </template>
                                 </div>
                               </div>
-                              <button type="button" @click="clear()" class="mt-1 text-xs text-gray-500 hover:text-red-600 hover:underline">Limpiar</button>
+                              <button type="button" @click="clear()" class="mt-1 text-xs text-gray-400 hover:text-red-600 transition-colors cursor-pointer">Limpiar</button>
                             </div>
-                            <!-- Cuenta (opcional) -->
                             <div>
-                              <%= f.label :account_id, "Cuenta (opcional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-                              <%= f.select :account_id,
-                                           @accounts.map { |a| [a.name, a.id.to_s] },
+                              <%= f.label :account_id, "Cuenta (opcional)", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                              <%= f.select :account_id, @accounts.map { |a| [a.name, a.id.to_s] },
                                            { include_blank: "Sin cuenta", selected: expense.account_id&.to_s },
-                                           class: "w-full border border-gray-300 rounded px-3 py-2" %>
+                                           class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
                             </div>
-                            <!-- Tipo de soporte + N° Factura -->
                             <div x-data="{ supportType: '<%= expense.support_type_cd.to_s %>' }">
-                              <%= f.label :support_type_cd, "Tipo de Soporte", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                              <%= f.label :support_type_cd, "Tipo de Soporte", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
                               <%= f.select :support_type_cd,
                                            [["Sin soporte", 0], ["Factura electrónica", 1], ["Recibo de caja", 2], ["Documento soporte", 3]],
                                            { selected: expense.support_type_cd },
-                                           class: "w-full border border-gray-300 rounded px-3 py-2",
+                                           class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none",
                                            "x-model": "supportType" %>
                               <div x-show="supportType === '1'" x-cloak class="mt-3">
-                                <%= f.label :invoice_number, "Número de Factura", class: "block text-sm font-medium text-gray-700 mb-1" %>
-                                <%= f.text_field :invoice_number,
-                                                 value: expense.invoice_number,
-                                                 placeholder: "Ingresa el número de factura...",
-                                                 class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200" %>
+                                <%= f.label :invoice_number, "Número de Factura", class: "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" %>
+                                <%= f.text_field :invoice_number, value: expense.invoice_number,
+                                                 placeholder: "Número de factura...",
+                                                 class: "w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
                               </div>
                             </div>
                           </div>
-                          <div class="flex justify-between items-center pt-2">
-                            <button type="button" @click="editingId = null" class="text-gray-600 hover:underline text-sm">Cancelar</button>
-                            <%= f.submit "Actualizar Gasto", class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium" %>
+                          <div class="flex items-center justify-between pt-2">
+                            <button type="button" @click="editingId = null"
+                                    class="text-sm text-gray-500 hover:text-gray-700 cursor-pointer transition-colors">Cancelar</button>
+                            <%= f.submit "Actualizar Gasto",
+                                class: "px-4 py-2 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 rounded-xl transition-colors cursor-pointer" %>
                           </div>
                         <% end %>
                       </div>
@@ -592,370 +568,212 @@
             </table>
           </div>
         <% else %>
-          <div class="px-6 py-8 text-center">
-            <h3 class="text-sm font-medium text-gray-900">No hay gastos registrados</h3>
-            <p class="mt-1 text-sm text-gray-500">Comienza agregando el primer gasto del proyecto.</p>
+          <div class="px-6 py-12 text-center">
+            <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <p class="text-sm font-semibold text-gray-600">No hay gastos registrados</p>
+            <p class="text-xs text-gray-400 mt-1">Usa el formulario de arriba para agregar el primer gasto.</p>
           </div>
         <% end %>
       </div>
     </div>
 
-    <!-- Botón de volver -->
-    <div class="mt-6 flex justify-start">
-      <%= link_to "← Volver a Proyectos", root_path, class: "bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" %>
-    </div>
   </div>
 </div>
+
+<!-- ── JS ─────────────────────────────────────────────────────── -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-        const display = document.getElementById("project_expense_amount_display");
-        const raw = document.getElementById("project_expense_amount_raw");
-
-        if (display && raw) {
-            display.addEventListener("input", function () {
-                const digits = this.value.replace(/\D/g, "");
-                this.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                raw.value = digits;
-            });
-        }
+  const display = document.getElementById("project_expense_amount_display");
+  const raw     = document.getElementById("project_expense_amount_raw");
+  if (display && raw) {
+    display.addEventListener("input", function () {
+      const digits = this.value.replace(/\D/g, "");
+      this.value   = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      raw.value    = digits;
     });
+  }
+});
 
-    // Formateo de monto para formularios de edición inline
-    document.addEventListener("input", function (e) {
-        const rawId = e.target.dataset.amountRaw;
-        if (!rawId) return;
-        const digits = e.target.value.replace(/\D/g, "");
-        e.target.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        const rawField = document.getElementById(rawId);
-        if (rawField) rawField.value = digits;
-    });
+document.addEventListener("input", function (e) {
+  const rawId = e.target.dataset.amountRaw;
+  if (!rawId) return;
+  const digits = e.target.value.replace(/\D/g, "");
+  e.target.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const rawField = document.getElementById(rawId);
+  if (rawField) rawField.value = digits;
+});
 
-    // Función para alternar el acordeón de gastos
-    function toggleExpensesAccordion() {
-        const content = document.getElementById('expenses-accordion-content');
-        const icon = document.getElementById('expenses-accordion-icon');
-        
-        if (content.classList.contains('hidden')) {
-            // Abrir acordeón
-            content.classList.remove('hidden');
-            icon.style.transform = 'rotate(180deg)';
-        } else {
-            // Cerrar acordeón
-            content.classList.add('hidden');
-            icon.style.transform = 'rotate(0deg)';
-        }
-    }
+function toggleExpensesAccordion() {
+  const content = document.getElementById('expenses-accordion-content');
+  const icon    = document.getElementById('expenses-accordion-icon');
+  if (content.classList.contains('hidden')) {
+    content.classList.remove('hidden');
+    icon.style.transform = 'rotate(180deg)';
+  } else {
+    content.classList.add('hidden');
+    icon.style.transform = 'rotate(0deg)';
+  }
+}
 
+function toggleStatusModal() {
+  const modal = document.getElementById('statusModal');
+  if (!modal) return;
+  modal.style.display = (modal.style.display === 'none' || !modal.style.display) ? 'block' : 'none';
+}
 
+function closeStatusModal() {
+  const m = document.getElementById('statusModal');
+  if (m) m.style.display = 'none';
+}
+
+function updateSelectedOption(radio) {
+  document.querySelectorAll('.status-option').forEach(opt => {
+    opt.style.borderColor     = '#e5e7eb';
+    opt.style.backgroundColor = 'transparent';
+  });
+  const sel = radio.closest('.status-option');
+  if (sel) { sel.style.borderColor = '#16a34a'; sel.style.backgroundColor = '#f0fdf4'; }
+}
+
+function toggleSettlementDate(status) {
+  const container = document.getElementById('settlement_date_container');
+  const input     = document.getElementById('settlement_date');
+  if (status === 'ended') { container.style.display = 'block'; input.required = true; }
+  else { container.style.display = 'none'; input.required = false; }
+}
+
+function validateUpdateStatusForm() {
+  const sel = document.querySelector('input[name="project[execution_status]"]:checked');
+  if (sel && sel.value === 'ended') {
+    const d = document.getElementById('settlement_date');
+    if (!d.value) { alert('Por favor ingresa la fecha de liquidación'); return false; }
+  }
+  const btn = document.getElementById('update-status-btn');
+  setTimeout(() => { btn.disabled = true; btn.value = 'Actualizando...'; btn.style.opacity = '0.6'; }, 0);
+  return true;
+}
+
+function toggleShareModal() {
+  const modal = document.getElementById('shareModal');
+  if (!modal) return;
+  modal.style.display = (modal.style.display === 'none' || !modal.style.display) ? 'block' : 'none';
+}
+
+function closeShareModal() {
+  const m = document.getElementById('shareModal');
+  if (m) m.style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  ['statusModal', 'shareModal'].forEach(id => {
+    const m = document.getElementById(id);
+    if (m) m.addEventListener('click', e => { if (e.target === m) m.style.display = 'none'; });
+  });
+  const checked = document.querySelector('input[name="project[execution_status]"]:checked');
+  if (checked) { updateSelectedOption(checked); toggleSettlementDate(checked.value); }
+});
 </script>
 
-<!-- Modal para actualizar estado de ejecución -->
-<div id="statusModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; overflow-y: auto;">
-  <div style="position: relative; margin: 80px auto; padding: 30px; width: 500px; max-width: 90%; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);" onclick="event.stopPropagation()">
-    <!-- Header del modal -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <svg style="width: 24px; height: 24px; color: #3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <h3 style="font-size: 20px; font-weight: 600; color: #111827; margin: 0;">Actualizar Estado de Ejecución</h3>
+<!-- Modal Estado -->
+<div id="statusModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; overflow-y:auto;">
+  <div style="position:relative; margin:80px auto; width:500px; max-width:90%; background:white; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.15); overflow:hidden;" onclick="event.stopPropagation()">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid #f3f4f6;">
+      <div>
+        <h3 style="font-size:18px; font-weight:700; color:#111827; margin:0;">Actualizar Estado</h3>
+        <p style="font-size:12px; color:#9ca3af; margin:4px 0 0;">Selecciona el nuevo estado del proyecto</p>
       </div>
-      <button type="button" onclick="closeStatusModal()" style="background: none; border: none; cursor: pointer; color: #9ca3af; padding: 4px; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.color='#4b5563'; this.style.backgroundColor='#f3f4f6';" onmouseout="this.style.color='#9ca3af'; this.style.backgroundColor='transparent';">
-        <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      <button onclick="closeStatusModal()" style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:none; background:none; cursor:pointer; color:#9ca3af;"
+              onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.color='#4b5563';"
+              onmouseout="this.style.backgroundColor='transparent'; this.style.color='#9ca3af';">
+        <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
     </div>
-
     <%= form_with model: @project, url: update_status_project_path(@project), method: :patch, local: true, id: "update-status-form", data: { turbo: false } do |f| %>
-      <div style="margin-bottom: 24px;">
-        <label style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 12px;">
-          Selecciona el nuevo estado del proyecto:
-        </label>
-
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <% Project.execution_statuses.each do |status_key, status_value| %>
+      <div style="padding:20px 24px;">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <% Project.execution_statuses.each do |status_key, _| %>
             <% next if status_key == 'in_liquidation' %>
-            <label style="display: flex; align-items: center; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
-                   class="status-option"
-                   onmouseover="this.style.borderColor='#3b82f6'; this.style.backgroundColor='#eff6ff';"
-                   onmouseout="if(!this.querySelector('input').checked) { this.style.borderColor='#e5e7eb'; this.style.backgroundColor='transparent'; }">
-              <%= f.radio_button :execution_status, status_key,
-                  id: "status_#{status_key}",
+            <label style="display:flex; align-items:center; padding:12px 16px; border:2px solid #e5e7eb; border-radius:10px; cursor:pointer; transition:all 0.15s;" class="status-option"
+                   onmouseover="this.style.borderColor='#16a34a'; this.style.backgroundColor='#f0fdf4';"
+                   onmouseout="if(!this.querySelector('input').checked){this.style.borderColor='#e5e7eb'; this.style.backgroundColor='transparent';}">
+              <%= f.radio_button :execution_status, status_key, id: "status_#{status_key}",
                   checked: @project.execution_status == status_key,
-                  style: "width: 18px; height: 18px; cursor: pointer;",
+                  style: "width:18px; height:18px; cursor:pointer; accent-color:#16a34a;",
                   onchange: "updateSelectedOption(this); toggleSettlementDate(this.value);" %>
-              <div style="margin-left: 12px; flex-grow: 1;">
-                <span style="font-weight: 500; color: #111827; font-size: 14px;">
-                  <%= t("enums.project.execution_status.#{status_key}") %>
-                </span>
-                <span style="display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
-                  <%= case status_key
-                      when 'pending' then 'background-color: #f3f4f6; color: #1f2937;'
-                      when 'running' then 'background-color: #dbeafe; color: #1e40af;'
-                      when 'stop' then 'background-color: #fed7aa; color: #c2410c;'
-                      when 'cancelled' then 'background-color: #fecaca; color: #991b1b;'
-                      when 'ended' then 'background-color: #d1fae5; color: #065f46;'
-                      end %>">
-                  <% case status_key
-                     when 'pending' then '⏳'
-                     when 'running' then '▶️'
-                     when 'stop' then '⏸️'
-                     when 'cancelled' then '❌'
-                     when 'ended' then '✅'
-                     end %>
-                </span>
-              </div>
+              <span style="margin-left:12px; font-size:14px; font-weight:500; color:#111827;">
+                <%= t("enums.project.execution_status.#{status_key}") %>
+              </span>
             </label>
           <% end %>
         </div>
+        <div id="settlement_date_container" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid #f3f4f6;">
+          <label style="display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:8px;">Fecha de Liquidación</label>
+          <%= f.date_field :settlement_date, id: "settlement_date", value: @project.settlement_date || Date.current,
+              style: "width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; outline:none;",
+              onfocus: "this.style.borderColor='#16a34a'; this.style.boxShadow='0 0 0 3px rgba(22,163,74,0.1)';",
+              onblur:  "this.style.borderColor='#d1d5db'; this.style.boxShadow='none';" %>
+          <p style="margin-top:6px; font-size:12px; color:#6b7280;">Ingresa la fecha en que se liquidó el proyecto</p>
+        </div>
       </div>
-
-      <!-- Campo de fecha de liquidación (solo visible cuando estado = ended) -->
-      <div id="settlement_date_container" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <label for="settlement_date" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">
-          📅 Fecha de Liquidación
-        </label>
-        <%= f.date_field :settlement_date,
-            id: "settlement_date",
-            value: @project.settlement_date || Date.current,
-            style: "width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: all 0.2s; outline: none;",
-            onfocus: "this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)';",
-            onblur: "this.style.borderColor='#d1d5db'; this.style.boxShadow='none';" %>
-        <p style="margin-top: 6px; font-size: 12px; color: #6b7280;">
-          Ingresa la fecha en que se liquidó el proyecto
-        </p>
-      </div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+      <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 24px; border-top:1px solid #f3f4f6; background:#fafafa;">
         <button type="button" onclick="closeStatusModal()"
-                style="padding: 10px 20px; font-size: 14px; font-weight: 500; color: #374151; background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; transition: all 0.2s;"
-                onmouseover="this.style.backgroundColor='#f3f4f6';"
-                onmouseout="this.style.backgroundColor='#f9fafb';">
+                style="padding:9px 18px; font-size:13px; font-weight:500; color:#374151; background:#fff; border:1px solid #d1d5db; border-radius:8px; cursor:pointer;"
+                onmouseover="this.style.backgroundColor='#f9fafb';" onmouseout="this.style.backgroundColor='#fff';">
           Cancelar
         </button>
-        <%= f.submit "Actualizar Estado",
-            id: "update-status-btn",
-            class: "bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed",
+        <%= f.submit "Actualizar Estado", id: "update-status-btn",
+            style: "padding:9px 18px; font-size:13px; font-weight:600; color:white; background:#15803d; border:none; border-radius:8px; cursor:pointer;",
+            onmouseover: "this.style.backgroundColor='#166534';", onmouseout: "this.style.backgroundColor='#15803d';",
             onclick: "return validateUpdateStatusForm();" %>
       </div>
     <% end %>
   </div>
 </div>
 
-<!-- Modal para compartir proyecto -->
-<div id="shareModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; overflow-y: auto;">
-  <div style="position: relative; margin: 80px auto; padding: 30px; width: 450px; max-width: 90%; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);" onclick="event.stopPropagation()">
-    <!-- Header del modal -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <svg style="width: 24px; height: 24px; color: #16a34a;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.645 9 12 9 12s.114.645.316 1.342m0 0a8.997 8.997 0 001.656 2.658m-1.656-2.658a8.997 8.997 0 01-1.656-2.658m0 0a8.997 8.997 0 011.656-2.658m-1.656 2.658L9 12l1.656-2.658m0 0a8.997 8.997 0 011.656 2.658m-1.656-2.658L9 12l-1.656 2.658"></path>
-        </svg>
-        <h3 style="font-size: 20px; font-weight: 600; color: #111827; margin: 0;">Compartir Proyecto</h3>
+<!-- Modal Compartir -->
+<div id="shareModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; overflow-y:auto;">
+  <div style="position:relative; margin:80px auto; width:450px; max-width:90%; background:white; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.15); overflow:hidden;" onclick="event.stopPropagation()">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid #f3f4f6;">
+      <div>
+        <h3 style="font-size:18px; font-weight:700; color:#111827; margin:0;">Compartir Proyecto</h3>
+        <p style="font-size:12px; color:#9ca3af; margin:4px 0 0;">El usuario tendrá acceso de solo lectura</p>
       </div>
-      <button type="button" onclick="closeShareModal()" style="background: none; border: none; cursor: pointer; color: #9ca3af; padding: 4px; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.color='#4b5563'; this.style.backgroundColor='#f3f4f6';" onmouseout="this.style.color='#9ca3af'; this.style.backgroundColor='transparent';">
-        <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      <button onclick="closeShareModal()" style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:none; background:none; cursor:pointer; color:#9ca3af;"
+              onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.color='#4b5563';"
+              onmouseout="this.style.backgroundColor='transparent'; this.style.color='#9ca3af';">
+        <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
     </div>
-
     <%= form_with url: project_shared_projects_path(@project), method: :post, local: true do |f| %>
-      <div style="margin-bottom: 24px;">
-        <label for="shared_project_user_email" style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">
-          Email del usuario
-          <div style="position: relative; display: inline-block;">
-            <svg class="info-icon" style="width: 16px; height: 16px; color: #6b7280; cursor: help;" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-            </svg>
-            <div class="tooltip-text" style="visibility: hidden; opacity: 0; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); width: 250px; background-color: #1f2937; color: white; text-align: center; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: normal; z-index: 10000; transition: opacity 0.3s, visibility 0.3s; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);">
-              El usuario podrá ver el proyecto y sus gastos, pero no podrá editarlo ni eliminarlo.
-              <div style="position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1f2937 transparent transparent transparent;"></div>
-            </div>
-          </div>
-        </label>
-        <%= f.email_field :user_email,
-            id: "shared_project_user_email",
-            placeholder: "ejemplo@correo.com",
-            required: true,
-            style: "width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; transition: all 0.2s; outline: none;",
-            onfocus: "this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)';",
-            onblur: "this.style.borderColor='#d1d5db'; this.style.boxShadow='none';" %>
+      <div style="padding:24px;">
+        <label style="display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:8px;">Email del usuario</label>
+        <%= f.email_field :user_email, id: "shared_project_user_email",
+            placeholder: "ejemplo@correo.com", required: true,
+            style: "width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; outline:none; box-sizing:border-box;",
+            onfocus: "this.style.borderColor='#16a34a'; this.style.boxShadow='0 0 0 3px rgba(22,163,74,0.1)';",
+            onblur:  "this.style.borderColor='#d1d5db'; this.style.boxShadow='none';" %>
+        <p style="margin-top:6px; font-size:12px; color:#9ca3af;">El usuario podrá ver el proyecto y sus gastos, pero no podrá editarlo.</p>
       </div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+      <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 24px; border-top:1px solid #f3f4f6; background:#fafafa;">
         <button type="button" onclick="closeShareModal()"
-                style="padding: 10px 20px; font-size: 14px; font-weight: 500; color: #374151; background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; transition: all 0.2s;"
-                onmouseover="this.style.backgroundColor='#f3f4f6';"
-                onmouseout="this.style.backgroundColor='#f9fafb';">
+                style="padding:9px 18px; font-size:13px; font-weight:500; color:#374151; background:#fff; border:1px solid #d1d5db; border-radius:8px; cursor:pointer;"
+                onmouseover="this.style.backgroundColor='#f9fafb';" onmouseout="this.style.backgroundColor='#fff';">
           Cancelar
         </button>
         <%= f.submit "Compartir Proyecto",
-            style: "padding: 10px 24px; font-size: 14px; font-weight: 500; color: white; background-color: #16a34a; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;",
-            onmouseover: "this.style.backgroundColor='#15803d';",
-            onmouseout: "this.style.backgroundColor='#16a34a';" %>
+            style: "padding:9px 18px; font-size:13px; font-weight:600; color:white; background:#15803d; border:none; border-radius:8px; cursor:pointer;",
+            onmouseover: "this.style.backgroundColor='#166534';", onmouseout: "this.style.backgroundColor='#15803d';" %>
       </div>
     <% end %>
   </div>
 </div>
 
-<style>
-.info-icon:hover + .tooltip-text {
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-</style>
-
-<script>
-// Funciones para el modal de estado
-function toggleStatusModal() {
-    const modal = document.getElementById('statusModal');
-    if (!modal) {
-        console.error('Status modal element not found!');
-        return;
-    }
-
-    const currentDisplay = window.getComputedStyle(modal).display;
-    if (currentDisplay === 'none' || modal.style.display === 'none') {
-        modal.style.display = 'block';
-        modal.style.visibility = 'visible';
-        modal.style.opacity = '1';
-    } else {
-        modal.style.display = 'none';
-    }
-}
-
-function closeStatusModal() {
-    const modal = document.getElementById('statusModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-function updateSelectedOption(radio) {
-    // Remover el estilo de selección de todas las opciones
-    document.querySelectorAll('.status-option').forEach(option => {
-        option.style.borderColor = '#e5e7eb';
-        option.style.backgroundColor = 'transparent';
-    });
-
-    // Agregar el estilo de selección a la opción seleccionada
-    const selectedOption = radio.closest('.status-option');
-    if (selectedOption) {
-        selectedOption.style.borderColor = '#3b82f6';
-        selectedOption.style.backgroundColor = '#eff6ff';
-    }
-}
-
-// Mostrar/ocultar el campo de fecha de liquidación según el estado seleccionado
-function toggleSettlementDate(status) {
-    const container = document.getElementById('settlement_date_container');
-    const dateInput = document.getElementById('settlement_date');
-
-    if (status === 'ended') {
-        // Mostrar el campo de fecha si el estado es "Terminado"
-        container.style.display = 'block';
-        dateInput.required = true;
-    } else {
-        // Ocultar el campo de fecha para otros estados
-        container.style.display = 'none';
-        dateInput.required = false;
-    }
-}
-
-// Función para validar el formulario de actualización de estado
-function validateUpdateStatusForm() {
-    const selectedStatus = document.querySelector('input[name="project[execution_status]"]:checked');
-    const submitBtn = document.getElementById('update-status-btn');
-
-    // Si el estado es "ended", validar que se haya ingresado la fecha
-    if (selectedStatus && selectedStatus.value === 'ended') {
-        const settlementDate = document.getElementById('settlement_date');
-        if (!settlementDate.value || settlementDate.value.trim() === '') {
-            alert('Por favor ingresa la fecha de liquidación');
-            return false;
-        }
-    }
-
-    // Si todo está bien, deshabilitar botón y mostrar efecto de carga
-    setTimeout(() => {
-        submitBtn.disabled = true;
-        submitBtn.value = '⏳ Actualizando...';
-        submitBtn.style.opacity = '0.6';
-    }, 0);
-
-    return true;
-}
-
-// Inicializar el estado seleccionado cuando se abre el modal
-document.addEventListener('DOMContentLoaded', function() {
-    const statusModal = document.getElementById('statusModal');
-    if (statusModal) {
-        statusModal.addEventListener('click', function(event) {
-            if (event.target === statusModal) {
-                closeStatusModal();
-            }
-        });
-
-        // Marcar la opción actualmente seleccionada al cargar
-        const checkedRadio = document.querySelector('input[name="project[execution_status]"]:checked');
-        if (checkedRadio) {
-            updateSelectedOption(checkedRadio);
-            // Mostrar el campo de fecha si el estado actual es "ended"
-            toggleSettlementDate(checkedRadio.value);
-        }
-    }
-});
-
-// Funciones para el modal de compartir proyecto
-function toggleShareModal() {
-    console.log('toggleShareModal called');
-    const modal = document.getElementById('shareModal');
-    console.log('Modal element:', modal);
-
-    if (!modal) {
-        console.error('Modal element not found!');
-        alert('Error: No se pudo encontrar el modal');
-        return;
-    }
-
-    const currentDisplay = window.getComputedStyle(modal).display;
-    console.log('Current display:', currentDisplay);
-
-    if (currentDisplay === 'none' || modal.style.display === 'none') {
-        modal.style.display = 'block';
-        modal.style.visibility = 'visible';
-        modal.style.opacity = '1';
-        console.log('Modal shown - display set to block');
-    } else {
-        modal.style.display = 'none';
-        console.log('Modal hidden - display set to none');
-    }
-}
-
-function closeShareModal() {
-    console.log('closeShareModal called');
-    const modal = document.getElementById('shareModal');
-    if (modal) {
-        modal.style.display = 'none';
-        console.log('Modal closed');
-    }
-}
-
-// Cerrar modal al hacer clic fuera de él
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOMContentLoaded - Setting up modal listeners');
-    const modal = document.getElementById('shareModal');
-    if (modal) {
-        console.log('Modal found in DOMContentLoaded');
-        modal.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                closeShareModal();
-            }
-        });
-    } else {
-        console.error('Modal not found in DOMContentLoaded');
-    }
-});
-</script>
+<style>[x-cloak] { display: none !important; }</style>

@@ -1,4 +1,5 @@
-<div class="max-w-6xl mx-auto px-4 mt-6"
+<div class="min-h-screen bg-gray-50">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8"
      x-data="{
        open: <%= @expense&.errors&.any? ? 'true' : 'false' %>,
        openTypes: false,
@@ -9,28 +10,36 @@
        filterAccounts: false,
        filterThirdParty: false
      }">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-gray-900">Mis Gastos</h1>
+
+  <!-- ── Header ──────────────────────────────────────────────── -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Mis Gastos</h1>
+      <p class="text-sm text-gray-400 mt-0.5">Registro y control de todos tus gastos</p>
+    </div>
     <div class="flex gap-2">
       <button @click="openTypes = true"
-              class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 rounded-lg transition-colors duration-150 cursor-pointer shadow-sm">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z"/>
         </svg>
-        Tipos
+        Tipos de gasto
       </button>
       <button @click="open = true"
-              class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded">
+              class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 rounded-lg transition-colors duration-150 cursor-pointer shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
         Registrar Gasto
       </button>
     </div>
   </div>
 
-  <!-- Barra de filtros -->
+  <!-- ── Barra de filtros ────────────────────────────────────── -->
   <%
-    sel_project_ids  = Array(params[:project_ids]).reject(&:blank?)
-    sel_category_ids = Array(params[:category_ids]).reject(&:blank?)
-    sel_account_ids  = Array(params[:account_ids]).reject(&:blank?)
+    sel_project_ids     = Array(params[:project_ids]).reject(&:blank?)
+    sel_category_ids    = Array(params[:category_ids]).reject(&:blank?)
+    sel_account_ids     = Array(params[:account_ids]).reject(&:blank?)
     sel_third_party_ids = Array(params[:third_party_ids]).reject(&:blank?)
     date_from           = params[:date_from]
     date_to             = params[:date_to]
@@ -39,137 +48,148 @@
   %>
   <%= form_with url: expenses_path, method: :get, local: true, id: "filter-form" do %>
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-      <!-- Fila de filtros -->
       <div class="flex flex-wrap gap-3 items-end">
 
         <!-- Fecha desde -->
         <div class="flex flex-col gap-1 min-w-[130px]">
-          <label class="text-xs font-medium text-gray-500">Fecha desde</label>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Desde</label>
           <input type="date" name="date_from" value="<%= date_from %>"
-                 class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring focus:ring-blue-200"
+                 class="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none"
                  onchange="document.getElementById('filter-form').submit()">
         </div>
 
         <!-- Fecha hasta -->
         <div class="flex flex-col gap-1 min-w-[130px]">
-          <label class="text-xs font-medium text-gray-500">Fecha hasta</label>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Hasta</label>
           <input type="date" name="date_to" value="<%= date_to %>"
-                 class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring focus:ring-blue-200"
+                 class="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none"
                  onchange="document.getElementById('filter-form').submit()">
         </div>
 
-        <!-- Proyectos (múltiple) -->
+        <!-- Proyectos -->
         <div class="flex flex-col gap-1 relative" @click.outside="filterProjects = false">
-          <label class="text-xs font-medium text-gray-500">Proyecto</label>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Proyecto</label>
           <button type="button" @click="filterProjects = !filterProjects"
-                  class="inline-flex items-center gap-2 px-3 py-1.5 border rounded text-sm <%= sel_project_ids.any? ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700' %>">
+                  class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm cursor-pointer transition-colors duration-150 <%= sel_project_ids.any? ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 text-gray-600 hover:border-gray-300' %>">
+            <svg class="w-3.5 h-3.5 flex-shrink-0 <%= sel_project_ids.any? ? 'text-green-500' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+            </svg>
             <% if sel_project_ids.any? %>
               <%= sel_project_ids.count == 1 ? @all_projects.find { |p| p.id.to_s == sel_project_ids.first }&.project_identifier : "#{sel_project_ids.count} proyectos" %>
             <% else %>
               Todos
             <% end %>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
           <div x-show="filterProjects" x-cloak
-               class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px] max-h-56 overflow-y-auto">
+               class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[200px] max-h-56 overflow-y-auto">
             <% @all_projects.each do |proj| %>
-              <label class="flex items-center gap-2 px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">
+              <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-green-50 cursor-pointer text-sm transition-colors">
                 <input type="checkbox" name="project_ids[]" value="<%= proj.id %>"
                        <%= 'checked' if sel_project_ids.include?(proj.id.to_s) %>
                        onchange="document.getElementById('filter-form').submit()"
-                       class="w-4 h-4 text-blue-600 rounded">
+                       class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
                 <span class="text-gray-700"><%= proj.project_identifier %> — <%= proj.name.truncate(25) %></span>
               </label>
             <% end %>
             <% if @all_projects.empty? %>
-              <p class="px-3 py-2 text-xs text-gray-400">Sin proyectos</p>
+              <p class="px-3 py-3 text-xs text-gray-400 text-center">Sin proyectos</p>
             <% end %>
           </div>
         </div>
 
-        <!-- Tipos de gasto (múltiple) -->
+        <!-- Tipo de gasto -->
         <div class="flex flex-col gap-1 relative" @click.outside="filterCategories = false">
-          <label class="text-xs font-medium text-gray-500">Tipo</label>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tipo</label>
           <button type="button" @click="filterCategories = !filterCategories"
-                  class="inline-flex items-center gap-2 px-3 py-1.5 border rounded text-sm <%= sel_category_ids.any? ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700' %>">
+                  class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm cursor-pointer transition-colors duration-150 <%= sel_category_ids.any? ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 text-gray-600 hover:border-gray-300' %>">
+            <svg class="w-3.5 h-3.5 flex-shrink-0 <%= sel_category_ids.any? ? 'text-green-500' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z"/>
+            </svg>
             <% if sel_category_ids.any? %>
               <%= sel_category_ids.count == 1 ? @expense_categories.find { |c| c.id.to_s == sel_category_ids.first }&.name : "#{sel_category_ids.count} tipos" %>
             <% else %>
               Todos
             <% end %>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
           <div x-show="filterCategories" x-cloak
-               class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px] max-h-56 overflow-y-auto">
+               class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[180px] max-h-56 overflow-y-auto">
             <% @expense_categories.each do |cat| %>
-              <label class="flex items-center gap-2 px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">
+              <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-green-50 cursor-pointer text-sm transition-colors">
                 <input type="checkbox" name="category_ids[]" value="<%= cat.id %>"
                        <%= 'checked' if sel_category_ids.include?(cat.id.to_s) %>
                        onchange="document.getElementById('filter-form').submit()"
-                       class="w-4 h-4 text-blue-600 rounded">
+                       class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
                 <span class="text-gray-700"><%= cat.name %></span>
               </label>
             <% end %>
             <% if @expense_categories.empty? %>
-              <p class="px-3 py-2 text-xs text-gray-400">Sin tipos</p>
+              <p class="px-3 py-3 text-xs text-gray-400 text-center">Sin tipos</p>
             <% end %>
           </div>
         </div>
 
-        <!-- Terceros (múltiple) -->
+        <!-- Terceros -->
         <div class="flex flex-col gap-1 relative" @click.outside="filterThirdParty = false">
-          <label class="text-xs font-medium text-gray-500">Tercero</label>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tercero</label>
           <button type="button" @click="filterThirdParty = !filterThirdParty"
-                  class="inline-flex items-center gap-2 px-3 py-1.5 border rounded text-sm <%= sel_third_party_ids.any? ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700' %>">
+                  class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm cursor-pointer transition-colors duration-150 <%= sel_third_party_ids.any? ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 text-gray-600 hover:border-gray-300' %>">
+            <svg class="w-3.5 h-3.5 flex-shrink-0 <%= sel_third_party_ids.any? ? 'text-green-500' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
             <% if sel_third_party_ids.any? %>
               <%= sel_third_party_ids.count == 1 ? @third_parties.find { |t| t.id.to_s == sel_third_party_ids.first }&.full_name&.truncate(20) : "#{sel_third_party_ids.count} terceros" %>
             <% else %>
               Todos
             <% end %>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
           <div x-show="filterThirdParty" x-cloak
-               class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px] max-h-56 overflow-y-auto">
+               class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[200px] max-h-56 overflow-y-auto">
             <% @third_parties.each do |tp| %>
-              <label class="flex items-center gap-2 px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">
+              <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-green-50 cursor-pointer text-sm transition-colors">
                 <input type="checkbox" name="third_party_ids[]" value="<%= tp.id %>"
                        <%= 'checked' if sel_third_party_ids.include?(tp.id.to_s) %>
                        onchange="document.getElementById('filter-form').submit()"
-                       class="w-4 h-4 text-blue-600 rounded">
+                       class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
                 <span class="text-gray-700"><%= tp.full_name %></span>
               </label>
             <% end %>
             <% if @third_parties.empty? %>
-              <p class="px-3 py-2 text-xs text-gray-400">Sin terceros</p>
+              <p class="px-3 py-3 text-xs text-gray-400 text-center">Sin terceros</p>
             <% end %>
           </div>
         </div>
 
-        <!-- Cuentas (múltiple) -->
+        <!-- Cuentas -->
         <div class="flex flex-col gap-1 relative" @click.outside="filterAccounts = false">
-          <label class="text-xs font-medium text-gray-500">Cuenta</label>
+          <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Cuenta</label>
           <button type="button" @click="filterAccounts = !filterAccounts"
-                  class="inline-flex items-center gap-2 px-3 py-1.5 border rounded text-sm <%= sel_account_ids.any? ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700' %>">
+                  class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm cursor-pointer transition-colors duration-150 <%= sel_account_ids.any? ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 text-gray-600 hover:border-gray-300' %>">
+            <svg class="w-3.5 h-3.5 flex-shrink-0 <%= sel_account_ids.any? ? 'text-green-500' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            </svg>
             <% if sel_account_ids.any? %>
               <%= sel_account_ids.count == 1 ? @accounts.find { |a| a.id.to_s == sel_account_ids.first }&.name&.truncate(18) : "#{sel_account_ids.count} cuentas" %>
             <% else %>
               Todas
             <% end %>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
           <div x-show="filterAccounts" x-cloak
-               class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px] max-h-56 overflow-y-auto">
+               class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[180px] max-h-56 overflow-y-auto">
             <% @accounts.each do |acc| %>
-              <label class="flex items-center gap-2 px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm">
+              <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-green-50 cursor-pointer text-sm transition-colors">
                 <input type="checkbox" name="account_ids[]" value="<%= acc.id %>"
                        <%= 'checked' if sel_account_ids.include?(acc.id.to_s) %>
                        onchange="document.getElementById('filter-form').submit()"
-                       class="w-4 h-4 text-blue-600 rounded">
+                       class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
                 <span class="text-gray-700"><%= acc.name %></span>
               </label>
             <% end %>
             <% if @accounts.empty? %>
-              <p class="px-3 py-2 text-xs text-gray-400">Sin cuentas</p>
+              <p class="px-3 py-3 text-xs text-gray-400 text-center">Sin cuentas</p>
             <% end %>
           </div>
         </div>
@@ -178,7 +198,7 @@
         <% if @has_filters %>
           <div class="flex flex-col justify-end">
             <%= link_to expenses_path,
-                        class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-colors" do %>
+                  class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors cursor-pointer" do %>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
@@ -188,21 +208,22 @@
         <% end %>
       </div>
 
-      <!-- Resumen de resultados -->
-      <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-        <p class="text-xs text-gray-500">
+      <!-- Resumen -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4 pt-3 border-t border-gray-100">
+        <p class="text-xs text-gray-500 flex items-center gap-1.5">
           <% if @has_filters %>
-            <span class="font-semibold text-blue-600"><%= active_count %> <%= active_count == 1 ? 'filtro activo' : 'filtros activos' %></span>
-            · mostrando
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+              <%= active_count %> <%= active_count == 1 ? 'filtro' : 'filtros' %>
+            </span>
           <% end %>
           <span class="font-medium text-gray-700"><%= @expenses.count %> <%= @expenses.count == 1 ? 'gasto' : 'gastos' %></span>
         </p>
-        <div class="flex items-center gap-4">
-          <p class="text-xs font-semibold text-gray-700">
-            Total: <span class="text-blue-700"><%= number_to_currency(@total_filtered, unit: "$", separator: ",", delimiter: ".") %></span>
-          </p>
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-semibold text-gray-700">
+            Total: <span class="text-red-600"><%= number_to_currency(@total_filtered, unit: "$", separator: ",", delimiter: ".") %></span>
+          </span>
           <%= link_to export_expenses_path(request.query_parameters),
-                      class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-colors" do %>
+                class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors cursor-pointer" do %>
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
             </svg>
@@ -213,7 +234,7 @@
     </div>
   <% end %>
 
-  <!-- Modal: Nuevo Gasto -->
+  <!-- ── Modal: Nuevo Gasto ──────────────────────────────────── -->
   <div x-show="open"
        x-transition:enter="transition ease-out duration-200"
        x-transition:enter-start="opacity-0"
@@ -224,11 +245,15 @@
        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
        style="display: none;">
     <div @click.outside="open = false"
-         class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+         class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-5">
-        <h2 class="text-lg font-bold text-gray-900">Nuevo Gasto</h2>
-        <button @click="open = false" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Nuevo Gasto</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Completa los datos del gasto</p>
+        </div>
+        <button @click="open = false"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
@@ -237,7 +262,7 @@
     </div>
   </div>
 
-  <!-- Modal: Tipos de Gasto -->
+  <!-- ── Modal: Tipos de Gasto ──────────────────────────────── -->
   <div x-show="openTypes"
        x-transition:enter="transition ease-out duration-200"
        x-transition:enter-start="opacity-0"
@@ -248,25 +273,25 @@
        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
        style="display: none;">
     <div @click.outside="openTypes = false; editingId = null; showAddForm = false"
-         class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-      <!-- Header -->
+         class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-        <h2 class="text-lg font-bold text-gray-900">Tipos de Gasto</h2>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Tipos de Gasto</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Gestiona las categorías de gastos</p>
+        </div>
         <button @click="openTypes = false; editingId = null; showAddForm = false"
-                class="text-gray-400 hover:text-gray-600">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <!-- Lista de categorías -->
       <div class="px-6 py-4 space-y-2">
         <% if @expense_categories.any? %>
           <% @expense_categories.each do |cat| %>
-            <div class="border border-gray-200 rounded-lg overflow-hidden">
-              <!-- Fila normal -->
-              <div x-show="editingId !== '<%= cat.id %>'" class="flex items-start justify-between p-3 hover:bg-gray-50">
+            <div class="border border-gray-200 rounded-xl overflow-hidden">
+              <div x-show="editingId !== '<%= cat.id %>'" class="flex items-start justify-between p-3 hover:bg-gray-50 transition-colors">
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-gray-800"><%= cat.name %></p>
                   <% if cat.description.present? %>
@@ -284,76 +309,67 @@
                 <% unless cat.in_use? %>
                   <div class="flex items-center gap-2 ml-3 flex-shrink-0">
                     <button @click="editingId = '<%= cat.id %>'"
-                            class="text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full transition-colors">
+                            class="text-xs text-green-700 bg-green-50 hover:bg-green-100 px-2.5 py-1 rounded-lg transition-colors cursor-pointer">
                       Editar
                     </button>
                     <%= button_to expense_category_path(cat), method: :delete,
-                                  class: "text-xs text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-full transition-colors border-0 cursor-pointer",
-                                  form: { onsubmit: "return confirm('¿Eliminar el tipo \"#{cat.name}\"?')" } do %>
+                          class: "text-xs text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors border-0 cursor-pointer",
+                          form: { onsubmit: "return confirm('¿Eliminar el tipo \"#{cat.name}\"?')" } do %>
                       Eliminar
                     <% end %>
                   </div>
                 <% end %>
               </div>
 
-              <!-- Fila edición inline -->
-              <div x-show="editingId === '<%= cat.id %>'" x-cloak class="p-3 bg-blue-50">
+              <div x-show="editingId === '<%= cat.id %>'" x-cloak class="p-3 bg-green-50">
                 <%= form_with url: expense_category_path(cat), method: :patch, scope: :expense_category, local: true, class: "space-y-2" do |f| %>
-                  <div>
-                    <%= f.text_field :name, value: cat.name, placeholder: "Nombre del tipo",
-                                     class: "w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring focus:ring-blue-200",
-                                     required: true %>
-                  </div>
-                  <div>
-                    <%= f.text_field :description, value: cat.description, placeholder: "Descripción (opcional)",
-                                     class: "w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring focus:ring-blue-200" %>
-                  </div>
+                  <%= f.text_field :name, value: cat.name, placeholder: "Nombre del tipo",
+                                   class: "w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none",
+                                   required: true %>
+                  <%= f.text_field :description, value: cat.description, placeholder: "Descripción (opcional)",
+                                   class: "w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
                   <div class="flex gap-2 justify-end">
                     <button type="button" @click="editingId = null"
-                            class="text-xs text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded transition-colors">
+                            class="text-xs text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
                       Cancelar
                     </button>
-                    <%= f.submit "Guardar", class: "text-xs text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded cursor-pointer transition-colors" %>
+                    <%= f.submit "Guardar", class: "text-xs text-white bg-green-700 hover:bg-green-800 px-3 py-1.5 rounded-lg cursor-pointer transition-colors" %>
                   </div>
                 <% end %>
               </div>
             </div>
           <% end %>
         <% else %>
-          <p class="text-sm text-gray-500 text-center py-4">No hay tipos registrados.</p>
+          <div class="text-center py-6">
+            <p class="text-sm text-gray-400">No hay tipos registrados.</p>
+          </div>
         <% end %>
       </div>
 
-      <!-- Agregar nuevo tipo -->
-      <div class="px-6 pb-4">
+      <div class="px-6 pb-5">
         <div x-show="!showAddForm">
           <button @click="showAddForm = true"
-                  class="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg text-sm font-medium transition-colors">
+                  class="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-200 hover:border-green-400 hover:bg-green-50 text-gray-400 hover:text-green-700 rounded-xl text-sm font-medium transition-colors cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             Agregar tipo
           </button>
         </div>
-
-        <div x-show="showAddForm" x-cloak class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div x-show="showAddForm" x-cloak class="border border-gray-200 rounded-xl p-4 bg-gray-50">
           <p class="text-sm font-semibold text-gray-700 mb-3">Nuevo tipo de gasto</p>
           <%= form_with url: expense_categories_path, method: :post, scope: :expense_category, local: true, class: "space-y-2" do |f| %>
-            <div>
-              <%= f.text_field :name, placeholder: "Nombre del tipo *",
-                               class: "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring focus:ring-blue-200",
-                               required: true %>
-            </div>
-            <div>
-              <%= f.text_field :description, placeholder: "Descripción (opcional)",
-                               class: "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring focus:ring-blue-200" %>
-            </div>
+            <%= f.text_field :name, placeholder: "Nombre del tipo *",
+                             class: "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none",
+                             required: true %>
+            <%= f.text_field :description, placeholder: "Descripción (opcional)",
+                             class: "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none" %>
             <div class="flex gap-2 justify-end">
               <button type="button" @click="showAddForm = false"
-                      class="text-xs text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded transition-colors">
+                      class="text-xs text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
                 Cancelar
               </button>
-              <%= f.submit "Crear tipo", class: "text-xs text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded cursor-pointer transition-colors" %>
+              <%= f.submit "Crear tipo", class: "text-xs text-white bg-green-700 hover:bg-green-800 px-3 py-1.5 rounded-lg cursor-pointer transition-colors" %>
             </div>
           <% end %>
         </div>
@@ -361,89 +377,134 @@
     </div>
   </div>
 
+  <!-- ── Tabla de gastos ─────────────────────────────────────── -->
   <% if @expenses.any? %>
-    <div class="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="overflow-x-auto">
-      <table class="w-full text-sm table-fixed">
-        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-          <tr>
-            <th class="px-4 py-3 text-left w-24">Fecha</th>
-            <th class="px-4 py-3 text-left w-48">Descripción</th>
-            <th class="px-4 py-3 text-left w-24">Tipo</th>
-            <th class="px-4 py-3 text-left w-24">Proyecto</th>
-            <th class="px-4 py-3 text-left w-28">Tercero</th>
-            <th class="px-4 py-3 text-left w-24">Cuenta</th>
-            <th class="px-4 py-3 text-left w-20">Soporte</th>
-            <th class="px-4 py-3 text-left w-24">N° Factura</th>
-            <th class="px-4 py-3 text-right w-28">Valor</th>
-            <th class="px-4 py-3 text-center w-24">Acciones</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          <% @expenses.each do |expense| %>
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
-                <%= expense.expense_date&.strftime("%d/%m/%Y") || "-" %>
-              </td>
-              <td class="px-4 py-3 font-medium text-gray-800 truncate">
-                <%= expense.description %>
-              </td>
-              <td class="px-4 py-3">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  <%= expense.expense_category&.name || "-" %>
-                </span>
-              </td>
-              <td class="px-4 py-3 text-gray-600">
-                <% if expense.project.present? %>
-                  <%= link_to expense.project.project_identifier, project_path(expense.project),
-                              class: "text-blue-600 hover:underline text-xs" %>
-                <% else %>
-                  <span class="text-gray-400 text-xs">-</span>
-                <% end %>
-              </td>
-              <td class="px-4 py-3 text-gray-600 text-xs">
-                <%= expense.third_party&.full_name || "-" %>
-              </td>
-              <td class="px-4 py-3 text-gray-600 text-xs">
-                <% if expense.account.present? %>
-                  <%= link_to expense.account.name, account_path(expense.account),
-                              class: "text-blue-600 hover:underline text-xs" %>
-                <% else %>
-                  <span class="text-gray-400 text-xs">-</span>
-                <% end %>
-              </td>
-              <td class="px-4 py-3 text-xs">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                  <%= expense.support_type_label %>
-                </span>
-              </td>
-              <td class="px-4 py-3 text-xs text-gray-600">
-                <%= expense.invoice_number.present? ? expense.invoice_number : "N/A" %>
-              </td>
-              <td class="px-4 py-3 text-right font-semibold text-gray-800 whitespace-nowrap">
-                <%= number_to_currency(expense.amount, unit: "$", separator: ",", delimiter: ".") %>
-              </td>
-              <td class="px-4 py-3 text-center">
-                <div class="flex justify-center gap-3">
-                  <%= link_to "Editar", edit_expense_path(expense),
-                              class: "text-xs text-blue-600 hover:underline" %>
-                  <%= button_to "Eliminar", expense_path(expense), method: :delete,
-                                class: "text-xs text-red-600 hover:underline bg-transparent border-0 cursor-pointer",
-                                form: { onsubmit: "return confirm('¿Eliminar este gasto?')" } %>
-                </div>
-              </td>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200">
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Fecha</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Descripción</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Tipo</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Proyecto</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Tercero</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Cuenta</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20">Soporte</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">N° Factura</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Valor</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-20"></th>
             </tr>
-          <% end %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% @expenses.each do |expense| %>
+              <tr class="hover:bg-gray-50 transition-colors duration-100 group">
+                <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                  <%= expense.expense_date&.strftime("%d/%m/%Y") || "-" %>
+                </td>
+                <td class="px-4 py-3">
+                  <p class="text-sm font-medium text-gray-800 truncate max-w-[200px]"><%= expense.description %></p>
+                </td>
+                <td class="px-4 py-3">
+                  <% if expense.expense_category.present? %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                      <%= expense.expense_category.name %>
+                    </span>
+                  <% else %>
+                    <span class="text-gray-300 text-xs">—</span>
+                  <% end %>
+                </td>
+                <td class="px-4 py-3">
+                  <% if expense.project.present? %>
+                    <%= link_to expense.project.project_identifier, project_path(expense.project),
+                          class: "text-xs font-medium text-green-700 hover:text-green-900 hover:underline" %>
+                  <% else %>
+                    <span class="text-gray-300 text-xs">—</span>
+                  <% end %>
+                </td>
+                <td class="px-4 py-3 text-xs text-gray-600 truncate max-w-[110px]">
+                  <%= expense.third_party&.full_name || "—" %>
+                </td>
+                <td class="px-4 py-3">
+                  <% if expense.account.present? %>
+                    <%= link_to expense.account.name, account_path(expense.account),
+                          class: "text-xs font-medium text-green-700 hover:text-green-900 hover:underline" %>
+                  <% else %>
+                    <span class="text-gray-300 text-xs">—</span>
+                  <% end %>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                    <%= expense.support_type_label %>
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-xs text-gray-500">
+                  <%= expense.invoice_number.present? ? expense.invoice_number : "—" %>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <span class="text-sm font-bold text-red-600">
+                    -<%= number_to_currency(expense.amount, unit: "$", separator: ",", delimiter: ".") %>
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    <%= link_to edit_expense_path(expense),
+                          class: "w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-green-700 hover:bg-green-50 transition-colors cursor-pointer",
+                          title: "Editar" do %>
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                    <% end %>
+                    <%= button_to expense_path(expense), method: :delete,
+                          class: "w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors border-0 cursor-pointer",
+                          title: "Eliminar",
+                          form: { onsubmit: "return confirm('¿Eliminar este gasto?')" } do %>
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
       </div>
     </div>
+
   <% else %>
-    <div class="text-center py-16 text-gray-500" x-data>
-      <p class="text-lg font-medium">No tienes gastos registrados.</p>
-      <button @click="open = true" class="mt-4 inline-block text-blue-600 hover:underline text-sm">
-        Registrar primer gasto
-      </button>
+    <!-- Empty state -->
+    <div class="bg-white rounded-xl border border-dashed border-gray-300 py-20 text-center" x-data>
+      <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+        </svg>
+      </div>
+      <p class="text-base font-semibold text-gray-600 mb-1">
+        <%= @has_filters ? 'Sin resultados para los filtros aplicados' : 'No tienes gastos registrados' %>
+      </p>
+      <p class="text-sm text-gray-400 mb-5">
+        <%= @has_filters ? 'Intenta ajustar los filtros para ver más resultados.' : 'Comienza registrando tu primer gasto.' %>
+      </p>
+      <% if @has_filters %>
+        <%= link_to expenses_path,
+              class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Limpiar filtros
+        <% end %>
+      <% else %>
+        <button @click="open = true"
+                class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 rounded-lg transition-colors cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Registrar primer gasto
+        </button>
+      <% end %>
     </div>
   <% end %>
+
+</div>
 </div>

@@ -1,246 +1,328 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
-  <!-- Saludo -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">
-        Bienvenido, <span class="text-blue-700"><%= current_user.email.split("@").first.capitalize %></span>
-      </h1>
-      <p class="text-sm text-gray-500 mt-0.5"><%= Date.current.strftime("%A, %d de %B de %Y").capitalize %></p>
+    <!-- ── Greeting ─────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <!-- Avatar -->
+        <div class="w-12 h-12 rounded-full bg-green-700 flex items-center justify-center flex-shrink-0">
+          <span class="text-white text-lg font-bold">
+            <%= current_user.email.first.upcase %>
+          </span>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-widest mb-0.5">Bienvenido de nuevo</p>
+          <h1 class="text-xl font-bold text-gray-900">
+            <%= current_user.email.split("@").first.capitalize %>
+          </h1>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <!-- Fecha -->
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <%= Date.current.strftime("%d de %B de %Y").capitalize %>
+        </span>
+        <!-- CTA gastos -->
+        <%= link_to expenses_path,
+              class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 rounded-lg transition-colors duration-200 cursor-pointer" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          Ver Gastos
+        <% end %>
+      </div>
     </div>
-    <div class="flex gap-2">
-<%= link_to expenses_path,
-            class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-        </svg>
-        Ver Gastos
+
+    <!-- ── KPI Cards ─────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+      <!-- Proyectos activos -->
+      <%= link_to projects_path,
+            class: "bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md hover:border-green-300 transition-all duration-200 cursor-pointer group" do %>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Proyectos activos</span>
+          <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors duration-200">
+            <svg class="w-4 h-4 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <p class="text-4xl font-bold text-gray-900"><%= @active_projects_count %></p>
+          <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500"></span>
+            <%= @total_projects_count %> proyectos en total
+          </p>
+        </div>
+        <div class="h-0.5 w-full bg-green-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
       <% end %>
+
+      <!-- Gastos del mes -->
+      <%= link_to expenses_path,
+            class: "bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md hover:border-red-300 transition-all duration-200 cursor-pointer group" do %>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Gastos del mes</span>
+          <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors duration-200">
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-gray-900 leading-tight">
+            <%= number_to_currency(@monthly_expenses_total, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+          </p>
+          <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-red-400"></span>
+            <%= Date.current.strftime("%B %Y").capitalize %>
+          </p>
+        </div>
+        <div class="h-0.5 w-full bg-red-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+      <% end %>
+
+      <!-- Saldo en cuentas -->
+      <%= link_to accounts_path,
+            class: "bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group" do %>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Saldo en cuentas</span>
+          <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-200">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <p class="text-2xl font-bold leading-tight <%= @total_balance >= 0 ? 'text-gray-900' : 'text-red-600' %>">
+            <%= number_to_currency(@total_balance, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+          </p>
+          <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+            <%= @accounts.count %> <%= @accounts.count == 1 ? 'cuenta' : 'cuentas' %>
+          </p>
+        </div>
+        <div class="h-0.5 w-full bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+      <% end %>
+
+      <!-- Preliquidación -->
+      <%= link_to preliquidation_settlements_path,
+            class: "bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md hover:border-purple-300 transition-all duration-200 cursor-pointer group" do %>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Preliquidación</span>
+          <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors duration-200">
+            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <p class="text-2xl font-bold leading-tight <%= @preliq_difference >= 0 ? 'text-gray-900' : 'text-red-600' %>">
+            <%= number_to_currency(@preliq_difference, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+          </p>
+          <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+            <%= Date.current.strftime("%B %Y").capitalize %>
+          </p>
+        </div>
+        <div class="h-0.5 w-full bg-purple-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+      <% end %>
+
     </div>
-  </div>
 
-  <!-- KPI Cards -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Proyectos activos -->
-    <%= link_to projects_path, class: "bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md hover:border-blue-300 transition-all" do %>
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Proyectos activos</span>
-        <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-          </svg>
-        </div>
-      </div>
-      <p class="text-3xl font-bold text-gray-900"><%= @active_projects_count %></p>
-      <p class="text-xs text-gray-500 mt-1"><%= @total_projects_count %> en total</p>
-    <% end %>
+    <!-- ── Contenido principal ────────────────────────────────── -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    <!-- Gastos del mes -->
-    <%= link_to expenses_path, class: "bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md hover:border-red-300 transition-all" do %>
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Gastos del mes</span>
-        <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
-          <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
-          </svg>
-        </div>
-      </div>
-      <p class="text-2xl font-bold text-gray-900"><%= number_to_currency(@monthly_expenses_total, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
-      <p class="text-xs text-gray-500 mt-1"><%= Date.current.strftime("%B %Y").capitalize %></p>
-    <% end %>
-
-    <!-- Saldo total cuentas -->
-    <%= link_to accounts_path, class: "bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md hover:border-green-300 transition-all" do %>
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Saldo en cuentas</span>
-        <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-          <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-          </svg>
-        </div>
-      </div>
-      <p class="text-2xl font-bold <%= @total_balance >= 0 ? 'text-gray-900' : 'text-red-600' %>">
-        <%= number_to_currency(@total_balance, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
-      </p>
-      <p class="text-xs text-gray-500 mt-1"><%= @accounts.count %> <%= @accounts.count == 1 ? 'cuenta' : 'cuentas' %> registradas</p>
-    <% end %>
-
-    <!-- Preliquidación del mes -->
-    <%= link_to preliquidation_settlements_path, class: "bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md hover:border-purple-300 transition-all" do %>
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Preliquidación</span>
-        <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-        </div>
-      </div>
-      <p class="text-2xl font-bold <%= @preliq_difference >= 0 ? 'text-gray-900' : 'text-red-600' %>">
-        <%= number_to_currency(@preliq_difference, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
-      </p>
-      <p class="text-xs text-gray-500 mt-1"><%= Date.current.strftime("%B %Y").capitalize %></p>
-    <% end %>
-  </div>
-
-  <!-- Contenido principal: 3 columnas -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-    <!-- Últimos gastos -->
-    <div class="lg:col-span-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <h2 class="text-sm font-semibold text-gray-800">Últimos Gastos</h2>
-        <%= link_to "Ver todos", expenses_path, class: "text-xs text-blue-600 hover:underline" %>
-      </div>
-      <% if @recent_expenses.any? %>
-        <div class="divide-y divide-gray-50">
-          <% @recent_expenses.each do |expense| %>
-            <div class="px-5 py-3 hover:bg-gray-50 transition-colors">
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-800 truncate"><%= expense.description %></p>
-                  <div class="flex items-center gap-2 mt-0.5">
-                    <% if expense.expense_category.present? %>
-                      <span class="text-xs text-gray-400"><%= expense.expense_category.name %></span>
-                    <% end %>
-                    <% if expense.project.present? %>
-                      <span class="text-xs text-gray-400">· <%= expense.project.project_identifier %></span>
-                    <% end %>
-                  </div>
-                </div>
-                <div class="text-right flex-shrink-0">
-                  <p class="text-sm font-semibold text-red-600">
-                    -<%= number_to_currency(expense.amount, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
-                  </p>
-                  <p class="text-xs text-gray-400"><%= expense.expense_date&.strftime("%d/%m/%Y") || "-" %></p>
-                </div>
-              </div>
-            </div>
+      <!-- Últimos Gastos -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+            <h2 class="text-sm font-semibold text-gray-800">Últimos Gastos</h2>
+          </div>
+          <%= link_to expenses_path,
+                class: "text-xs font-medium text-green-700 hover:text-green-900 hover:underline transition-colors cursor-pointer" do %>
+            Ver todos →
           <% end %>
         </div>
-      <% else %>
-        <div class="px-5 py-10 text-center text-sm text-gray-400">
-          No hay gastos registrados aún.
-        </div>
-      <% end %>
-    </div>
-
-    <!-- Proyectos activos -->
-    <div class="lg:col-span-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <h2 class="text-sm font-semibold text-gray-800">Proyectos Activos</h2>
-        <%= link_to "Ver todos", projects_path, class: "text-xs text-blue-600 hover:underline" %>
-      </div>
-      <% if @active_projects.any? %>
-        <div class="divide-y divide-gray-50">
-          <% @active_projects.each do |project| %>
-            <%
-              amount_spent = project.expenses.sum { |e| e.amount.to_i }
-              diff = project.quoted_value.to_i - amount_spent
-              diff_color = diff > 1_000_000 ? "text-green-600" : diff >= 0 ? "text-orange-500" : "text-red-600"
-              status_styles = {
-                'pending' => 'bg-gray-100 text-gray-700',
-                'running' => 'bg-blue-100 text-blue-700'
-              }
-            %>
-            <%= link_to project_path(project), class: "block px-5 py-3 hover:bg-gray-50 transition-colors" do %>
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-800 truncate"><%= project.name.titleize %></p>
-                  <div class="flex items-center gap-2 mt-0.5">
-                    <span class="text-xs text-gray-400"><%= project.project_identifier %></span>
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium <%= status_styles[project.execution_status] || 'bg-gray-100 text-gray-700' %>">
-                      <%= t("enums.project.execution_status.#{project.execution_status}") %>
-                    </span>
-                  </div>
-                </div>
-                <div class="text-right flex-shrink-0">
-                  <p class="text-xs text-gray-500">Diferencia</p>
-                  <p class="text-sm font-semibold <%= diff_color %>">
-                    <%= number_to_currency(diff, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
-                  </p>
-                </div>
-              </div>
-            <% end %>
-          <% end %>
-        </div>
-      <% else %>
-        <div class="px-5 py-10 text-center text-sm text-gray-400">
-          No hay proyectos activos.
-          <%= link_to "Crear uno", new_project_path, class: "text-blue-600 hover:underline" %>
-        </div>
-      <% end %>
-    </div>
-
-    <!-- Cuentas -->
-    <div class="lg:col-span-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <h2 class="text-sm font-semibold text-gray-800">Cuentas</h2>
-        <%= link_to "Ver todas", accounts_path, class: "text-xs text-blue-600 hover:underline" %>
-      </div>
-      <% if @accounts.any? %>
-        <div class="divide-y divide-gray-50">
-          <% @accounts.each do |account| %>
-            <%= link_to account_path(account), class: "block px-5 py-3 hover:bg-gray-50 transition-colors" do %>
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-3 min-w-0">
-                  <%
-                    icon_bg = case account.account_type.to_s
-                              when "savings"  then "bg-blue-100"
-                              when "checking" then "bg-indigo-100"
-                              when "cash"     then "bg-green-100"
-                              when "credit"   then "bg-purple-100"
-                              end
-                    icon_color = case account.account_type.to_s
-                                 when "savings"  then "text-blue-600"
-                                 when "checking" then "text-indigo-600"
-                                 when "cash"     then "text-green-600"
-                                 when "credit"   then "text-purple-600"
-                                 end
-                  %>
-                  <div class="w-8 h-8 rounded-lg <%= icon_bg %> flex items-center justify-center flex-shrink-0">
-                    <% if account.account_type.to_s == "cash" %>
-                      <svg class="w-4 h-4 <%= icon_color %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                      </svg>
-                    <% elsif account.account_type.to_s == "credit" %>
-                      <svg class="w-4 h-4 <%= icon_color %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                      </svg>
-                    <% else %>
-                      <svg class="w-4 h-4 <%= icon_color %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                      </svg>
-                    <% end %>
-                  </div>
+        <% if @recent_expenses.any? %>
+          <div class="divide-y divide-gray-50">
+            <% @recent_expenses.each do |expense| %>
+              <div class="px-5 py-3 hover:bg-gray-50 transition-colors duration-150">
+                <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0">
-                    <p class="text-sm font-medium text-gray-800 truncate"><%= account.name %></p>
-                    <p class="text-xs text-gray-400"><%= t("enums.account.account_type.#{account.account_type}") %><%= account.bank_name.present? ? " · #{account.bank_name}" : "" %></p>
+                    <p class="text-sm font-medium text-gray-800 truncate"><%= expense.description %></p>
+                    <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <% if expense.expense_category.present? %>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                          <%= expense.expense_category.name %>
+                        </span>
+                      <% end %>
+                      <% if expense.project.present? %>
+                        <span class="text-xs text-gray-400"><%= expense.project.project_identifier %></span>
+                      <% end %>
+                    </div>
                   </div>
-                </div>
-                <div class="text-right flex-shrink-0">
-                  <% if account.account_type.to_s == "credit" %>
-                    <p class="text-sm font-semibold <%= account.balance.positive? ? 'text-red-600' : 'text-gray-800' %>">
-                      <%= number_to_currency(account.balance, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+                  <div class="text-right flex-shrink-0">
+                    <p class="text-sm font-bold text-red-500">
+                      -<%= number_to_currency(expense.amount, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
                     </p>
-                    <p class="text-xs text-gray-400">deuda</p>
-                  <% else %>
-                    <p class="text-sm font-semibold <%= account.balance.negative? ? 'text-red-600' : 'text-gray-800' %>">
-                      <%= number_to_currency(account.balance, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
-                    </p>
-                    <p class="text-xs text-gray-400">saldo</p>
-                  <% end %>
+                    <p class="text-xs text-gray-400"><%= expense.expense_date&.strftime("%d/%m/%Y") || "-" %></p>
+                  </div>
                 </div>
               </div>
             <% end %>
+          </div>
+        <% else %>
+          <div class="flex flex-col items-center justify-center py-12 px-5 text-center">
+            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+              </svg>
+            </div>
+            <p class="text-sm text-gray-400">No hay gastos registrados aún.</p>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Proyectos Activos -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <h2 class="text-sm font-semibold text-gray-800">Proyectos Activos</h2>
+          </div>
+          <%= link_to projects_path,
+                class: "text-xs font-medium text-green-700 hover:text-green-900 hover:underline transition-colors cursor-pointer" do %>
+            Ver todos →
           <% end %>
         </div>
-      <% else %>
-        <div class="px-5 py-10 text-center text-sm text-gray-400">
-          No hay cuentas registradas.
-          <%= link_to "Crear una", accounts_path, class: "text-blue-600 hover:underline" %>
-        </div>
-      <% end %>
-    </div>
+        <% if @active_projects.any? %>
+          <div class="divide-y divide-gray-50">
+            <% @active_projects.each do |project| %>
+              <%
+                amount_spent = project.expenses.sum { |e| e.amount.to_i }
+                diff = project.quoted_value.to_i - amount_spent
+                diff_color   = diff > 1_000_000 ? "text-green-600" : diff >= 0 ? "text-orange-500" : "text-red-600"
+                status_styles = {
+                  'pending' => 'bg-gray-100 text-gray-600',
+                  'running' => 'bg-green-100 text-green-700'
+                }
+              %>
+              <%= link_to project_path(project),
+                    class: "block px-5 py-3 hover:bg-gray-50 transition-colors duration-150 cursor-pointer" do %>
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-800 truncate"><%= project.name.titleize %></p>
+                    <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span class="text-xs text-gray-400"><%= project.project_identifier %></span>
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium <%= status_styles[project.execution_status] || 'bg-gray-100 text-gray-600' %>">
+                        <%= t("enums.project.execution_status.#{project.execution_status}") %>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="text-right flex-shrink-0">
+                    <p class="text-xs text-gray-400">Diferencia</p>
+                    <p class="text-sm font-bold <%= diff_color %>">
+                      <%= number_to_currency(diff, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+                    </p>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="flex flex-col items-center justify-center py-12 px-5 text-center">
+            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+              </svg>
+            </div>
+            <p class="text-sm text-gray-400 mb-2">No hay proyectos activos.</p>
+            <%= link_to new_project_path,
+                  class: "text-sm font-medium text-green-700 hover:text-green-900 hover:underline cursor-pointer" do %>
+              Crear uno →
+            <% end %>
+          </div>
+        <% end %>
+      </div>
 
+      <!-- Cuentas -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            <h2 class="text-sm font-semibold text-gray-800">Cuentas</h2>
+          </div>
+          <%= link_to accounts_path,
+                class: "text-xs font-medium text-green-700 hover:text-green-900 hover:underline transition-colors cursor-pointer" do %>
+            Ver todas →
+          <% end %>
+        </div>
+        <% if @accounts.any? %>
+          <div class="divide-y divide-gray-50">
+            <% @accounts.each do |account| %>
+              <%
+                icon_bg    = { "savings" => "bg-blue-50",   "checking" => "bg-indigo-50", "cash" => "bg-green-50",   "credit" => "bg-purple-50"   }
+                icon_color = { "savings" => "text-blue-600","checking" => "text-indigo-600","cash" => "text-green-600","credit" => "text-purple-600" }
+                type_key   = account.account_type.to_s
+              %>
+              <%= link_to account_path(account),
+                    class: "block px-5 py-3 hover:bg-gray-50 transition-colors duration-150 cursor-pointer" do %>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-lg <%= icon_bg[type_key] || 'bg-gray-100' %> flex items-center justify-center flex-shrink-0">
+                      <% if type_key == "cash" %>
+                        <svg class="w-4 h-4 <%= icon_color[type_key] %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                      <% else %>
+                        <svg class="w-4 h-4 <%= icon_color[type_key] || 'text-gray-500' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                      <% end %>
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-medium text-gray-800 truncate"><%= account.name %></p>
+                      <p class="text-xs text-gray-400">
+                        <%= t("enums.account.account_type.#{account.account_type}") %><%= account.bank_name.present? ? " · #{account.bank_name}" : "" %>
+                      </p>
+                    </div>
+                  </div>
+                  <div class="text-right flex-shrink-0">
+                    <% if type_key == "credit" %>
+                      <p class="text-sm font-bold <%= account.balance.positive? ? 'text-red-500' : 'text-gray-800' %>">
+                        <%= number_to_currency(account.balance, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+                      </p>
+                      <p class="text-xs text-gray-400">deuda</p>
+                    <% else %>
+                      <p class="text-sm font-bold <%= account.balance.negative? ? 'text-red-500' : 'text-gray-800' %>">
+                        <%= number_to_currency(account.balance, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+                      </p>
+                      <p class="text-xs text-gray-400">saldo</p>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="flex flex-col items-center justify-center py-12 px-5 text-center">
+            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+            </div>
+            <p class="text-sm text-gray-400 mb-2">No hay cuentas registradas.</p>
+            <%= link_to accounts_path,
+                  class: "text-sm font-medium text-green-700 hover:text-green-900 hover:underline cursor-pointer" do %>
+              Crear una →
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+    </div>
   </div>
 </div>
