@@ -36,6 +36,7 @@ class User
   has_many :managed_users, class_name: 'User', foreign_key: 'owner_id', dependent: :destroy
   has_one :profile, class_name: 'UserProfile', dependent: :destroy
 
+  has_many :fixed_assets, dependent: :destroy
   has_many :projects, dependent: :destroy
   has_many :expenses, dependent: :nullify
   has_many :shared_projects, dependent: :destroy, inverse_of: :user

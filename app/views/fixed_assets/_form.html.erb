@@ -1,0 +1,184 @@
+<% is_edit = fixed_asset.persisted? %>
+
+<% if fixed_asset.errors.any? %>
+  <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+    <div class="flex">
+      <svg class="h-5 w-5 text-red-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+      </svg>
+      <div class="ml-3">
+        <h3 class="text-sm font-medium text-red-800">Se encontraron <%= pluralize(fixed_asset.errors.count, "error") %>:</h3>
+        <ul class="mt-2 text-sm text-red-700 list-disc pl-5 space-y-1">
+          <% fixed_asset.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<%= form_with model: fixed_asset, local: true, multipart: true, class: "space-y-5" do |f| %>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5" x-data="{ status: '<%= fixed_asset.status_cd.to_s %>' }">
+    <div>
+      <%= f.label :name, "Nombre del activo", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :name,
+            placeholder: "Ej: Laptop Dell XPS 15",
+            class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :serial, "Serial / Número de serie", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :serial,
+            placeholder: "Ej: SN-2024-001",
+            class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :purchase_date, "Fecha de compra", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.date_field :purchase_date,
+            value: fixed_asset.purchase_date&.strftime('%Y-%m-%d'),
+            class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :purchase_price, "Precio de compra (COP)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :purchase_price,
+            value: fixed_asset.purchase_price&.fractional.to_i > 0 ? (fixed_asset.purchase_price.fractional / 100).to_i.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\1.').reverse : '',
+            placeholder: "0",
+            id: "purchase_price_input",
+            autocomplete: "off",
+            class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :responsible, "Responsable", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :responsible,
+            placeholder: "Nombre del responsable",
+            class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :status_cd, "Estado", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.select :status_cd,
+            [
+              ['Disponible',        0],
+              ['Asignado',          1],
+              ['En mantenimiento',  2],
+              ['En reparación',     3],
+              ['En bodega',         4],
+              ['Dado de baja',      6],
+              ['Perdido / Robado',  7]
+            ],
+            { selected: fixed_asset.status_cd },
+            class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none",
+            "x-model": "status" %>
+    </div>
+
+    <!-- Campos de asignación (solo cuando estado = Asignado = 1) -->
+    <div class="md:col-span-2" x-show="status === '1'" x-cloak>
+      <div class="border border-blue-200 bg-blue-50 rounded-lg p-4 space-y-4">
+        <p class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Información de asignación</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <%= f.label :assigned_to, "Asignado a", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.text_field :assigned_to,
+                  placeholder: "Nombre de la persona",
+                  class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none" %>
+          </div>
+          <div>
+            <%= f.label :assigned_date, "Fecha de asignación", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.date_field :assigned_date,
+                  value: fixed_asset.assigned_date&.strftime('%Y-%m-%d'),
+                  class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none" %>
+          </div>
+          <div class="md:col-span-2">
+            <%= f.label :assigned_description, "Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.text_area :assigned_description,
+                  placeholder: "Motivo o descripción de la asignación...",
+                  rows: 3,
+                  class: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none resize-none" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adjunto -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Imagen o PDF del activo (opcional)</label>
+
+    <% if is_edit && fixed_asset.attachment_present? %>
+      <div class="flex items-center gap-3 mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+        <% if fixed_asset.attachment_image? %>
+          <img src="<%= fixed_asset.attachment_url %>" class="w-16 h-16 object-cover rounded border border-gray-200" alt="">
+        <% else %>
+          <div class="w-16 h-16 bg-red-50 border border-red-200 rounded flex items-center justify-center flex-shrink-0">
+            <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+          </div>
+        <% end %>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-gray-500 truncate"><%= fixed_asset.attachment_filename %></p>
+          <label class="inline-flex items-center gap-1.5 mt-1.5 text-xs text-red-600 cursor-pointer">
+            <input type="checkbox" name="fixed_asset[remove_attachment]" value="1" class="rounded">
+            Eliminar archivo adjunto
+          </label>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="border-2 border-dashed border-gray-300 rounded-lg px-4 py-5 text-center hover:border-green-400 transition-colors">
+      <input type="file" name="fixed_asset[attachment_file]" accept="image/*,application/pdf"
+             class="sr-only" id="attachment-input">
+      <label for="attachment-input" class="cursor-pointer">
+        <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <p class="text-sm text-gray-500">
+          <span class="font-medium text-green-700 hover:text-green-800">Seleccionar archivo</span>
+          o arrastra aquí
+        </p>
+        <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF, WebP o PDF</p>
+      </label>
+      <p id="file-name-preview" class="text-xs text-green-700 font-medium mt-2 hidden"></p>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+    <%= link_to fixed_assets_path, class: "text-sm text-gray-500 hover:text-gray-700 font-medium" do %>Cancelar<% end %>
+    <%= f.submit is_edit ? "Actualizar Activo" : "Registrar Activo",
+          id: "submit-btn",
+          class: "bg-green-700 hover:bg-green-800 text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors cursor-pointer" %>
+  </div>
+<% end %>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const priceInput = document.getElementById("purchase_price_input");
+    if (priceInput) {
+      priceInput.addEventListener("input", function () {
+        const clean = priceInput.value.replace(/\D/g, "");
+        priceInput.value = clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      });
+      priceInput.form.addEventListener("submit", function () {
+        priceInput.value = priceInput.value.replace(/\./g, "");
+      });
+    }
+
+    const fileInput = document.getElementById("attachment-input");
+    const preview  = document.getElementById("file-name-preview");
+    if (fileInput && preview) {
+      fileInput.addEventListener("change", function () {
+        if (fileInput.files.length > 0) {
+          preview.textContent = fileInput.files[0].name;
+          preview.classList.remove("hidden");
+        } else {
+          preview.classList.add("hidden");
+        }
+      });
+    }
+  });
+</script>

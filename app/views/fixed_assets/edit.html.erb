@@ -1,0 +1,17 @@
+<div class="max-w-3xl mx-auto mt-6 px-4">
+  <div class="flex items-center gap-3 mb-6">
+    <%= link_to fixed_asset_path(@fixed_asset), class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    <% end %>
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Editar Activo Fijo</h1>
+      <p class="text-sm text-gray-500 truncate"><%= @fixed_asset.name %></p>
+    </div>
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+    <%= render 'form', fixed_asset: @fixed_asset %>
+  </div>
+</div>

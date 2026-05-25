@@ -146,7 +146,20 @@ es:
         phone_number: "Número de contacto"
         position_cd: "Cargo"
         position: "Cargo"
+      fixed_asset:
+        name: "Nombre"
+        serial: "Serial"
+        purchase_date: "Fecha de compra"
+        purchase_price: "Precio de compra"
+        responsible: "Responsable"
+        assigned_to: "Asignado a"
+        assigned_date: "Fecha de asignación"
+        assigned_description: "Descripción de asignación"
     errors:
+      messages:
+        blank: "no puede estar en blanco"
+        taken: "ya está en uso"
+        invalid: "es inválido"
       models:
         user:
           attributes:

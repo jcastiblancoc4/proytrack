@@ -1,0 +1,105 @@
+<div class="max-w-3xl mx-auto mt-6 px-4">
+  <div class="flex items-center gap-3 mb-6">
+    <%= link_to fixed_assets_path, class: "text-gray-400 hover:text-gray-600 transition-colors" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    <% end %>
+    <h1 class="text-2xl font-bold text-gray-800 truncate"><%= @fixed_asset.name %></h1>
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 <%= @fixed_asset.status_badge_class %>">
+      <%= @fixed_asset.status_label %>
+    </span>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Imagen / adjunto -->
+    <% if @fixed_asset.attachment_present? %>
+      <div class="md:col-span-1">
+        <% if @fixed_asset.attachment_image? %>
+          <img src="<%= @fixed_asset.attachment_url %>"
+               class="w-full max-h-52 md:max-h-none rounded-xl border border-gray-200 object-cover shadow-sm"
+               alt="<%= @fixed_asset.name %>">
+        <% else %>
+          <a href="<%= @fixed_asset.attachment_url %>" target="_blank"
+             class="flex flex-col items-center justify-center gap-2 p-6 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-colors">
+            <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+            <span class="text-sm font-medium text-red-600">Ver PDF</span>
+            <span class="text-xs text-red-400 truncate max-w-full"><%= @fixed_asset.attachment_filename %></span>
+          </a>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Datos del activo -->
+    <div class="<%= @fixed_asset.attachment_present? ? 'md:col-span-2' : 'md:col-span-3' %> bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Serial</dt>
+          <dd class="mt-1 text-sm text-gray-800 font-mono"><%= @fixed_asset.serial %></dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha de compra</dt>
+          <dd class="mt-1 text-sm text-gray-800"><%= @fixed_asset.purchase_date&.strftime('%d/%m/%Y') %></dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Precio de compra</dt>
+          <dd class="mt-1 text-sm text-gray-800 font-medium">
+            <%= number_to_currency(@fixed_asset.purchase_price&.fractional.to_f / 100, unit: '$ ', separator: ',', delimiter: '.', precision: 0) rescue '-' %>
+            <span class="text-xs text-gray-400">COP</span>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Responsable</dt>
+          <dd class="mt-1 text-sm text-gray-800"><%= @fixed_asset.responsible %></dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Registrado</dt>
+          <dd class="mt-1 text-sm text-gray-500"><%= @fixed_asset.created_at.strftime('%d/%m/%Y %H:%M') %></dd>
+        </div>
+      </dl>
+
+      <% if @fixed_asset.assigned? %>
+        <div class="mt-4 border border-blue-200 bg-blue-50 rounded-lg p-4">
+          <p class="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-3">Información de asignación</p>
+          <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Asignado a</dt>
+              <dd class="mt-1 text-sm text-gray-800"><%= @fixed_asset.assigned_to %></dd>
+            </div>
+            <div>
+              <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha de asignación</dt>
+              <dd class="mt-1 text-sm text-gray-800"><%= @fixed_asset.assigned_date&.strftime('%d/%m/%Y') %></dd>
+            </div>
+            <% if @fixed_asset.assigned_description.present? %>
+              <div class="sm:col-span-2">
+                <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Descripción</dt>
+                <dd class="mt-1 text-sm text-gray-800"><%= @fixed_asset.assigned_description %></dd>
+              </div>
+            <% end %>
+          </dl>
+        </div>
+      <% end %>
+
+      <div class="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100">
+        <%= link_to edit_fixed_asset_path(@fixed_asset),
+              class: "inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          Editar
+        <% end %>
+        <%= button_to fixed_asset_path(@fixed_asset),
+              method: :delete,
+              form: { data: { turbo_confirm: "¿Eliminar el activo #{@fixed_asset.name}?" } },
+              class: "inline-flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors border border-red-200" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Eliminar
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
