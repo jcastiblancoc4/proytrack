@@ -155,6 +155,11 @@ es:
         assigned_to: "Asignado a"
         assigned_date: "Fecha de asignación"
         assigned_description: "Descripción de asignación"
+      asset_novelty:
+        name: "Nombre"
+        date: "Fecha"
+        description: "Descripción"
+        responsible: "Responsable"
     errors:
       messages:
         blank: "no puede estar en blanco"

@@ -49,7 +49,9 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :fixed_assets
+  resources :fixed_assets do
+    resources :asset_novelties, only: [:new, :create, :show, :destroy]
+  end
 
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check

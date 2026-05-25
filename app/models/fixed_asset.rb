@@ -25,6 +25,7 @@ class FixedAsset
   }, field: { type: Integer, default: 0 }
 
   belongs_to :user
+  has_many :asset_novelties, dependent: :destroy
 
   validates :name,           presence: true
   validates :serial,         presence: true
