@@ -3,7 +3,13 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-2xl font-bold text-gray-800">Activos Fijos</h1>
-      <p class="text-sm text-gray-500 mt-1"><%= @fixed_assets.count %> activo(s) registrado(s)</p>
+      <p class="text-sm text-gray-500 mt-1">
+        <% if @query.present? %>
+          <%= @fixed_assets.count %> resultado(s) para "<%= @query %>"
+        <% else %>
+          <%= @fixed_assets.count %> activo(s) registrado(s)
+        <% end %>
+      </p>
     </div>
     <%= link_to new_fixed_asset_path,
           class: "inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors" do %>
@@ -14,13 +20,40 @@
     <% end %>
   </div>
 
+  <!-- Barra de búsqueda -->
+  <%= form_with url: fixed_assets_path, method: :get, local: true, class: "mb-5" do %>
+    <div class="relative">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+      <input type="text" name="q" value="<%= @query %>"
+             placeholder="Buscar por nombre o serial..."
+             class="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none bg-white"
+             autofocus="<%= @query.present? ? 'autofocus' : nil %>">
+      <% if @query.present? %>
+        <%= link_to fixed_assets_path, class: "absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
   <% if @fixed_assets.empty? %>
     <div class="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
       <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
       </svg>
-      <p class="text-gray-500 font-medium">No hay activos fijos registrados</p>
-      <p class="text-gray-400 text-sm mt-1">Registra el primer activo fijo</p>
+      <% if @query.present? %>
+        <p class="text-gray-500 font-medium">Sin resultados para "<%= @query %>"</p>
+        <p class="text-gray-400 text-sm mt-1">Intenta con otro nombre o serial</p>
+      <% else %>
+        <p class="text-gray-500 font-medium">No hay activos fijos registrados</p>
+        <p class="text-gray-400 text-sm mt-1">Registra el primer activo fijo</p>
+      <% end %>
     </div>
   <% else %>
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">

@@ -3,7 +3,19 @@ class FixedAssetsController < ApplicationController
   before_action :set_fixed_asset, only: [:show, :edit, :update, :destroy]
 
   def index
-    @fixed_assets = current_user.fixed_assets.order(created_at: :desc)
+    @query = params[:q].to_s.strip
+    @fixed_assets = if @query.present?
+      FixedAsset.where(
+        user_id: current_user.id,
+        '$or' => [
+          { name:   { '$regex' => @query, '$options' => 'i' } },
+          { serial: { '$regex' => @query, '$options' => 'i' } }
+        ]
+      )
+    else
+      current_user.fixed_assets
+    end
+    @fixed_assets = @fixed_assets.order_by(created_at: :desc)
   end
 
   def show
