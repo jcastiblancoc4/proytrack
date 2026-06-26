@@ -1,6 +1,6 @@
 class FixedAssetsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_fixed_asset, only: [:show, :edit, :update, :destroy]
+  before_action :set_fixed_asset, only: [:show, :edit, :update, :destroy, :download_pdf]
 
   def index
     @query = params[:q].to_s.strip
@@ -19,6 +19,12 @@ class FixedAssetsController < ApplicationController
   end
 
   def show
+  end
+
+  def download_pdf
+    pdf_data = FixedAssetPdf.generate(@fixed_asset)
+    filename  = "activo_#{@fixed_asset.serial.gsub(/[^a-zA-Z0-9_-]/, '_')}_#{Date.current.strftime('%Y%m%d')}.pdf"
+    send_data pdf_data, filename: filename, type: 'application/pdf', disposition: 'attachment'
   end
 
   def new

@@ -50,6 +50,9 @@ Rails.application.routes.draw do
   end
 
   resources :fixed_assets do
+    member do
+      get :download_pdf
+    end
     resources :asset_novelties, only: [:new, :create, :show, :destroy]
   end
 
