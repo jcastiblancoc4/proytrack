@@ -39,7 +39,7 @@
       </div>
     <% end %>
 
-    <%= form_with(model: [@project, @expense], local: true, class: "space-y-6") do |f| %>
+    <%= form_with(model: [@project, @expense], local: true, class: "space-y-6", id: "expense-form") do |f| %>
       <%= hidden_field_tag :from, params[:from] %>
       <div>
         <%= f.label :description, "📝 Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
@@ -94,10 +94,9 @@
 
       <div class="flex justify-between items-center pt-6">
         <%= link_to "Cancelar", root_path, class: "text-gray-600 hover:underline" %>
-        <%= f.submit "Guardar Gasto", 
+        <%= f.submit "Guardar Gasto",
             class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed",
-            id: "submit-btn",
-            onclick: "return validateExpenseForm();" %>
+            id: "submit-btn" %>
       </div>
     <% end %>
   </div>
@@ -127,6 +126,15 @@
 
             input.form.addEventListener("submit", function () {
                 input.value = input.value.replace(/\./g, "");
+            });
+        }
+
+        const form = document.getElementById("expense-form");
+        if (form) {
+            form.addEventListener("submit", function (e) {
+                if (!validateExpenseForm()) {
+                    e.preventDefault();
+                }
             });
         }
     });
@@ -159,12 +167,12 @@
             return false;
         }
 
-        // Si todo está bien, deshabilitar botón y mostrar efecto de carga
-        setTimeout(() => {
-            submitBtn.disabled = true;
-            submitBtn.value = '⏳ Guardando...';
-            submitBtn.style.opacity = '0.6';
-        }, 0);
+        // Si todo está bien, deshabilitar botón y mostrar efecto de carga.
+        // Se ejecuta en el handler de "submit" del form (no en el click del botón)
+        // para que también cubra el envío por Enter/tecla "Ir" del teclado móvil.
+        submitBtn.disabled = true;
+        submitBtn.value = '⏳ Guardando...';
+        submitBtn.style.opacity = '0.6';
 
         return true;
     }
