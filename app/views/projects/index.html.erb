@@ -1,12 +1,12 @@
 <div class="min-h-screen bg-gray-50">
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+<div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-8">
 
   <!-- ── Header ────────────────────────────────────────────── -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Proyectos</h1>
+      <h1 class="text-2xl font-bold text-gray-900">Proyectos - Panel de Control</h1>
       <p class="text-sm text-gray-400 mt-0.5">
-        Mostrando <%= @projects.count %> de <%= @total_projects %> <%= @total_projects == 1 ? 'proyecto' : 'proyectos' %>
+        Mostrando <%= @projects.count %> de <%= @filtered_count %> <%= @filtered_count == 1 ? 'proyecto' : 'proyectos' %>
       </p>
     </div>
     <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
@@ -40,7 +40,7 @@
           </span>
           <% if has_active_filters %>
             <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-xs font-bold text-white bg-green-600 rounded-full">
-              <%= @projects.count %>
+              <%= @filtered_count %>
             </span>
           <% end %>
           <svg class="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,27 +75,24 @@
             <%= form_with url: projects_path, method: :get, local: true, id: 'filter-form' do |f| %>
               <%= hidden_field_tag :sort_by, @sort_by %>
               <%= hidden_field_tag :sort_direction, @sort_direction %>
+              <%= hidden_field_tag :per_page, @per_page %>
               <%
                 status_icons = {
                   'todos'          => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>',
-                  'pending'        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
                   'running'        => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
                   'stop'           => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-                  'cancelled'      => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
                   'ended'          => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
                   'in_liquidation' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
                 }
                 status_colors = {
-                  'todos' => 'text-gray-500', 'pending' => 'text-gray-500', 'running' => 'text-blue-500',
-                  'stop' => 'text-orange-500', 'cancelled' => 'text-red-500', 'ended' => 'text-green-600',
+                  'todos' => 'text-gray-500', 'running' => 'text-blue-500',
+                  'stop' => 'text-orange-500', 'ended' => 'text-green-600',
                   'in_liquidation' => 'text-purple-500'
                 }
                 filter_options = [
                   { value: 'todos',          label: 'Todos los estados', is_all: true },
-                  { value: 'pending',        label: t('enums.project.execution_status.pending') },
                   { value: 'running',        label: t('enums.project.execution_status.running') },
                   { value: 'stop',           label: t('enums.project.execution_status.stop') },
-                  { value: 'cancelled',      label: t('enums.project.execution_status.cancelled') },
                   { value: 'ended',          label: t('enums.project.execution_status.ended') },
                   { value: 'in_liquidation', label: t('enums.project.execution_status.in_liquidation') }
                 ]
@@ -150,7 +147,7 @@
           <% if has_active_filters %>
             <div class="px-4 py-2.5 bg-green-50 border-t border-green-100 rounded-b-xl flex items-center justify-between text-xs">
               <span class="text-green-700 font-medium"><%= active_filter_count %> <%= active_filter_count == 1 ? 'filtro activo' : 'filtros activos' %></span>
-              <span class="text-green-700 font-bold"><%= @projects.count %> resultados</span>
+              <span class="text-green-700 font-bold"><%= @filtered_count %> resultados</span>
             </div>
           <% end %>
         </div>
@@ -236,251 +233,307 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
       </div>
-      <input type="text" id="search-input"
+      <input type="text" id="search-input" name="q" value="<%= @query %>" form="filter-form" autocomplete="off"
              placeholder="Buscar por ID o nombre..."
-             class="block w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 shadow-sm transition-all duration-200">
+             oninput="submitFilterWithDebounce()"
+             onkeydown="if (event.key === 'Escape') { this.value = ''; document.getElementById('filter-form').submit(); }"
+             class="block w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-300 focus:border-green-500 shadow-sm transition-all duration-200"
     </div>
   </div>
 
-  <!-- ── Tarjetas de proyectos ──────────────────────────────── -->
-  <% if @projects.any? %>
+  <!-- ── Tabla de proyectos + panel resumen ─────────────────── -->
+  <% if @filtered_count > 0 %>
     <%
-      status_badge = {
-        'pending'        => 'bg-gray-100 text-gray-700',
-        'running'        => 'bg-blue-100 text-blue-800',
-        'stop'           => 'bg-orange-100 text-orange-700',
-        'cancelled'      => 'bg-red-100 text-red-800',
-        'ended'          => 'bg-green-100 text-green-800',
-        'in_liquidation' => 'bg-purple-100 text-purple-800'
-      }
-      status_border = {
-        'pending'        => 'border-l-gray-300',
-        'running'        => 'border-l-blue-400',
-        'stop'           => 'border-l-orange-400',
-        'cancelled'      => 'border-l-red-400',
-        'ended'          => 'border-l-green-500',
-        'in_liquidation' => 'border-l-purple-400'
+      status_solid = {
+        'running'        => 'bg-blue-600',
+        'stop'           => 'bg-orange-500',
+        'ended'          => 'bg-green-600',
+        'in_liquidation' => 'bg-purple-600'
       }
     %>
-    <div class="space-y-4">
-      <% @projects.each do |project| %>
-        <% amount_spent = project.expenses.pluck(:amount).sum %>
-        <% diff = project.quoted_value.to_i - amount_spent.to_i %>
-        <% diff_color = diff > 1_000_000 ? 'text-green-600' : diff >= 0 ? 'text-orange-500' : 'text-red-600' %>
-        <% is_owner = project.user == current_user %>
+    <div class="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-6 items-start">
 
-        <div class="project-card bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 <%= status_border[project.execution_status] || 'border-l-gray-300' %> overflow-hidden transition-shadow duration-200 hover:shadow-md"
-             data-project-name="<%= project.name.to_s.downcase %>"
-             data-project-id="<%= project.project_identifier.to_s.downcase %>">
-          <div class="p-5">
-
-            <!-- Card header -->
-            <div class="flex items-start justify-between gap-4 mb-4">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2 flex-wrap mb-1">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-xs font-mono font-semibold">
-                    <%= project.project_identifier %>
-                  </span>
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= status_badge[project.execution_status] || 'bg-gray-100 text-gray-700' %>">
-                    <%= t("enums.project.execution_status.#{project.execution_status}") %>
-                  </span>
-                  <% unless is_owner %>
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                      </svg>
-                      Compartido
+      <!-- Tabla -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-w-0">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID del Proyecto</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre del Proyecto</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha Registro</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Cotizado</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Gastado</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Diferencia (Presupuesto)</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Orden Compra</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Localidad</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              <% @projects.each do |project| %>
+                <%
+                  amount_spent = @expense_totals_by_project[project.id] || 0
+                  diff = project.quoted_value.to_i - amount_spent
+                  is_owner = project.user == current_user
+                %>
+                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                  <td class="px-4 py-3 whitespace-nowrap align-top">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-xs font-mono font-semibold">
+                      <%= project.project_identifier %>
                     </span>
-                  <% end %>
-                </div>
-                <h2 class="text-lg font-bold text-gray-900 truncate"><%= project.name.titleize %></h2>
-                <p class="text-xs text-gray-400 mt-0.5">
-                  <% if is_owner %>
-                    Registrado el <%= project.created_at.in_time_zone("Bogota").strftime("%d/%m/%Y %I:%M %p") %>
-                  <% else %>
-                    Propietario: <%= project.user.email %>
-                  <% end %>
-                </p>
-              </div>
-
-              <!-- Actualizar estado -->
-              <% if is_owner && !project.in_liquidation? %>
-                <button type="button" onclick="toggleStatusModal<%= project.id %>()"
-                        class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 hover:bg-green-50 hover:text-green-700 border border-gray-200 hover:border-green-300 rounded-lg transition-colors duration-150 cursor-pointer">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                  </svg>
-                  Estado
-                </button>
-              <% end %>
-            </div>
-
-            <!-- Métricas -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-              <div class="bg-gray-50 rounded-lg px-3 py-2">
-                <p class="text-xs text-gray-400 mb-0.5">Cotizado</p>
-                <p class="text-sm font-bold text-green-700"><%= number_to_currency(project.quoted_value, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
-              </div>
-              <div class="bg-gray-50 rounded-lg px-3 py-2">
-                <p class="text-xs text-gray-400 mb-0.5">Gastado</p>
-                <p class="text-sm font-bold text-red-600"><%= number_to_currency(amount_spent, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
-              </div>
-              <div class="bg-gray-50 rounded-lg px-3 py-2">
-                <p class="text-xs text-gray-400 mb-0.5">Diferencia</p>
-                <p class="text-sm font-bold <%= diff_color %>"><%= number_to_currency(diff, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
-              </div>
-              <div class="bg-gray-50 rounded-lg px-3 py-2">
-                <p class="text-xs text-gray-400 mb-0.5">Orden de Compra</p>
-                <p class="text-sm font-medium text-gray-700"><%= project.purchase_order.presence || "—" %></p>
-              </div>
-              <div class="bg-gray-50 rounded-lg px-3 py-2">
-                <p class="text-xs text-gray-400 mb-0.5">Localidad</p>
-                <p class="text-sm font-medium text-gray-700 truncate"><%= project.locality.presence || "—" %></p>
-              </div>
-              <% if (project.ended? || project.in_liquidation?) && project.settlement_date.present? %>
-                <div class="bg-green-50 rounded-lg px-3 py-2 border border-green-200">
-                  <p class="text-xs text-green-600 mb-0.5">Finalización</p>
-                  <p class="text-sm font-bold text-green-700"><%= project.settlement_date.strftime("%d/%m/%Y") %></p>
-                </div>
-              <% else %>
-                <div class="bg-gray-50 rounded-lg px-3 py-2">
-                  <p class="text-xs text-gray-400 mb-0.5">Gastos</p>
-                  <p class="text-sm font-medium text-gray-700"><%= project.expenses.count %> registros</p>
-                </div>
-              <% end %>
-            </div>
-
-            <!-- Acciones -->
-            <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
-              <%= link_to project_path(project),
-                    class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors duration-150 cursor-pointer" do %>
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-                Ver Detalles
-              <% end %>
-
-              <% if is_owner %>
-                <% if project.in_liquidation? %>
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                    </svg>
-                    En Liquidación
-                  </span>
-                  <% if project.settlement.present? %>
-                    <%= link_to settlement_path(project.settlement),
-                          class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition-colors cursor-pointer" do %>
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                      </svg>
-                      Ver Liquidación
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap align-top">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold text-white <%= status_solid[project.execution_status] || 'bg-gray-500' %>">
+                      <%= t("enums.project.execution_status.#{project.execution_status}") %>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 align-top max-w-[220px]">
+                    <p class="text-sm font-semibold text-gray-900 truncate"><%= project.name.titleize %></p>
+                    <% unless is_owner %>
+                      <span class="inline-flex items-center gap-1 mt-0.5 text-xs text-blue-600 font-medium">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                        Compartido
+                      </span>
                     <% end %>
-                  <% end %>
-                <% else %>
-                  <%= link_to edit_project_path(project),
-                        class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-colors duration-150 cursor-pointer" do %>
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    Editar
-                  <% end %>
-                  <button type="button"
-                          onclick="if(confirm('¿Estás seguro de eliminar este proyecto?')) { document.getElementById('delete-project-<%= project.id %>').submit(); }"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition-colors duration-150 cursor-pointer">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                    Eliminar
-                  </button>
-                  <%= form_with url: project_path(project), method: :delete, local: true,
-                        html: { id: "delete-project-#{project.id}", style: "display:none;" } do |f| %><% end %>
-                <% end %>
-              <% else %>
-                <span class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-lg">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                  </svg>
-                  Solo lectura
-                </span>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap align-top text-xs text-gray-500">
+                    <%= project.created_at.in_time_zone("Bogota").strftime("%d/%m/%Y") %>
+                    <br><span class="text-gray-400"><%= project.created_at.in_time_zone("Bogota").strftime("%I:%M %p") %></span>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap align-top text-right text-sm font-semibold text-gray-800">
+                    <%= number_to_currency(project.quoted_value, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap align-top text-right text-sm font-semibold text-gray-800">
+                    <%= number_to_currency(amount_spent, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap align-top text-right">
+                    <% if diff.negative? %>
+                      <p class="text-sm font-bold text-red-600">-<%= number_to_currency(diff.abs, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
+                      <p class="text-xs text-red-500">En Riesgo</p>
+                    <% else %>
+                      <p class="text-sm font-bold text-green-600"><%= diff.zero? ? "0" : "+#{number_to_currency(diff, unit: '$', delimiter: '.', separator: ',', precision: 0)}" %></p>
+                      <p class="text-xs text-green-600">Correcto</p>
+                    <% end %>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap align-top text-sm text-gray-600">
+                    <%= project.purchase_order.presence || "—" %>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap align-top text-sm text-gray-600 max-w-[140px] truncate">
+                    <%= project.locality.presence || "—" %>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap align-top">
+                    <div class="flex items-center justify-end gap-1" x-data="{ open: false }" @click.away="open = false">
+                      <%= link_to project_path(project),
+                            class: "p-1.5 rounded-lg text-gray-500 hover:text-green-700 hover:bg-green-50 transition-colors cursor-pointer",
+                            title: "Ver detalles" do %>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                      <% end %>
+
+                      <% if is_owner && !project.in_liquidation? %>
+                        <%= link_to edit_project_path(project),
+                              class: "p-1.5 rounded-lg text-gray-500 hover:text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer",
+                              title: "Editar" do %>
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                          </svg>
+                        <% end %>
+                        <button type="button" title="Eliminar"
+                                onclick="if(confirm('¿Estás seguro de eliminar este proyecto?')) { document.getElementById('delete-project-<%= project.id %>').submit(); }"
+                                class="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                        </button>
+                        <%= form_with url: project_path(project), method: :delete, local: true,
+                              html: { id: "delete-project-#{project.id}", style: "display:none;" } do |f| %><% end %>
+                      <% end %>
+
+                      <% if is_owner %>
+                        <div class="relative">
+                          <button type="button" @click="open = !open" title="Más acciones"
+                                  class="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
+                            </svg>
+                          </button>
+                          <div x-show="open" x-cloak
+                               x-transition:enter="transition ease-out duration-100"
+                               x-transition:enter-start="opacity-0 scale-95"
+                               x-transition:enter-end="opacity-100 scale-100"
+                               class="absolute right-0 mt-1 w-52 bg-white rounded-lg shadow-xl border border-gray-200 z-30 py-1.5 text-left">
+                            <% if project.in_liquidation? %>
+                              <span class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-purple-700">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                En Liquidación
+                              </span>
+                              <% if project.settlement.present? %>
+                                <%= link_to settlement_path(project.settlement),
+                                      class: "flex items-center gap-2 px-3 py-2 text-xs text-purple-700 hover:bg-purple-50 cursor-pointer" do %>
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                  </svg>
+                                  Ver Liquidación
+                                <% end %>
+                              <% end %>
+                            <% else %>
+                              <button type="button" onclick="toggleStatusModal<%= project.id %>()"
+                                      class="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 cursor-pointer">
+                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                </svg>
+                                Actualizar Estado
+                              </button>
+                            <% end %>
+                          </div>
+                        </div>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
               <% end %>
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
 
-        <!-- Modal actualizar estado -->
-        <% if is_owner %>
-          <div id="statusModal<%= project.id %>" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:9999; overflow-y:auto;">
-            <div style="position:relative; margin:80px auto; width:500px; max-width:90%; background:white; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.15); overflow:hidden;" onclick="event.stopPropagation()">
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid #f3f4f6;">
-                <div>
-                  <h3 style="font-size:18px; font-weight:700; color:#111827; margin:0;">Actualizar Estado</h3>
-                  <p style="font-size:12px; color:#9ca3af; margin:4px 0 0;">Selecciona el nuevo estado del proyecto</p>
-                </div>
-                <button type="button" onclick="closeStatusModal<%= project.id %>()"
-                        style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:none; background:none; cursor:pointer; color:#9ca3af;"
-                        onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.color='#4b5563';"
-                        onmouseout="this.style.backgroundColor='transparent'; this.style.color='#9ca3af';">
-                  <svg style="width:18px; height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                </button>
+        <!-- Paginación -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-gray-100">
+          <div class="flex items-center gap-1 flex-wrap">
+            <% if @page > 1 %>
+              <%= link_to "Anterior", url_for(request.query_parameters.merge(page: @page - 1)),
+                    class: "px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer" %>
+            <% else %>
+              <span class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-100 text-gray-300">Anterior</span>
+            <% end %>
+
+            <% pagination_page_numbers(@page, @total_pages).each do |p| %>
+              <% if p == :ellipsis %>
+                <span class="px-2 text-xs text-gray-400">…</span>
+              <% else %>
+                <%= link_to p, url_for(request.query_parameters.merge(page: p)),
+                      class: "px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer #{p == @page ? 'bg-green-700 text-white' : 'text-gray-600 hover:bg-gray-50 border border-gray-200'}" %>
+              <% end %>
+            <% end %>
+
+            <% if @page < @total_pages %>
+              <%= link_to "Siguiente", url_for(request.query_parameters.merge(page: @page + 1)),
+                    class: "px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer" %>
+            <% else %>
+              <span class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-100 text-gray-300">Siguiente</span>
+            <% end %>
+          </div>
+
+          <div class="flex items-center gap-1.5 text-xs text-gray-500">
+            Mostrar
+            <% [10, 25, 50, 100].each do |n| %>
+              <%= link_to n, url_for(request.query_parameters.merge(per_page: n, page: 1)),
+                    class: "px-2.5 py-1 rounded-md font-semibold cursor-pointer #{@per_page == n ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel resumen -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 xl:sticky xl:top-6">
+        <div>
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Proyectos Activos</p>
+          <p class="text-2xl font-bold text-gray-900 mt-0.5"><%= @active_projects_count %></p>
+        </div>
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Presupuesto Total</p>
+          <p class="text-lg font-bold text-gray-900 mt-0.5"><%= number_to_currency(@quoted_total, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
+        </div>
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Gasto Total</p>
+          <p class="text-lg font-bold text-red-600 mt-0.5"><%= number_to_currency(@spent_total, unit: "$", delimiter: ".", separator: ",", precision: 0) %></p>
+        </div>
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Diferencia Global</p>
+          <p class="text-lg font-bold mt-0.5 <%= @budget_diff_total.negative? ? 'text-red-600' : 'text-green-600' %>">
+            <%= number_to_currency(@budget_diff_total, unit: "$", delimiter: ".", separator: ",", precision: 0) %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modales de actualización de estado (uno por proyecto de la página actual) -->
+    <% @projects.each do |project| %>
+      <% next unless project.user == current_user && !project.in_liquidation? %>
+      <div id="statusModal<%= project.id %>" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:9999; overflow-y:auto;">
+        <div style="position:relative; margin:80px auto; width:500px; max-width:90%; background:white; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.15); overflow:hidden;" onclick="event.stopPropagation()">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid #f3f4f6;">
+            <div>
+              <h3 style="font-size:18px; font-weight:700; color:#111827; margin:0;">Actualizar Estado</h3>
+              <p style="font-size:12px; color:#9ca3af; margin:4px 0 0;">Selecciona el nuevo estado del proyecto</p>
+            </div>
+            <button type="button" onclick="closeStatusModal<%= project.id %>()"
+                    style="width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:none; background:none; cursor:pointer; color:#9ca3af;"
+                    onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.color='#4b5563';"
+                    onmouseout="this.style.backgroundColor='transparent'; this.style.color='#9ca3af';">
+              <svg style="width:18px; height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <%= form_with model: project, url: update_status_project_path(project), method: :patch, local: true,
+                id: "update-status-form-#{project.id}", data: { turbo: false } do |f| %>
+            <div style="padding:20px 24px;">
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <% Project.execution_statuses.each do |status_key, _| %>
+                  <% next if status_key == 'in_liquidation' %>
+                  <label style="display:flex; align-items:center; padding:12px 16px; border:2px solid #e5e7eb; border-radius:10px; cursor:pointer; transition:all 0.15s;"
+                         class="status-option-<%= project.id %>"
+                         onmouseover="this.style.borderColor='#16a34a'; this.style.backgroundColor='#f0fdf4';"
+                         onmouseout="if(!this.querySelector('input').checked) { this.style.borderColor='#e5e7eb'; this.style.backgroundColor='transparent'; }">
+                    <%= f.radio_button :execution_status, status_key,
+                        id: "status_#{status_key}_#{project.id}",
+                        checked: project.execution_status == status_key,
+                        style: "width:18px; height:18px; cursor:pointer; accent-color:#16a34a;",
+                        onchange: "updateSelectedOption#{project.id}(this); toggleSettlementDate#{project.id}(this.value);" %>
+                    <span style="margin-left:12px; font-size:14px; font-weight:500; color:#111827;">
+                      <%= t("enums.project.execution_status.#{status_key}") %>
+                    </span>
+                  </label>
+                <% end %>
               </div>
 
-              <%= form_with model: project, url: update_status_project_path(project), method: :patch, local: true,
-                    id: "update-status-form-#{project.id}", data: { turbo: false } do |f| %>
-                <div style="padding:20px 24px;">
-                  <div style="display:flex; flex-direction:column; gap:8px;">
-                    <% Project.execution_statuses.each do |status_key, _| %>
-                      <% next if status_key == 'in_liquidation' %>
-                      <label style="display:flex; align-items:center; padding:12px 16px; border:2px solid #e5e7eb; border-radius:10px; cursor:pointer; transition:all 0.15s;"
-                             class="status-option-<%= project.id %>"
-                             onmouseover="this.style.borderColor='#16a34a'; this.style.backgroundColor='#f0fdf4';"
-                             onmouseout="if(!this.querySelector('input').checked) { this.style.borderColor='#e5e7eb'; this.style.backgroundColor='transparent'; }">
-                        <%= f.radio_button :execution_status, status_key,
-                            id: "status_#{status_key}_#{project.id}",
-                            checked: project.execution_status == status_key,
-                            style: "width:18px; height:18px; cursor:pointer; accent-color:#16a34a;",
-                            onchange: "updateSelectedOption#{project.id}(this); toggleSettlementDate#{project.id}(this.value);" %>
-                        <span style="margin-left:12px; font-size:14px; font-weight:500; color:#111827;">
-                          <%= t("enums.project.execution_status.#{status_key}") %>
-                        </span>
-                      </label>
-                    <% end %>
-                  </div>
-
-                  <div id="settlement_date_container_<%= project.id %>" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid #f3f4f6;">
-                    <label style="display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:8px;">Fecha de Liquidación</label>
-                    <%= f.date_field :settlement_date, id: "settlement_date_#{project.id}",
-                        value: project.settlement_date || Date.current,
-                        style: "width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; outline:none;",
-                        onfocus: "this.style.borderColor='#16a34a'; this.style.boxShadow='0 0 0 3px rgba(22,163,74,0.1)';",
-                        onblur:  "this.style.borderColor='#d1d5db'; this.style.boxShadow='none';" %>
-                    <p style="margin-top:6px; font-size:12px; color:#6b7280;">Ingresa la fecha en que se liquidó el proyecto</p>
-                  </div>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 24px; border-top:1px solid #f3f4f6; background:#fafafa;">
-                  <button type="button" onclick="closeStatusModal<%= project.id %>()"
-                          style="padding:9px 18px; font-size:13px; font-weight:500; color:#374151; background:#fff; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; transition:all 0.15s;"
-                          onmouseover="this.style.backgroundColor='#f9fafb';"
-                          onmouseout="this.style.backgroundColor='#fff';">
-                    Cancelar
-                  </button>
-                  <%= f.submit "Actualizar Estado",
-                      id: "update-status-btn-#{project.id}",
-                      style: "padding:9px 18px; font-size:13px; font-weight:600; color:white; background:#15803d; border:none; border-radius:8px; cursor:pointer; transition:all 0.15s;",
-                      onmouseover: "this.style.backgroundColor='#166534';",
-                      onmouseout:  "this.style.backgroundColor='#15803d';",
-                      onclick: "return validateUpdateStatusForm#{project.id}();" %>
-                </div>
-              <% end %>
+              <div id="settlement_date_container_<%= project.id %>" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid #f3f4f6;">
+                <label style="display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:8px;">Fecha de Liquidación</label>
+                <%= f.date_field :settlement_date, id: "settlement_date_#{project.id}",
+                    value: project.settlement_date || Date.current,
+                    style: "width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; outline:none;",
+                    onfocus: "this.style.borderColor='#16a34a'; this.style.boxShadow='0 0 0 3px rgba(22,163,74,0.1)';",
+                    onblur:  "this.style.borderColor='#d1d5db'; this.style.boxShadow='none';" %>
+                <p style="margin-top:6px; font-size:12px; color:#6b7280;">Ingresa la fecha en que se liquidó el proyecto</p>
+              </div>
             </div>
-          </div>
-        <% end %>
 
-      <% end %>
-    </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; padding:16px 24px; border-top:1px solid #f3f4f6; background:#fafafa;">
+              <button type="button" onclick="closeStatusModal<%= project.id %>()"
+                      style="padding:9px 18px; font-size:13px; font-weight:500; color:#374151; background:#fff; border:1px solid #d1d5db; border-radius:8px; cursor:pointer; transition:all 0.15s;"
+                      onmouseover="this.style.backgroundColor='#f9fafb';"
+                      onmouseout="this.style.backgroundColor='#fff';">
+                Cancelar
+              </button>
+              <%= f.submit "Actualizar Estado",
+                  id: "update-status-btn-#{project.id}",
+                  style: "padding:9px 18px; font-size:13px; font-weight:600; color:white; background:#15803d; border:none; border-radius:8px; cursor:pointer; transition:all 0.15s;",
+                  onmouseover: "this.style.backgroundColor='#166534';",
+                  onmouseout:  "this.style.backgroundColor='#15803d';",
+                  onclick: "return validateUpdateStatusForm#{project.id}();" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
 
   <% else %>
     <!-- Empty state -->
@@ -490,14 +543,21 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
         </svg>
       </div>
-      <p class="text-base font-semibold text-gray-600 mb-1">No hay proyectos registrados</p>
-      <p class="text-sm text-gray-400 mb-5">Crea tu primer proyecto para comenzar.</p>
-      <%= link_to new_project_path,
-            class: "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 rounded-lg transition-colors cursor-pointer" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Nuevo Proyecto
+      <% if @total_projects.zero? %>
+        <p class="text-base font-semibold text-gray-600 mb-1">No hay proyectos registrados</p>
+        <p class="text-sm text-gray-400 mb-5">Crea tu primer proyecto para comenzar.</p>
+        <%= link_to new_project_path,
+              class: "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 rounded-lg transition-colors cursor-pointer" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Nuevo Proyecto
+        <% end %>
+      <% else %>
+        <p class="text-base font-semibold text-gray-600 mb-1">Ningún proyecto coincide con tu búsqueda</p>
+        <p class="text-sm text-gray-400 mb-5">Prueba con otros filtros o términos de búsqueda.</p>
+        <%= link_to "Limpiar filtros", projects_path,
+              class: "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors cursor-pointer" %>
       <% end %>
     </div>
   <% end %>
@@ -529,22 +589,8 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('search-input');
-    const cards = document.querySelectorAll('.project-card');
-    function search() {
-      const q = searchInput.value.toLowerCase().trim();
-      cards.forEach(card => {
-        const match = !q || card.dataset.projectName.includes(q) || card.dataset.projectId.includes(q);
-        card.style.display = match ? '' : 'none';
-      });
-    }
-    searchInput.addEventListener('input', search);
-    searchInput.addEventListener('keydown', e => { if (e.key === 'Escape') { searchInput.value = ''; search(); } });
-  });
-
   <% @projects.each do |project| %>
-    <% if project.user == current_user %>
+    <% if project.user == current_user && !project.in_liquidation? %>
       function toggleStatusModal<%= project.id %>() {
         const modal = document.getElementById('statusModal<%= project.id %>');
         if (!modal) return;

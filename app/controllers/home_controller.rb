@@ -3,12 +3,12 @@ class HomeController < ApplicationController
   before_action :require_admin!
 
   def index
-    # Proyectos activos (pendiente + ejecutando)
+    # Proyectos activos (ejecutando)
     @active_projects = current_user.projects
-                                   .in(execution_status_cd: [0, 1])
+                                   .where(execution_status_cd: 1)
                                    .order(updated_at: :desc)
                                    .limit(5)
-    @active_projects_count = current_user.projects.in(execution_status_cd: [0, 1]).count
+    @active_projects_count = current_user.projects.where(execution_status_cd: 1).count
     @total_projects_count  = current_user.projects.count
 
     # Cuentas

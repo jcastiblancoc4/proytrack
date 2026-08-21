@@ -10,7 +10,7 @@ class ExpensesController < ApplicationController
   def index
     @third_parties      = current_user.third_parties.order(:first_name.asc)
     @accounts           = current_user.accounts.order(created_at: :desc)
-    @projects           = current_user.projects.in(execution_status_cd: [0, 1]).order(created_at: :desc)
+    @projects           = current_user.projects.where(execution_status_cd: 1).order(created_at: :desc)
     @all_projects       = current_user.projects.order(created_at: :desc)
     @expense_categories = current_user.expense_categories.order(name: :asc)
 
@@ -124,7 +124,7 @@ class ExpensesController < ApplicationController
       else
         @third_parties      = current_user.third_parties.order(:first_name.asc)
         @accounts           = current_user.accounts.order(created_at: :desc)
-        @projects           = current_user.projects.in(execution_status_cd: [0, 1]).order(created_at: :desc)
+        @projects           = current_user.projects.where(execution_status_cd: 1).order(created_at: :desc)
         @all_projects       = current_user.projects.order(created_at: :desc)
         @expense_categories = current_user.expense_categories.order(name: :asc)
         @expenses           = apply_filters(current_user.expenses)

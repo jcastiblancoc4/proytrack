@@ -27,6 +27,14 @@ class ProjectsController < ApplicationController
     all_projects = all_projects.select { |p| p.created_at.to_date >= @date_from } if @date_from
     all_projects = all_projects.select { |p| p.created_at.to_date <= @date_to   } if @date_to
 
+    @query = params[:q].to_s.strip
+    if @query.present?
+      q_down = @query.downcase
+      all_projects = all_projects.select do |p|
+        p.name.to_s.downcase.include?(q_down) || p.project_identifier.to_s.downcase.include?(q_down)
+      end
+    end
+
     @sort_by        = %w[created_at updated_at].include?(params[:sort_by])        ? params[:sort_by]        : 'updated_at'
     @sort_direction = %w[asc desc].include?(params[:sort_direction]) ? params[:sort_direction] : 'desc'
 
@@ -39,7 +47,27 @@ class ProjectsController < ApplicationController
       end
     end
 
-    @projects = @sort_direction == 'desc' ? sorted.reverse : sorted
+    filtered_projects = @sort_direction == 'desc' ? sorted.reverse : sorted
+    @filtered_count = filtered_projects.count
+
+    # Totales del panel resumen, calculados sobre el conjunto filtrado (no solo la página actual)
+    expense_totals = Expense.where(:project_id.in => filtered_projects.map(&:id))
+                             .only(:project_id, :amount).to_a
+                             .group_by(&:project_id)
+                             .transform_values { |exps| exps.sum { |e| e.amount.to_i } }
+    @expense_totals_by_project = expense_totals
+    @active_projects_count = filtered_projects.count { |p| p.execution_status.to_s == 'running' }
+    @quoted_total = filtered_projects.sum { |p| p.quoted_value.to_i }
+    @spent_total  = expense_totals.values.sum
+    @budget_diff_total = @quoted_total - @spent_total
+
+    # Paginación
+    @per_page   = %w[10 25 50 100].include?(params[:per_page]) ? params[:per_page].to_i : 10
+    @total_pages = [(@filtered_count.to_f / @per_page).ceil, 1].max
+    @page       = [[params[:page].to_i, 1].max, @total_pages].min
+    offset      = (@page - 1) * @per_page
+
+    @projects = filtered_projects[offset, @per_page] || []
   end
 
   # GET /projects/1 or /projects/1.json

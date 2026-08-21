@@ -206,7 +206,6 @@
                 diff = project.quoted_value.to_i - amount_spent
                 diff_color   = diff > 1_000_000 ? "text-green-600" : diff >= 0 ? "text-orange-500" : "text-red-600"
                 status_styles = {
-                  'pending' => 'bg-gray-100 text-gray-600',
                   'running' => 'bg-green-100 text-green-700'
                 }
               %>

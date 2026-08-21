@@ -36,13 +36,11 @@ class Project
   }, field: { type: Integer, default: 0 }
 
   as_enum :execution_status, {
-    pending: 0,      # pendiente
     running: 1,   # ejecutando
     stop: 2,      # pausado
-    cancelled: 3, # cancelado
     ended: 4, # termino
     in_liquidation: 5, # en liquidación
-  }, field: { type: Integer, default: 0 }
+  }, field: { type: Integer, default: 1 }
 
   # Métodos personalizados para usuarios compartidos (Mongoid no soporta through)
   def shared_with_users

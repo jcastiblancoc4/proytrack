@@ -95,10 +95,8 @@ es:
         collaborator: "Colaborador"
     project:
       execution_status:
-        pending: "Pendiente"
         running: "Ejecutando"
         stop: "Pausado"
-        cancelled: "Cancelado"
         ended: "Terminado"
         in_liquidation: "En Liquidación"
       payment_status:
