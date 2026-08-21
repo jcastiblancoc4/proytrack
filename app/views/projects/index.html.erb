@@ -609,7 +609,7 @@
         return true;
       }
 
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('turbo:load', function() {
         const modal = document.getElementById('statusModal<%= project.id %>');
         if (modal) modal.addEventListener('click', e => { if (e.target === modal) closeStatusModal<%= project.id %>(); });
       });

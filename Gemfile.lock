@@ -284,6 +284,9 @@ GEM
     timeout (0.4.3)
     ttfunk (1.8.0)
       bigdecimal (~> 3.1)
+    turbo-rails (2.0.23)
+      actionpack (>= 7.1.0)
+      railties (>= 7.1.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     warden (1.2.9)
@@ -322,6 +325,7 @@ DEPENDENCIES
   simple_enum (~> 2.3.0)
   sprockets-rails
   tailwindcss-rails
+  turbo-rails (~> 2.0)
   tzinfo-data
   web-console
 

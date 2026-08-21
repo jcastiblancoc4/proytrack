@@ -10,7 +10,7 @@ class FormResponsesController < ApplicationController
   def download_pdf
     if @form_response.pdf_report.present?
       path = Rails.root.join('public', @form_response.pdf_report)
-      send_file path, type: 'application/pdf', disposition: 'inline',
+      send_file path, type: 'application/pdf', disposition: 'attachment',
                 filename: "inspeccion_#{@form_response.id}.pdf"
     else
       redirect_to inspection_form_form_response_path(@inspection_form, @form_response),

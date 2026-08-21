@@ -120,7 +120,7 @@
         <div class="flex items-center justify-between">
           <% if devise_mapping.rememberable? %>
             <div class="flex items-center gap-2">
-              <%= f.check_box :remember_me, class: "h-4 w-4 rounded border-gray-300", style: "accent-color: #22c15e" %>
+              <%= f.check_box :remember_me, checked: turbo_native_app?, class: "h-4 w-4 rounded border-gray-300", style: "accent-color: #22c15e" %>
               <%= f.label :remember_me, "Recordarme", class: "text-sm text-gray-600" %>
             </div>
           <% end %>

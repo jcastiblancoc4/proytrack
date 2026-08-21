@@ -55,3 +55,5 @@ group :development do
   # gem "spring"
 end
 
+
+gem "turbo-rails", "~> 2.0"

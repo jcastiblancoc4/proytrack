@@ -1,0 +1,67 @@
+{
+  "settings": {},
+  "rules": [
+    {
+      "patterns": ["/users/sign_in$"],
+      "properties": {
+        "context": "default",
+        "presentation": "clear_all",
+        "pull_to_refresh_enabled": false,
+        "title": "Iniciar sesión"
+      }
+    },
+    {
+      "patterns": ["/form_responses/new$"],
+      "properties": {
+        "context": "default",
+        "pull_to_refresh_enabled": false
+      }
+    },
+    {
+      "patterns": ["/download_pdf$"],
+      "properties": {
+        "context": "default",
+        "new_screen": false
+      }
+    },
+    {
+      "patterns": ["/new$", "/new_version$", "/edit$"],
+      "properties": {
+        "context": "modal",
+        "pull_to_refresh_enabled": false
+      }
+    },
+    {
+      "patterns": ["^/$"],
+      "properties": {
+        "context": "default",
+        "pull_to_refresh_enabled": true,
+        "title": "Inicio"
+      }
+    },
+    {
+      "patterns": [
+        "/projects$",
+        "/expenses$",
+        "/accounts$",
+        "/third_parties$",
+        "/settlements$",
+        "/inspection_forms$",
+        "/fixed_assets$",
+        "/settlements/preliquidation$",
+        "/inspection_forms/[^/]+/versions$"
+      ],
+      "properties": {
+        "context": "default",
+        "pull_to_refresh_enabled": true
+      }
+    },
+    {
+      "patterns": [".*"],
+      "properties": {
+        "context": "default",
+        "pull_to_refresh_enabled": false
+      }
+    }
+  ]
+}

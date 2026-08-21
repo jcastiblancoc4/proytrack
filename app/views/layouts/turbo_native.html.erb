@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <%= render "layouts/head_assets" %>
+  </head>
+
+  <body class="bg-gray-100">
+  <%= render "layouts/flash_messages" %>
+
+  <main>
+    <%= yield %>
+  </main>
+  </body>
+</html>
+<%= render "layouts/flash_dismiss_script" %>

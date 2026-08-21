@@ -1,7 +1,21 @@
 class ApplicationController < ActionController::Base
-  helper_method :admin_user?, :collaborator_user?
+  layout :resolve_layout
+
+  helper_method :admin_user?, :collaborator_user?, :turbo_native_app?
 
   private
+
+  def resolve_layout
+    turbo_native_app? ? "turbo_native" : "application"
+  end
+
+  # El shell nativo (Hotwire Native / Turbo Native para Android e iOS) agrega
+  # este identificador al User-Agent del WebView. Cuando la request viene de
+  # ahí, se omite el layout web completo (sidebar, barra superior) porque la
+  # navegación y el chrome los provee la app nativa.
+  def turbo_native_app?
+    request.user_agent.to_s.match?(/Turbo Native|Hotwire Native/i)
+  end
 
   def require_admin!
     return if admin_user?

@@ -1,0 +1,11 @@
+<script>
+    document.addEventListener("turbo:load", function () {
+        const alerts = document.querySelectorAll(".flash-alert");
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.classList.add("opacity-0");
+                setTimeout(() => alert.remove(), 500);
+            }, 3000); // Oculta después de 3 segundos
+        });
+    });
+</script>
