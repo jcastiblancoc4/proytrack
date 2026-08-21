@@ -265,10 +265,8 @@
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha Registro</th>
                 <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Cotizado</th>
                 <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Gastado</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Diferencia (Presupuesto)</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Orden Compra</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Localidad</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Diferencia</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -285,7 +283,7 @@
                     </span>
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap align-top">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold text-white <%= status_solid[project.execution_status] || 'bg-gray-500' %>">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold text-white <%= status_solid[project.execution_status.to_s] || 'bg-gray-500' %>">
                       <%= t("enums.project.execution_status.#{project.execution_status}") %>
                     </span>
                   </td>
@@ -319,14 +317,8 @@
                       <p class="text-xs text-green-600">Correcto</p>
                     <% end %>
                   </td>
-                  <td class="px-4 py-3 whitespace-nowrap align-top text-sm text-gray-600">
-                    <%= project.purchase_order.presence || "—" %>
-                  </td>
-                  <td class="px-4 py-3 whitespace-nowrap align-top text-sm text-gray-600 max-w-[140px] truncate">
-                    <%= project.locality.presence || "—" %>
-                  </td>
                   <td class="px-4 py-3 whitespace-nowrap align-top">
-                    <div class="flex items-center justify-end gap-1" x-data="{ open: false }" @click.away="open = false">
+                    <div class="flex items-center justify-center gap-1">
                       <%= link_to project_path(project),
                             class: "p-1.5 rounded-lg text-gray-500 hover:text-green-700 hover:bg-green-50 transition-colors cursor-pointer",
                             title: "Ver detalles" do %>
@@ -352,48 +344,31 @@
                         </button>
                         <%= form_with url: project_path(project), method: :delete, local: true,
                               html: { id: "delete-project-#{project.id}", style: "display:none;" } do |f| %><% end %>
+
+                        <button type="button" title="Actualizar Estado" onclick="toggleStatusModal<%= project.id %>()"
+                                class="p-1.5 rounded-lg text-gray-500 hover:text-purple-700 hover:bg-purple-50 transition-colors cursor-pointer">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                          </svg>
+                        </button>
                       <% end %>
 
-                      <% if is_owner %>
-                        <div class="relative">
-                          <button type="button" @click="open = !open" title="Más acciones"
-                                  class="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
+                      <% if is_owner && project.in_liquidation? %>
+                        <% if project.settlement.present? %>
+                          <%= link_to settlement_path(project.settlement),
+                                class: "p-1.5 rounded-lg text-purple-600 hover:text-purple-800 hover:bg-purple-50 transition-colors cursor-pointer",
+                                title: "Ver Liquidación" do %>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                          </button>
-                          <div x-show="open" x-cloak
-                               x-transition:enter="transition ease-out duration-100"
-                               x-transition:enter-start="opacity-0 scale-95"
-                               x-transition:enter-end="opacity-100 scale-100"
-                               class="absolute right-0 mt-1 w-52 bg-white rounded-lg shadow-xl border border-gray-200 z-30 py-1.5 text-left">
-                            <% if project.in_liquidation? %>
-                              <span class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-purple-700">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                                En Liquidación
-                              </span>
-                              <% if project.settlement.present? %>
-                                <%= link_to settlement_path(project.settlement),
-                                      class: "flex items-center gap-2 px-3 py-2 text-xs text-purple-700 hover:bg-purple-50 cursor-pointer" do %>
-                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                  </svg>
-                                  Ver Liquidación
-                                <% end %>
-                              <% end %>
-                            <% else %>
-                              <button type="button" onclick="toggleStatusModal<%= project.id %>()"
-                                      class="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 cursor-pointer">
-                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                                </svg>
-                                Actualizar Estado
-                              </button>
-                            <% end %>
-                          </div>
-                        </div>
+                          <% end %>
+                        <% else %>
+                          <span class="p-1.5 rounded-lg text-purple-400" title="En Liquidación">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                          </span>
+                        <% end %>
                       <% end %>
                     </div>
                   </td>

@@ -77,7 +77,7 @@
       open_groups_json = nav_groups.map { |g| "#{g[:key]}: #{g[:active]}" }.join(", ")
     %>
 
-    <div x-data="{ sidebarOpen: false, userOpen: false, openGroups: { <%= open_groups_json %> } }" class="min-h-screen flex bg-gray-100">
+    <div x-data="{ sidebarOpen: false, userOpen: false, openGroups: { <%= open_groups_json %> } }" class="h-screen flex bg-gray-100 overflow-hidden">
 
       <!-- Overlay móvil -->
       <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
@@ -88,18 +88,18 @@
       <!-- Sidebar -->
       <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
              class="fixed inset-y-0 left-0 z-40 w-64 flex flex-col transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:flex-shrink-0"
-             style="background: linear-gradient(180deg, #0f3d22 0%, #1a6b3a 100%)">
+             style="background: linear-gradient(180deg, #15803d 0%, #22c55e 100%)">
 
-        <div class="h-16 flex items-center justify-between px-5 flex-shrink-0 border-b border-white/10">
+        <div class="h-16 flex items-center justify-between px-5 flex-shrink-0 bg-white border-b border-gray-100">
           <%= link_to root_path, class: "flex items-center gap-2.5" do %>
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-white/15">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, #22c55e, #15803d)">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
               </svg>
             </div>
-            <span class="text-lg font-bold tracking-tight text-white">ProyTrack</span>
+            <span class="text-lg font-bold tracking-tight text-gray-900">ProyTrack</span>
           <% end %>
-          <button @click="sidebarOpen = false" type="button" class="lg:hidden text-white/70 hover:text-white p-1" aria-label="Cerrar menú">
+          <button @click="sidebarOpen = false" type="button" class="lg:hidden text-gray-400 hover:text-gray-700 p-1" aria-label="Cerrar menú">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -149,9 +149,10 @@
       <div class="flex-1 flex flex-col min-w-0">
 
         <!-- Topbar -->
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 sticky top-0 z-20">
+        <header class="h-16 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 sticky top-0 z-20 border-b border-black/10"
+                style="background: linear-gradient(90deg, #15803d 0%, #22c55e 100%)">
           <button @click="sidebarOpen = true" type="button"
-                  class="lg:hidden inline-flex items-center justify-center p-2 -ml-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  class="lg:hidden inline-flex items-center justify-center p-2 -ml-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                   aria-label="Abrir menú">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
@@ -159,12 +160,12 @@
 
           <div class="flex items-center relative" @click.away="userOpen = false">
             <button @click="userOpen = !userOpen" type="button"
-                    class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors hover:bg-gray-100">
-              <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background: linear-gradient(135deg, #0f3d22, #1a6b3a)">
+                    class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors hover:bg-white/10">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-green-800 text-xs font-bold flex-shrink-0 bg-white">
                 <%= user_initials %>
               </div>
-              <span class="text-sm font-medium text-gray-700 max-w-[140px] truncate hidden sm:block"><%= current_user.email.split("@").first %></span>
-              <svg class="w-4 h-4 text-gray-400 transition-transform" :class="userOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span class="text-sm font-medium text-white max-w-[140px] truncate hidden sm:block"><%= current_user.email.split("@").first %></span>
+              <svg class="w-4 h-4 text-white/70 transition-transform" :class="userOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
             </button>
@@ -178,7 +179,7 @@
                  x-transition:leave-start="opacity-100 scale-100"
                  x-transition:leave-end="opacity-0 scale-95"
                  class="absolute right-0 top-12 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-              <div class="px-4 py-3 border-b border-gray-100" style="background: linear-gradient(135deg, #0f3d22, #1a6b3a)">
+              <div class="px-4 py-3 border-b border-gray-100" style="background: linear-gradient(135deg, #15803d, #22c55e)">
                 <p class="text-xs text-white/60">Sesión iniciada como</p>
                 <p class="text-sm font-semibold text-white truncate"><%= current_user.email %></p>
               </div>

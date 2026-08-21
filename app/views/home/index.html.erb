@@ -216,7 +216,7 @@
                     <p class="text-sm font-medium text-gray-800 truncate"><%= project.name.titleize %></p>
                     <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span class="text-xs text-gray-400"><%= project.project_identifier %></span>
-                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium <%= status_styles[project.execution_status] || 'bg-gray-100 text-gray-600' %>">
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium <%= status_styles[project.execution_status.to_s] || 'bg-gray-100 text-gray-600' %>">
                         <%= t("enums.project.execution_status.#{project.execution_status}") %>
                       </span>
                     </div>
