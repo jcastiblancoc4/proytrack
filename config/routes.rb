@@ -56,6 +56,8 @@ Rails.application.routes.draw do
     resources :asset_novelties, only: [:new, :create, :show, :destroy]
   end
 
+  get "download_android_app" => "home#download_android_app", as: :download_android_app
+
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 end

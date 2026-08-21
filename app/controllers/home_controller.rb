@@ -47,4 +47,17 @@ class HomeController < ApplicationController
     @preliq_expenses_value = preliq_expenses.sum { |e| e.amount.to_i }
     @preliq_difference     = @preliq_projects_value - @preliq_expenses_value
   end
+
+  def download_android_app
+    path = Rails.root.join("public", "downloads", "proytrack.apk")
+
+    if File.exist?(path)
+      send_file path,
+                filename: "ProyTrack.apk",
+                type: "application/vnd.android.package-archive",
+                disposition: "attachment"
+    else
+      redirect_to root_path, alert: "La app para Android no está disponible en este momento."
+    end
+  end
 end

@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::Base
   layout :resolve_layout
 
-  helper_method :admin_user?, :collaborator_user?, :turbo_native_app?
+  helper_method :admin_user?, :collaborator_user?, :turbo_native_app?, :show_android_app_download?
 
   private
 
@@ -15,6 +15,13 @@ class ApplicationController < ActionController::Base
   # navegación y el chrome los provee la app nativa.
   def turbo_native_app?
     request.user_agent.to_s.match?(/Turbo Native|Hotwire Native/i)
+  end
+
+  # Solo tiene sentido ofrecer el APK a alguien navegando desde un Android
+  # real por fuera de la app nativa (si ya está dentro de la app, no necesita
+  # instalarla).
+  def show_android_app_download?
+    !turbo_native_app? && request.user_agent.to_s.match?(/Android/i)
   end
 
   def require_admin!

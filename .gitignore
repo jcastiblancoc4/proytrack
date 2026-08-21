@@ -85,6 +85,9 @@ env_file
 # Ignore generated PDFs
 /public/uploads/
 
+# Ignore APK binaries (se despliegan aparte, no van en git)
+/public/downloads/*.apk
+
 # Ignore Claude memory
 /memory/
 

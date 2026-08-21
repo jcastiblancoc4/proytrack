@@ -33,6 +33,16 @@
           </svg>
           Ver Gastos
         <% end %>
+        <% if show_android_app_download? %>
+          <%= link_to download_android_app_path, target: "_blank", data: { turbo: false },
+                title: "Instalable fuera de Play Store: deberás habilitar \"instalar apps de orígenes desconocidos\" la primera vez",
+                class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-colors duration-200 cursor-pointer" do %>
+            <svg class="w-4 h-4 text-green-700" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.523 15.34l1.833-3.175a.417.417 0 00-.153-.57.417.417 0 00-.57.153l-1.857 3.216a11.19 11.19 0 00-4.776-1.043c-1.716 0-3.334.375-4.776 1.043L5.367 11.75a.417.417 0 00-.57-.153.417.417 0 00-.153.57l1.833 3.174C3.44 16.983 1.5 19.86 1.5 23.167h21c0-3.307-1.94-6.184-4.977-7.827zM7.5 20.5a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm9 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z"/>
+            </svg>
+            Descargar App
+          <% end %>
+        <% end %>
       </div>
     </div>
 
