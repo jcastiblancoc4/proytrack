@@ -58,7 +58,7 @@ class Expense
   before_save :clear_invoice_number_unless_electronic_invoice
 
   after_create  :create_account_transaction
-  after_update  :sync_account_transaction_amount
+  after_update  :sync_account_transaction
 
   private
 
@@ -89,9 +89,14 @@ class Expense
     end
   end
 
-  def sync_account_transaction_amount
-    return unless previous_changes.key?('amount') && account_transaction.present?
-    account_transaction.update!(amount: amount)
+  def sync_account_transaction
+    return unless account_transaction.present?
+
+    attrs = {}
+    attrs[:amount]           = amount       if previous_changes.key?('amount')
+    attrs[:description]      = description  if previous_changes.key?('description')
+    attrs[:transaction_date] = expense_date if previous_changes.key?('expense_date') && expense_date.present?
+    account_transaction.update!(attrs) if attrs.any?
   end
 
   def create_account_transaction
