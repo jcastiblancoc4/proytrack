@@ -253,11 +253,25 @@ class ExpensesController < ApplicationController
     selected_account_ids = Array(params[:account_ids]).reject(&:blank?)
     scope = scope.in(account_id: selected_account_ids) if selected_account_ids.any?
 
+    query = params[:q].to_s.strip
+    if query.present?
+      regex = /#{Regexp.escape(query)}/i
+      matching_project_ids = current_user.projects.any_of({ name: regex }, { project_identifier: regex }).pluck(:id)
+      # Se filtra en Ruby para que "Juan Pérez" coincida aunque nombre y apellido estén en campos distintos
+      matching_third_party_ids = current_user.third_parties.select do |tp|
+        tp.full_name.to_s.match?(regex) || tp.document_number.to_s.match?(regex)
+      end.map(&:id)
+      scope = scope.any_of({ description: regex }, { invoice_number: regex },
+                           { :project_id.in => matching_project_ids },
+                           { :third_party_id.in => matching_third_party_ids })
+    end
+
     scope.order(expense_date: :desc, created_at: :desc)
   end
 
   def filters_active?
-    params[:date_from].present? || params[:date_to].present? ||
+    params[:q].to_s.strip.present? ||
+      params[:date_from].present? || params[:date_to].present? ||
       Array(params[:project_ids]).reject(&:blank?).any? ||
       Array(params[:category_ids]).reject(&:blank?).any? ||
       Array(params[:third_party_ids]).reject(&:blank?).any? ||
