@@ -17,7 +17,7 @@ class Settlement
   validates :month, presence: true, inclusion: { in: 1..12 }
   validates :year, presence: true
   validates :user, presence: true
-  validates :month, uniqueness: { scope: :year, message: "Ya existe una liquidación para este mes y año" }
+  validates :month, uniqueness: { scope: [:year, :user_id], message: "Ya existe una liquidación para este mes y año" }
 
   # Callbacks
   before_create :set_created_by_email
