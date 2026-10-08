@@ -39,7 +39,7 @@
       </div>
     <% end %>
 
-    <%= form_with(model: [@project, @expense], local: true, class: "space-y-6", id: "expense-form") do |f| %>
+    <%= form_with(model: [@project, @expense], local: true, multipart: true, class: "space-y-6", id: "expense-form") do |f| %>
       <%= hidden_field_tag :from, params[:from] %>
       <div>
         <%= f.label :description, "📝 Descripción", class: "block text-sm font-medium text-gray-700 mb-1" %>
@@ -91,6 +91,8 @@
                            class: "w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-200" %>
         </div>
       </div>
+
+      <%= render "expenses/attachment_field", expense: @expense %>
 
       <div class="flex justify-between items-center pt-6">
         <%= link_to "Cancelar", root_path, class: "text-gray-600 hover:underline" %>

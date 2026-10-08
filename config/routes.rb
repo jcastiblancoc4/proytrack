@@ -22,6 +22,11 @@ Rails.application.routes.draw do
     collection do
       get :export
     end
+    member do
+      # El nombre del archivo va en la ruta para que el DownloadManager de la app
+      # Android guarde la descarga con su extensión (lo deduce de la URL)
+      get "attachment(/:filename)", action: :attachment, as: :attachment, constraints: { filename: /[^\/]+/ }
+    end
   end
   resources :expense_categories, only: [:create, :update, :destroy]
 
@@ -57,6 +62,7 @@ Rails.application.routes.draw do
   end
 
   get "download_android_app" => "home#download_android_app", as: :download_android_app
+  get "privacidad" => "pages#privacy", as: :privacy
 
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check

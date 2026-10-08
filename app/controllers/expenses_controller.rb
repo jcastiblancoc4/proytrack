@@ -1,6 +1,6 @@
 class ExpensesController < ApplicationController
   before_action :authenticate_user!
-  before_action :require_admin!
+  before_action :require_admin!, except: [:attachment]
   before_action :set_project, if: -> { params[:project_id].present? }
   before_action :set_expense, only: [:edit, :update, :destroy]
   before_action :check_edit_permission, only: [:new, :create, :edit, :update, :destroy], if: -> { @project.present? }
@@ -97,13 +97,15 @@ class ExpensesController < ApplicationController
       # Nested under project
       @expense = @project.expenses.build(expense_params)
       @expense.user = current_user
-      if @expense.save
+      if attach_file(@expense) && @expense.save
+        finalize_attachment
         if params[:from] == 'home'
           redirect_to root_path, notice: "Gasto registrado exitosamente."
         else
           redirect_to project_path(@project), notice: "Gasto registrado exitosamente."
         end
       else
+        discard_uploaded_attachment(@expense)
         render :new, alert: "No se pudo guardar el gasto."
       end
     else
@@ -119,9 +121,11 @@ class ExpensesController < ApplicationController
         @expense.errors.add(:project_id, "Debe seleccionar un proyecto")
       end
 
-      if project_id.present? && @expense.save
+      if project_id.present? && attach_file(@expense) && @expense.save
+        finalize_attachment
         redirect_to expenses_path, notice: "Gasto registrado exitosamente."
       else
+        discard_uploaded_attachment(@expense)
         @third_parties      = current_user.third_parties.order(:first_name.asc)
         @accounts           = current_user.accounts.order(created_at: :desc)
         @projects           = current_user.projects.where(execution_status_cd: 1).order(created_at: :desc)
@@ -148,13 +152,17 @@ class ExpensesController < ApplicationController
     @expense.user = current_user if @expense.user.nil?
 
     if @project.present?
-      if @expense.update(expense_params.except(:project_id))
+      @expense.assign_attributes(expense_params.except(:project_id))
+      if attach_file(@expense) && @expense.save
+        finalize_attachment
         if params[:from] == 'home'
           redirect_to root_path, notice: "Gasto actualizado exitosamente."
         else
           redirect_to project_path(@project), notice: "Gasto actualizado exitosamente."
         end
       else
+        discard_uploaded_attachment(@expense)
+        @expense_categories = current_user.expense_categories.order(name: :asc)
         render :edit, alert: "No se pudo actualizar el gasto."
       end
     else
@@ -173,9 +181,11 @@ class ExpensesController < ApplicationController
       @expense.project = new_project
       @expense.assign_attributes(expense_params.except(:project_id))
 
-      if @expense.save
+      if attach_file(@expense) && @expense.save
+        finalize_attachment
         redirect_to expenses_path, notice: "Gasto actualizado exitosamente."
       else
+        discard_uploaded_attachment(@expense)
         @third_parties      = current_user.third_parties.order(:first_name.asc)
         @accounts           = current_user.accounts.order(created_at: :desc)
         @projects           = current_user.projects.order(created_at: :desc)
@@ -186,7 +196,9 @@ class ExpensesController < ApplicationController
   end
 
   def destroy
+    drive_id = @expense.attachment_drive_id
     @expense.destroy
+    delete_from_drive(drive_id)
     if @project.present?
       redirect_to project_path(@project), notice: "Gasto eliminado exitosamente."
     else
@@ -194,7 +206,87 @@ class ExpensesController < ApplicationController
     end
   end
 
+  # Muestra el soporte guardado en Google Drive sin exponer el archivo públicamente
+  def attachment
+    expense = Expense.where(id: params[:id]).first
+    unless expense&.attachment_present? && expense.can_view?(current_user)
+      redirect_to root_path, alert: "No se encontró el soporte del gasto." and return
+    end
+
+    data = GoogleDriveService.download(expense.attachment_drive_id)
+    expires_in 1.hour, public: false
+    send_data data,
+              filename:    expense.attachment_filename.presence || "soporte",
+              type:        expense.attachment_content_type,
+              disposition: params[:download].present? ? "attachment" : "inline"
+  rescue GoogleDriveService::Error => e
+    Rails.logger.error("[GoogleDrive] Error descargando soporte del gasto #{params[:id]}: #{e.message}")
+    redirect_back fallback_location: root_path, alert: "No se pudo obtener el soporte desde Google Drive. Intenta de nuevo."
+  end
+
   private
+
+  # Valida y sube a Google Drive el archivo del formulario (o marca su eliminación).
+  # Devuelve false y agrega el error al gasto si algo falla, para no guardarlo a medias.
+  def attach_file(expense)
+    @uploaded_drive_id = nil
+    @replaced_drive_id = nil
+    @previous_attachment = expense.attributes.slice('attachment_drive_id', 'attachment_filename', 'attachment_content_type')
+    file = params.dig(:expense, :attachment_file)
+
+    if file.present?
+      unless file.respond_to?(:content_type) && Expense::ALLOWED_ATTACHMENT_TYPES.include?(file.content_type)
+        expense.errors.add(:base, "El soporte debe ser una imagen (JPG, PNG, GIF, WebP) o un PDF")
+        return false
+      end
+      if file.size > Expense::MAX_ATTACHMENT_SIZE
+        expense.errors.add(:base, "El soporte no puede superar los 10 MB")
+        return false
+      end
+
+      safe_name = file.original_filename.to_s.gsub(/[^a-zA-Z0-9._-]/, '_')
+      drive_name = "#{Date.current.strftime('%Y%m%d')}_#{SecureRandom.hex(4)}_#{safe_name}"
+      begin
+        @uploaded_drive_id = GoogleDriveService.upload(file.tempfile, filename: drive_name, content_type: file.content_type)
+      rescue GoogleDriveService::Error => e
+        Rails.logger.error("[GoogleDrive] Error subiendo soporte: #{e.message}")
+        expense.errors.add(:base, "No se pudo subir el soporte a Google Drive. Intenta de nuevo.")
+        return false
+      end
+
+      @replaced_drive_id = expense.attachment_drive_id
+      expense.attachment_drive_id     = @uploaded_drive_id
+      expense.attachment_filename     = file.original_filename
+      expense.attachment_content_type = file.content_type
+    elsif params.dig(:expense, :remove_attachment) == '1' && expense.attachment_present?
+      @replaced_drive_id = expense.attachment_drive_id
+      expense.attachment_drive_id     = nil
+      expense.attachment_filename     = nil
+      expense.attachment_content_type = nil
+    end
+
+    true
+  end
+
+  # Tras guardar el gasto, borra de Drive el soporte que fue reemplazado o eliminado
+  def finalize_attachment
+    delete_from_drive(@replaced_drive_id)
+  end
+
+  # Si el gasto no se guardó, borra de Drive el archivo recién subido para no dejarlo huérfano
+  # y restaura el soporte anterior en el formulario
+  def discard_uploaded_attachment(expense)
+    delete_from_drive(@uploaded_drive_id)
+    expense.assign_attributes(@previous_attachment) if @previous_attachment
+  end
+
+  def delete_from_drive(drive_id)
+    return if drive_id.blank?
+
+    GoogleDriveService.delete(drive_id)
+  rescue GoogleDriveService::Error => e
+    Rails.logger.error("[GoogleDrive] No se pudo eliminar el archivo #{drive_id}: #{e.message}")
+  end
 
   def set_project
     @project = Project.find(params[:project_id])

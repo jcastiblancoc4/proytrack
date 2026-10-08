@@ -57,3 +57,8 @@ end
 
 
 gem "turbo-rails", "~> 2.0"
+
+gem "google-apis-drive_v3", "~> 0.88.0"
+gem "googleauth", "~> 1.17"
+# json 3.x rompe la serialización de cookies de Rails 7.1 (unknown keyword: quirks_mode)
+gem "json", "< 3"

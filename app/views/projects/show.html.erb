@@ -283,7 +283,7 @@
             </div>
           <% end %>
 
-          <%= form_with model: [@project, Expense.new], local: true, class: "space-y-4" do |f| %>
+          <%= form_with model: [@project, Expense.new], local: true, multipart: true, class: "space-y-4" do |f| %>
             <%= hidden_field_tag :from, 'show' %>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="md:col-span-2">
@@ -362,6 +362,7 @@
                 </div>
               </div>
             </div>
+            <%= render "expenses/attachment_field", expense: nil %>
             <div class="flex justify-end pt-2">
               <%= f.submit "Agregar Gasto", id: "submit-btn",
                   class: "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 rounded-xl transition-colors cursor-pointer" %>
@@ -411,7 +412,10 @@
                       <%= expense.expense_date&.strftime("%d/%m/%Y") || "—" %>
                     </td>
                     <td class="px-4 py-3 max-w-xs">
-                      <p class="text-sm font-medium text-gray-800 truncate"><%= expense.description %></p>
+                      <div class="flex items-center gap-1.5">
+                        <p class="text-sm font-medium text-gray-800 truncate"><%= expense.description %></p>
+                        <%= render "expenses/attachment_link", expense: expense %>
+                      </div>
                     </td>
                     <td class="px-4 py-3">
                       <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
@@ -474,7 +478,7 @@
                           </svg>
                           Editar Gasto
                         </h3>
-                        <%= form_with model: [@project, expense], local: true, class: "space-y-4" do |f| %>
+                        <%= form_with model: [@project, expense], local: true, multipart: true, class: "space-y-4" do |f| %>
                           <%= hidden_field_tag :from, 'show' %>
                           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
@@ -549,6 +553,7 @@
                               </div>
                             </div>
                           </div>
+                          <%= render "expenses/attachment_field", expense: expense %>
                           <div class="flex items-center justify-between pt-2">
                             <button type="button" @click="editingId = null"
                                     class="text-sm text-gray-500 hover:text-gray-700 cursor-pointer transition-colors">Cancelar</button>

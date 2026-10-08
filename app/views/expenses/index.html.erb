@@ -424,7 +424,10 @@
                   <%= expense.expense_date&.strftime("%d/%m/%Y") || "-" %>
                 </td>
                 <td class="px-4 py-3">
-                  <p class="text-sm font-medium text-gray-800 truncate max-w-[200px]"><%= expense.description %></p>
+                  <div class="flex items-center gap-1.5">
+                    <p class="text-sm font-medium text-gray-800 truncate max-w-[200px]"><%= expense.description %></p>
+                    <%= render "expenses/attachment_link", expense: expense %>
+                  </div>
                 </td>
                 <td class="px-4 py-3">
                   <% if expense.expense_category.present? %>

@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::Base
   layout :resolve_layout
 
-  helper_method :admin_user?, :collaborator_user?, :turbo_native_app?, :show_android_app_download?
+  helper_method :admin_user?, :collaborator_user?, :turbo_native_app?, :show_android_app_download?, :inline_pdf_supported?
 
   private
 
@@ -20,6 +20,12 @@ class ApplicationController < ActionController::Base
   # Solo tiene sentido ofrecer el APK a alguien navegando desde un Android
   # real por fuera de la app nativa (si ya está dentro de la app, no necesita
   # instalarla).
+  # El WebView de Android (app nativa) y Chrome en Android no renderizan PDF
+  # dentro de un iframe, así que ahí se ofrece abrirlo/descargarlo.
+  def inline_pdf_supported?
+    !request.user_agent.to_s.match?(/Android/i)
+  end
+
   def show_android_app_download?
     !turbo_native_app? && request.user_agent.to_s.match?(/Android/i)
   end

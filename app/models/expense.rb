@@ -7,6 +7,9 @@ class Expense
   field :amount, type: Money, default: Money.new(0, 'COP')
   field :expense_date, type: Date
   field :invoice_number, type: String
+  field :attachment_drive_id,     type: String
+  field :attachment_filename,     type: String
+  field :attachment_content_type, type: String
 
   belongs_to :project, optional: true
   belongs_to :user
@@ -53,6 +56,29 @@ class Expense
 
   def support_type_label
     SUPPORT_TYPE_LABELS[support_type.to_s] || 'Sin soporte'
+  end
+
+  ALLOWED_ATTACHMENT_TYPES = %w[image/jpeg image/jpg image/png image/gif image/webp application/pdf].freeze
+  MAX_ATTACHMENT_SIZE = 10.megabytes
+
+  def attachment_present?
+    attachment_drive_id.present?
+  end
+
+  def attachment_image?
+    attachment_content_type&.start_with?('image/')
+  end
+
+  # Nombre seguro para usar en la URL de descarga
+  def attachment_download_name
+    attachment_filename.to_s.gsub(/[^a-zA-Z0-9._-]/, '_').presence || 'soporte'
+  end
+
+  def can_view?(user)
+    user == self.user ||
+      project&.can_access?(user) ||
+      settlement&.can_access?(user) ||
+      false
   end
 
   before_save :clear_invoice_number_unless_electronic_invoice
