@@ -8,6 +8,7 @@ class GoogleDriveService
   class Error < StandardError; end
 
   SCOPE = 'https://www.googleapis.com/auth/drive.file'.freeze
+  MUTEX = Mutex.new
 
   class << self
     # Sube el archivo a la carpeta configurada y devuelve el ID del archivo en Drive.
@@ -59,17 +60,21 @@ class GoogleDriveService
       ENV['GOOGLE_DRIVE_FOLDER_ID']
     end
 
+    # Se reutiliza entre peticiones: las credenciales guardan el access token (válido ~1 hora)
+    # y lo renuevan solas al vencer, en vez de pedir uno nuevo a Google en cada llamada.
     def drive
       raise Error, 'Google Drive no está configurado' unless configured?
 
-      service = Google::Apis::DriveV3::DriveService.new
-      service.authorization = Google::Auth::UserRefreshCredentials.new(
-        client_id:     ENV['GOOGLE_DRIVE_CLIENT_ID'],
-        client_secret: ENV['GOOGLE_DRIVE_CLIENT_SECRET'],
-        refresh_token: ENV['GOOGLE_DRIVE_REFRESH_TOKEN'],
-        scope:         SCOPE
-      )
-      service
+      MUTEX.synchronize do
+        @drive ||= Google::Apis::DriveV3::DriveService.new.tap do |service|
+          service.authorization = Google::Auth::UserRefreshCredentials.new(
+            client_id:     ENV['GOOGLE_DRIVE_CLIENT_ID'],
+            client_secret: ENV['GOOGLE_DRIVE_CLIENT_SECRET'],
+            refresh_token: ENV['GOOGLE_DRIVE_REFRESH_TOKEN'],
+            scope:         SCOPE
+          )
+        end
+      end
     end
   end
 end

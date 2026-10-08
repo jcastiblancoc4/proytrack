@@ -214,7 +214,8 @@ class ExpensesController < ApplicationController
     end
 
     data = GoogleDriveService.download(expense.attachment_drive_id)
-    expires_in 1.hour, public: false
+    # La URL incluye el ID de Drive (?v=), que cambia al reemplazar el soporte: se puede cachear largo
+    expires_in 1.year, public: false
     send_data data,
               filename:    expense.attachment_filename.presence || "soporte",
               type:        expense.attachment_content_type,
