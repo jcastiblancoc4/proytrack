@@ -41,6 +41,8 @@ Rails.application.routes.draw do
 
   resources :managed_users, only: [:index, :new, :create, :edit, :update, :destroy]
 
+  resource :password_change, only: [:edit, :update], path: "cambiar_contrasena"
+
   resources :inspection_forms, except: [:edit, :update] do
     member do
       get  :new_version

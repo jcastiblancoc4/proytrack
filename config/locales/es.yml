@@ -138,6 +138,7 @@ es:
         email: "Correo electrónico"
         password: "Contraseña"
         password_confirmation: "Confirmación de contraseña"
+        current_password: "Contraseña actual"
       user_profile:
         first_name: "Nombre"
         last_name: "Apellido"
@@ -163,6 +164,8 @@ es:
         blank: "no puede estar en blanco"
         taken: "ya está en uso"
         invalid: "es inválido"
+        too_short: "es demasiado corta (mínimo %{count} caracteres)"
+        too_long: "es demasiado larga (máximo %{count} caracteres)"
       models:
         user:
           attributes:
